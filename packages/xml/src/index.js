@@ -306,7 +306,8 @@ export async function parseSaoData(xml, options = {}) {
     attributeNamePrefix: '@_',
     parseTagValue: false,
     parseAttributeValue: false,
-    processEntities: false,
+    // DTD/ENTITY declarations are rejected above; built-in XML entities still need decoding.
+    processEntities: true,
     trimValues: false
   });
   const root = parser.parse(xml)?.saoData;
@@ -616,7 +617,8 @@ export function exportSaoData({ packId, name, language = 'pt-BR', entities }) {
     attributeNamePrefix: '@_',
     format: true,
     suppressEmptyNode: true,
-    processEntities: false
+    suppressBooleanAttributes: false,
+    processEntities: true
   });
   return `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build({ saoData: root })}`;
 }
