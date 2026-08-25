@@ -28,8 +28,8 @@ export const roleSchema = z.enum(ROLE_TYPES);
 
 export const referenceSchema = z.object({
   type: z.string().min(1),
-  id: z.string().min(3),
-  role: z.string().min(1),
+  id: z.string().min(1),
+  role: z.string().min(1).default('related'),
   chance: z.number().int().min(1).max(100).optional()
 });
 
@@ -43,6 +43,17 @@ export const baseEntitySchema = z.object({
   id: z.string().min(3),
   name: z.string().min(1),
   active: z.boolean().default(true),
+  discoveryRevision: z.number().int().nonnegative().default(0),
+  sectionVisibility: z.record(z.string(), visibilitySchema).default({}),
+  source: z
+    .object({
+      kind: z.enum(['local', 'xml']).default('local'),
+      packId: z.string().optional(),
+      fileName: z.string().optional(),
+      importedAt: z.union([z.number(), z.string()]).optional(),
+      modifiedLocally: z.boolean().default(true)
+    })
+    .optional(),
   tags: z.array(z.string()).default([]),
   fields: z.array(narrativeFieldSchema).default([]),
   references: z.array(referenceSchema).default([])

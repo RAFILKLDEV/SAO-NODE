@@ -8,59 +8,127 @@ import {
 } from '@sao/shared';
 
 const extensibleString = z.string().min(1);
+const stringValue = z.union([z.string(), z.number()]);
+const urlValue = z.union([z.string().url(), z.literal('')]).optional();
+const serviceSchema = z.union([
+  z.string().min(1),
+  z.object({ type: z.string().min(1), name: z.string().optional() })
+]);
+
+const t20SnapshotSchema = z
+  .object({
+    name: z.string().default(''),
+    player: z.string().default(''),
+    race: z.string().default(''),
+    origin: z.string().default(''),
+    job: z.string().default(''),
+    level: z.string().default(''),
+    strMod: z.string().default(''),
+    dexMod: z.string().default(''),
+    conMod: z.string().default(''),
+    intMod: z.string().default(''),
+    wisMod: z.string().default(''),
+    chaMod: z.string().default(''),
+    defense: z.string().default(''),
+    fortitude: z.string().default(''),
+    reflex: z.string().default(''),
+    will: z.string().default(''),
+    hp: z.string().default(''),
+    hpMax: z.string().default(''),
+    mp: z.string().default(''),
+    mpMax: z.string().default(''),
+    avatar: z.string().default(''),
+    dataType: z.string().default(''),
+    readAt: z.number().default(0),
+    attributeSummary: z.string().default(''),
+    hpText: z.string().default(''),
+    mpText: z.string().default(''),
+    saveSummary: z.string().default(''),
+    summary: z.string().default('')
+  })
+  .partial();
+
+const npcT20Schema = z.object({
+  mode: z.enum(['none', 'embedded', 'linked']).default('none'),
+  dataType: z.string().default(T20_CURRENT),
+  characterId: z.string().default(''),
+  firecastUri: z.string().default(''),
+  snapshot: t20SnapshotSchema.optional()
+});
 
 export const npcSchema = baseEntitySchema.extend({
   title: z.string().optional(),
+  identity: z
+    .object({
+      race: z.string().default(''),
+      gender: z.string().default(''),
+      age: z.string().default(''),
+      profession: z.string().default('')
+    })
+    .optional(),
   race: z.string().optional(),
   gender: z.string().optional(),
-  age: z.union([z.string(), z.number()]).optional(),
+  age: stringValue.optional(),
   profession: z.string().optional(),
-  level: z.number().int().nonnegative().optional(),
-  imageUrl: z.string().url().optional(),
-  tokenUrl: z.string().url().optional(),
-  portraitUrl: z.string().url().optional(),
-  sourceUrl: z.string().url().optional(),
+  level: stringValue.optional(),
+  imageURL: urlValue,
+  imageUrl: urlValue,
+  tokenUrl: urlValue,
+  portraitUrl: urlValue,
+  sourceUrl: urlValue,
   factions: z.array(z.string()).default([]),
-  services: z.array(z.string()).default([]),
+  services: z.array(serviceSchema).default([]),
+  mainLocationId: z.string().optional(),
   primaryLocationId: z.string().optional(),
   currentLocationId: z.string().optional(),
-  t20: z.unknown().optional()
+  locations: z.array(referenceSchema).default([]),
+  relations: z.array(referenceSchema).default([]),
+  t20: npcT20Schema.optional()
 });
 
-export const locationConnectionSchema = z.object({
-  connectionId: z.string().min(1),
-  targetId: z.string().min(3),
-  direction: z.string().optional(),
-  distanceKm: z.number().nonnegative().optional(),
-  travelMinutes: z.number().int().nonnegative().optional(),
-  access: z.enum(['public', 'discoverable', 'hidden', 'conditional', 'blocked']).default('public'),
-  unlockCondition: z.string().optional(),
-  visibility: visibilitySchema.default('public')
-});
+export const locationConnectionSchema = z
+  .object({
+    connectionId: z.string().min(1).optional(),
+    targetId: z.string().min(3).optional(),
+    to: z.string().min(3).optional(),
+    type: z.string().optional(),
+    direction: z.string().optional(),
+    distanceKm: z.number().nonnegative().optional(),
+    travelMinutes: z.number().int().nonnegative().optional(),
+    access: z
+      .enum(['public', 'discoverable', 'hidden', 'conditional', 'blocked'])
+      .default('public'),
+    unlockCondition: z.string().optional(),
+    visibility: visibilitySchema.default('public')
+  })
+  .refine((value) => value.targetId || value.to, { message: 'targetId or to is required' });
 
 export const locationSchema = baseEntitySchema.extend({
   type: extensibleString.default('region'),
   state: z.string().optional(),
   parentId: z.string().optional(),
   environment: z.string().optional(),
-  recommendedLevel: z.number().int().nonnegative().optional(),
-  imageUrl: z.string().url().optional(),
-  mapUrl: z.string().url().optional(),
-  services: z.array(z.string()).default([]),
+  levelRecommended: stringValue.optional(),
+  recommendedLevel: stringValue.optional(),
+  imageURL: urlValue,
+  imageUrl: urlValue,
+  mapUrl: urlValue,
+  services: z.array(serviceSchema).default([]),
   connections: z.array(locationConnectionSchema).default([])
 });
 
 export const itemStatSchema = z.object({
   key: z.string().min(1),
   value: z.union([z.string(), z.number(), z.boolean()]),
-  operation: z.string().min(1).default('set')
+  operation: z.string().min(1).optional()
 });
 
 export const itemSchema = baseEntitySchema.extend({
   category: extensibleString.default('misc'),
   rarity: extensibleString.default('common'),
-  imageUrl: z.string().url().optional(),
-  value: z.object({ amount: z.number().nonnegative(), currency: z.string().min(1) }).optional(),
+  imageURL: urlValue,
+  imageUrl: urlValue,
+  value: z.object({ amount: stringValue, currency: z.string().min(1) }).optional(),
   stats: z.array(itemStatSchema).default([])
 });
 
@@ -71,7 +139,8 @@ const visibleComponent = z.object({
 
 export const monsterSchema = baseEntitySchema.extend({
   group: z.string().optional(),
-  imageUrl: z.string().url().optional(),
+  imageURL: urlValue,
+  imageUrl: urlValue,
   sheet: z
     .object({
       nd: z.union([z.string(), z.number()]).optional(),
@@ -85,44 +154,66 @@ export const monsterSchema = baseEntitySchema.extend({
       statsVisibility: z.record(z.string(), visibilitySchema).default({})
     })
     .default({}),
-  movements: z.array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) })).default([]),
-  attacks: z.array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) })).default([]),
-  abilities: z.array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) })).default([]),
+  t20: z
+    .object({
+      nd: stringValue.optional(),
+      creatureType: z.string().optional(),
+      subtype: z.string().optional(),
+      size: z.string().optional(),
+      initiative: z.string().optional(),
+      perception: z.string().optional(),
+      senses: z.string().optional(),
+      defense: z.string().optional(),
+      fortitude: z.string().optional(),
+      reflex: z.string().optional(),
+      will: z.string().optional(),
+      hp: z.string().optional(),
+      hpMax: z.string().optional(),
+      mp: z.string().optional(),
+      mpMax: z.string().optional(),
+      attributes: z.record(z.string(), z.unknown()).default({}),
+      statVisibility: z.record(z.string(), visibilitySchema).default({})
+    })
+    .optional(),
+  movements: z
+    .array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) }))
+    .default([]),
+  attacks: z
+    .array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) }))
+    .default([]),
+  abilities: z
+    .array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) }))
+    .default([]),
   skills: z.array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) })).default([]),
   traits: z.array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) })).default([])
 });
 
-export const questObjectiveSchema = z.object({
-  objectiveId: z.string().min(1),
-  type: z.enum([
-    'talk',
-    'kill',
-    'collect',
-    'deliver',
-    'visit',
-    'interact',
-    'protect',
-    'escort',
-    'survive',
-    'discover',
-    'use',
-    'craft',
-    'custom'
-  ]),
-  text: z.string().min(1),
-  order: z.number().int().nonnegative(),
-  requiredQuantity: z.number().int().positive().default(1),
-  optional: z.boolean().default(false),
-  secret: z.boolean().default(false),
-  visibility: visibilitySchema.default('public'),
-  target: z.object({ type: z.string().min(1), id: z.string().min(1) }).optional(),
-  dependsOn: z.array(z.string()).default([]),
-  playerEditable: z.boolean().default(false)
-});
+export const questObjectiveSchema = z
+  .object({
+    objectiveId: z.string().min(1).optional(),
+    id: z.string().min(1).optional(),
+    type: extensibleString,
+    text: z.string().min(1),
+    order: z.number().int().nonnegative(),
+    requiredQuantity: z.number().int().positive().optional(),
+    quantity: z.number().int().positive().optional(),
+    optional: z.boolean().default(false),
+    secret: z.boolean().default(false),
+    visibility: visibilitySchema.default('public'),
+    target: z.object({ type: z.string().min(1), id: z.string().min(1) }).optional(),
+    targetType: z.string().optional(),
+    targetId: z.string().optional(),
+    dependsOn: z.array(z.string()).default([]),
+    dependsOnObjectiveIds: z.array(z.string()).optional(),
+    playerEditable: z.boolean().default(false)
+  })
+  .refine((value) => value.objectiveId || value.id, { message: 'objectiveId or id is required' });
 
 export const questRewardSchema = z.object({
-  type: z.enum(['money', 'reputation', 'item', 'xp', 'skill', 'custom']),
-  amount: z.number().optional(),
+  type: extensibleString,
+  id: z.string().optional(),
+  amount: stringValue.optional(),
+  quantity: stringValue.optional(),
   currency: z.string().optional(),
   target: referenceSchema.optional(),
   choiceGroup: z.string().optional(),
@@ -135,10 +226,22 @@ export const questSchema = baseEntitySchema.extend({
   state: extensibleString.default('available'),
   briefing: z.string().optional(),
   completionText: z.string().optional(),
-  recommendedLevel: z.number().int().nonnegative().optional(),
+  levelRecommended: stringValue.optional(),
+  recommendedLevel: stringValue.optional(),
   startSource: referenceSchema.optional(),
   completionReceiver: referenceSchema.optional(),
   prerequisites: z.array(z.string()).default([]),
+  requirements: z
+    .array(
+      z.object({
+        type: z.string().min(1),
+        id: z.string().optional(),
+        minimum: z.string().optional(),
+        quantity: z.string().optional(),
+        state: z.string().optional()
+      })
+    )
+    .default([]),
   nextQuests: z.array(z.string()).default([]),
   requirementLogic: z.enum(['all', 'any']).default('all'),
   objectiveMode: z.enum(['ordered', 'free']).default('free'),
@@ -156,7 +259,13 @@ export const entitySchemas = {
 };
 
 export function assertNamespacedId(type, id) {
-  const prefixes = { npc: 'npc.', location: 'loc.', item: 'item.', monster: 'monster.', quest: 'quest.' };
+  const prefixes = {
+    npc: 'npc.',
+    location: 'loc.',
+    item: 'item.',
+    monster: 'monster.',
+    quest: 'quest.'
+  };
   if (!prefixes[type] || !id.startsWith(prefixes[type])) {
     throw new Error(`Invalid ${type} id: ${id}`);
   }
@@ -170,7 +279,9 @@ export function calculateTravelMinutes(distanceKm) {
 }
 
 export function buildLocationTree(locations) {
-  const nodes = new Map(locations.map((location) => [location.id, { ...location, children: [], warnings: [] }]));
+  const nodes = new Map(
+    locations.map((location) => [location.id, { ...location, children: [], warnings: [] }])
+  );
   const roots = [];
 
   function wouldCycle(nodeId, parentId) {
@@ -265,10 +376,12 @@ export function evaluateQuestProgress(quest, progressByObjective = {}) {
     objectiveStates[objective.objectiveId] = { value, complete, blocked };
 
     if (!objective.optional && complete) completedRequired += 1;
-    if (quest.objectiveMode === 'ordered' && !objective.optional && !complete) orderedBlocked = true;
+    if (quest.objectiveMode === 'ordered' && !objective.optional && !complete)
+      orderedBlocked = true;
   }
 
-  const percentage = requiredTotal === 0 ? 100 : Math.round((completedRequired / requiredTotal) * 100);
+  const percentage =
+    requiredTotal === 0 ? 100 : Math.round((completedRequired / requiredTotal) * 100);
   return {
     percentage,
     readyToComplete: completedRequired === requiredTotal,
@@ -303,7 +416,9 @@ export function evaluateGrant({ baseVisibility, isGm, userId, groups = [], grant
   if (isGm) return { allowed: true, source: 'gm' };
 
   const subjects = new Set([`user:${userId}`, ...groups.map((id) => `group:${id}`)]);
-  const applicable = grants.filter((grant) => subjects.has(`${grant.subjectType}:${grant.subjectId}`));
+  const applicable = grants.filter((grant) =>
+    subjects.has(`${grant.subjectType}:${grant.subjectId}`)
+  );
   const userGrant = applicable.find((grant) => grant.subjectType === 'user');
   if (userGrant) return { allowed: userGrant.allowance === 'allow', source: 'user-grant' };
 
