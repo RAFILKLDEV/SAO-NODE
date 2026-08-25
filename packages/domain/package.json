@@ -1,0 +1,10 @@
+{
+  "name": "@sao/domain",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@sao/shared": "0.1.0",
+    "zod": "^4.1.5"
+  }
+}

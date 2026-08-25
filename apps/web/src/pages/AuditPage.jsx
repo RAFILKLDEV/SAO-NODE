@@ -1,0 +1,10 @@
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'react-router';
+import { api } from '../lib/api.js';
+
+export function AuditPage() {
+  const { campaignId } = useParams();
+  const audit = useQuery({ queryKey: ['audit', campaignId], queryFn: () => api(`/api/v1/campaigns/${campaignId}/audit?pageSize=100`) });
+  return <><div className="page-heading"><div><h1>Auditoria</h1><p>Histórico imutável de alterações sensíveis.</p></div></div><div className="table-wrap"><table><thead><tr><th>Data</th><th>Ação</th><th>Ator</th><th>Alvo</th><th>Sujeito</th></tr></thead><tbody>{audit.data?.map((entry) => <tr key={entry.id}><td>{new Date(entry.createdAt).toLocaleString()}</td><td>{entry.action}</td><td><code>{entry.actorUserId}</code></td><td>{entry.entityType ? `${entry.entityType}:${entry.entityDomainId}` : '—'}{entry.targetKind ? <small className="block">{entry.targetKind}:{entry.targetKey}</small> : null}</td><td>{entry.subjectType ? `${entry.subjectType}:${entry.subjectId}` : '—'}</td></tr>)}</tbody></table></div></>;
+}

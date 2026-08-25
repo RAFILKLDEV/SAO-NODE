@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:complexType name="EntityContainerType">
+    <xs:sequence>
+      <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="saoData">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="npcs" type="EntityContainerType" minOccurs="0"/>
+        <xs:element name="locations" type="EntityContainerType" minOccurs="0"/>
+        <xs:element name="items" type="EntityContainerType" minOccurs="0"/>
+        <xs:element name="monsters" type="EntityContainerType" minOccurs="0"/>
+        <xs:element name="quests" type="EntityContainerType" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute name="schemaVersion" use="required" fixed="1.0"/>
+      <xs:attribute name="packId" type="xs:string" use="required"/>
+      <xs:attribute name="name" type="xs:string" use="required"/>
+      <xs:attribute name="language" type="xs:string" use="optional" default="pt-BR"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

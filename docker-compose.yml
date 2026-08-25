@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sao
+      POSTGRES_PASSWORD: sao
+      POSTGRES_DB: sao_rpg
+    volumes:
+      - sao_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sao -d sao_rpg"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "5432:5432"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://sao:sao@db:5432/sao_rpg?schema=public
+      API_PORT: 3001
+      WEB_ORIGIN: http://localhost:5173
+      SESSION_COOKIE_NAME: sao_session
+      SESSION_TTL_HOURS: 168
+      COOKIE_SECURE: "false"
+      MAX_XML_BYTES: 5242880
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run prisma:migrate -w @sao/api && npm run start -w @sao/api"]
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "3001:3001"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "5173:80"
+
+volumes:
+  sao_pgdata:

@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  login        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  sessions     Session[]
+  memberships  Membership[]
+  groupMembers GroupMember[]
+  bindings     CharacterBinding[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  csrfToken String
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Campaign {
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  memberships Membership[]
+  groups      Group[]
+  entities    Entity[]
+  progresses  QuestProgress[]
+  grants      Grant[]
+  audits      AuditLog[]
+  imports     ImportHistory[]
+  bindings    CharacterBinding[]
+  npcAssociations NpcAssociation[]
+}
+
+model Membership {
+  id         String   @id @default(cuid())
+  campaignId String
+  userId     String
+  role       String
+  createdAt  DateTime @default(now())
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+  @@index([userId])
+}
+
+model Group {
+  id         String        @id @default(cuid())
+  campaignId String
+  domainId   String
+  name       String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  campaign   Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  members    GroupMember[]
+
+  @@unique([campaignId, domainId])
+  @@index([campaignId])
+}
+
+model GroupMember {
+  id      String @id @default(cuid())
+  groupId String
+  userId  String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model Entity {
+  id         String   @id @default(cuid())
+  campaignId String
+  type       String
+  domainId   String
+  name       String
+  active     Boolean  @default(true)
+  baseVisibility String @default("public")
+  data       Json
+  source     Json?
+  version    Int      @default(1)
+  localModifiedAt DateTime?
+  deletedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  fields     NarrativeField[]
+  references Reference[]
+  locationConnections LocationConnection[]
+  monsterComponents MonsterComponent[]
+  questObjectives QuestObjective[]
+  questRewards QuestReward[]
+  questProgresses QuestProgress[]
+
+  @@unique([campaignId, type, domainId])
+  @@index([campaignId, type, name])
+  @@index([campaignId, domainId])
+}
+
+model NarrativeField {
+  id         String   @id @default(cuid())
+  entityId   String
+  key        String
+  value      String
+  visibility String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  entity     Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, key])
+  @@index([entityId, visibility])
+}
+
+model Reference {
+  id             String   @id @default(cuid())
+  sourceEntityId String
+  targetType     String
+  targetDomainId String
+  role           String
+  chance         Int?
+  createdAt      DateTime @default(now())
+  sourceEntity   Entity   @relation(fields: [sourceEntityId], references: [id], onDelete: Cascade)
+
+  @@index([sourceEntityId])
+  @@index([targetType, targetDomainId])
+}
+
+model LocationConnection {
+  id             String   @id @default(cuid())
+  entityId       String
+  connectionId   String
+  targetDomainId String
+  direction      String?
+  distanceKm     Float?
+  travelMinutes  Int?
+  access         String
+  unlockCondition String?
+  visibility     String
+  data           Json?
+  entity         Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, connectionId])
+}
+
+model MonsterComponent {
+  id         String @id @default(cuid())
+  entityId   String
+  kind       String
+  componentId String
+  visibility String
+  data       Json
+  entity     Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, kind, componentId])
+  @@index([entityId, kind])
+}
+
+model QuestObjective {
+  id               String  @id @default(cuid())
+  entityId         String
+  objectiveId      String
+  type             String
+  text             String
+  sortOrder        Int
+  requiredQuantity Int     @default(1)
+  optional         Boolean @default(false)
+  secret           Boolean @default(false)
+  visibility       String
+  targetType       String?
+  targetDomainId   String?
+  dependsOn        Json
+  playerEditable   Boolean @default(false)
+  data             Json?
+  entity           Entity  @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  progress         QuestObjectiveProgress[]
+
+  @@unique([entityId, objectiveId])
+  @@index([entityId, sortOrder])
+}
+
+model QuestReward {
+  id        String @id @default(cuid())
+  entityId  String
+  rewardId  String
+  type      String
+  data      Json
+  entity    Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, rewardId])
+}
+
+model QuestProgress {
+  id            String   @id @default(cuid())
+  campaignId    String
+  questEntityId String
+  ownerType     String
+  ownerId       String
+  state         String   @default("active")
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  failedAt      DateTime?
+  version       Int      @default(1)
+  campaign      Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  questEntity   Entity   @relation(fields: [questEntityId], references: [id], onDelete: Cascade)
+  objectives    QuestObjectiveProgress[]
+
+  @@unique([questEntityId, ownerType, ownerId])
+  @@index([campaignId, ownerType, ownerId])
+}
+
+model QuestObjectiveProgress {
+  id              String   @id @default(cuid())
+  progressId      String
+  questObjectiveId String?
+  objectiveId     String
+  value           Int      @default(0)
+  orphaned        Boolean  @default(false)
+  updatedByUserId String?
+  updatedAt       DateTime @updatedAt
+  progress        QuestProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+  questObjective  QuestObjective? @relation(fields: [questObjectiveId], references: [id], onDelete: SetNull)
+
+  @@unique([progressId, objectiveId])
+  @@index([questObjectiveId])
+}
+
+model Grant {
+  id             String   @id @default(cuid())
+  campaignId     String
+  subjectType    String
+  subjectId      String
+  entityType     String
+  entityDomainId String
+  targetKind     String
+  targetKey      String
+  allowance      String
+  actorUserId    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, subjectType, subjectId, entityType, entityDomainId, targetKind, targetKey])
+  @@index([campaignId, entityType, entityDomainId])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  campaignId     String
+  actorUserId    String
+  action         String
+  entityType     String?
+  entityDomainId String?
+  targetKind     String?
+  targetKey      String?
+  subjectType    String?
+  subjectId      String?
+  before         Json?
+  after          Json?
+  createdAt      DateTime @default(now())
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, createdAt])
+  @@index([entityType, entityDomainId])
+}
+
+model CharacterBinding {
+  id            String   @id @default(cuid())
+  campaignId    String
+  userId        String
+  mode          String
+  providerId    String
+  externalId    String
+  snapshot      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  campaign      Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId, externalId])
+}
+
+model NpcAssociation {
+  id             String   @id @default(cuid())
+  campaignId     String
+  npcDomainId    String
+  ownerType      String
+  ownerId        String
+  createdAt      DateTime @default(now())
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, npcDomainId, ownerType, ownerId])
+}
+
+model ImportHistory {
+  id         String   @id @default(cuid())
+  campaignId String
+  packId     String
+  fileName   String
+  sourceKind String
+  summary    Json
+  importedByUserId String
+  importedAt DateTime @default(now())
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, packId, importedAt])
+}
