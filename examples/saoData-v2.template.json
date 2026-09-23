@@ -1,0 +1,197 @@
+{
+  "schemaVersion": "2.0",
+  "packId": "minha-campanha.importacao",
+  "name": "Conteúdo da campanha",
+  "language": "pt-BR",
+  "containers": [
+    "npc",
+    "location",
+    "item",
+    "monster",
+    "quest"
+  ],
+  "entities": [
+    {
+      "type": "npc",
+      "data": {
+        "id": "npc.exemplo",
+        "name": "Exemplo de npc",
+        "active": true,
+        "tags": [],
+        "discoveryRevision": 0,
+        "visibility": {
+          "entity": "gm",
+          "sections": {}
+        },
+        "media": {},
+        "fields": [
+          {
+            "key": "description",
+            "value": "Descrição",
+            "visibility": "public"
+          }
+        ],
+        "links": [],
+        "extensions": {},
+        "identity": {},
+        "factions": [],
+        "services": []
+      }
+    },
+    {
+      "type": "location",
+      "data": {
+        "id": "loc.exemplo",
+        "name": "Exemplo de location",
+        "active": true,
+        "tags": [],
+        "discoveryRevision": 0,
+        "visibility": {
+          "entity": "gm",
+          "sections": {}
+        },
+        "media": {},
+        "fields": [
+          {
+            "key": "description",
+            "value": "Descrição",
+            "visibility": "public"
+          }
+        ],
+        "links": [],
+        "extensions": {},
+        "type": "region",
+        "placement": {
+          "floor": "1"
+        },
+        "services": [],
+        "connections": []
+      }
+    },
+    {
+      "type": "item",
+      "data": {
+        "id": "item.exemplo",
+        "name": "Exemplo de item",
+        "active": true,
+        "tags": [],
+        "discoveryRevision": 0,
+        "visibility": {
+          "entity": "gm",
+          "sections": {}
+        },
+        "media": {},
+        "fields": [
+          {
+            "key": "description",
+            "value": "Descrição",
+            "visibility": "public"
+          }
+        ],
+        "links": [],
+        "extensions": {},
+        "category": "misc",
+        "rarity": "common",
+        "stats": []
+      }
+    },
+    {
+      "type": "monster",
+      "data": {
+        "id": "monster.exemplo",
+        "name": "Exemplo de monster",
+        "active": true,
+        "tags": [],
+        "discoveryRevision": 0,
+        "visibility": {
+          "entity": "gm",
+          "sections": {}
+        },
+        "media": {},
+        "fields": [
+          {
+            "key": "description",
+            "value": "Descrição",
+            "visibility": "public"
+          }
+        ],
+        "links": [],
+        "extensions": {},
+        "statBlocks": {
+          "Ambesek.T20": {
+            "nd": "1",
+            "combat": {},
+            "resources": {},
+            "resistances": {},
+            "attributes": {},
+            "statsVisibility": {}
+          }
+        },
+        "components": [
+          {
+            "id": "habilidade-exemplo",
+            "kind": "ability",
+            "visibility": "public",
+            "data": {
+              "name": "Habilidade",
+              "text": "Descrição"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "quest",
+      "data": {
+        "id": "quest.exemplo",
+        "name": "Exemplo de quest",
+        "active": true,
+        "tags": [],
+        "discoveryRevision": 0,
+        "visibility": {
+          "entity": "gm",
+          "sections": {}
+        },
+        "media": {},
+        "fields": [
+          {
+            "key": "description",
+            "value": "Descrição",
+            "visibility": "public"
+          }
+        ],
+        "links": [],
+        "extensions": {},
+        "type": "side",
+        "state": "available",
+        "prerequisites": [],
+        "requirements": [],
+        "nextQuests": [],
+        "requirementLogic": "all",
+        "objectiveMode": "free",
+        "objectives": [
+          {
+            "objectiveId": "objetivo-exemplo",
+            "type": "custom",
+            "text": "Descreva o objetivo",
+            "order": 1,
+            "requiredQuantity": 1,
+            "optional": false,
+            "secret": false,
+            "visibility": "public",
+            "dependsOn": [],
+            "playerEditable": false
+          }
+        ],
+        "rewards": [
+          {
+            "rewardId": "recompensa-exemplo",
+            "type": "currency",
+            "amount": 10,
+            "currency": "T$"
+          }
+        ]
+      }
+    }
+  ]
+}

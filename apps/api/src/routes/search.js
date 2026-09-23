@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { prisma } from '../lib/prisma.js';
 import { authenticate, requireCampaign } from '../lib/auth.js';
 import { apiError } from '@sao/shared';
 import { getEntityForRequest, searchForRequest } from '../services/content.js';
@@ -14,19 +13,13 @@ export async function searchRoutes(app) {
   });
 
   app.get('/api/v1/campaigns/:campaignId/references/backlinks/:type/:domainId', { preHandler: [authenticate, requireCampaign] }, async (request) => {
-    const refs = await prisma.reference.findMany({
-      where: {
-        targetType: request.params.type,
-        targetDomainId: request.params.domainId,
-        sourceEntity: { campaignId: request.campaign.id, deletedAt: null }
-      },
-      include: { sourceEntity: true }
+    const target = await getEntityForRequest({
+      request,
+      type: request.params.type,
+      domainId: request.params.domainId
     });
-    const visible = [];
-    for (const ref of refs) {
-      const source = await getEntityForRequest({ request, type: ref.sourceEntity.type, domainId: ref.sourceEntity.domainId });
-      if (source) visible.push({ type: source.entityType, id: source.id, name: source.name, role: ref.role });
-    }
-    return visible;
+    if (!target) return [];
+
+    return target.backlinks ?? [];
   });
 }

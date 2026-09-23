@@ -9,11 +9,28 @@ import {
 
 const extensibleString = z.string().min(1);
 const stringValue = z.union([z.string(), z.number()]);
-const urlValue = z.union([z.string().url(), z.literal('')]).optional();
-const serviceSchema = z.union([
-  z.string().min(1),
-  z.object({ type: z.string().min(1), name: z.string().optional() })
-]);
+const storedMediaUrl = z
+  .string()
+  .regex(/^\/api\/v1\/campaigns\/[^/]+\/media\/[a-f0-9-]+\.(?:png|jpe?g|gif|webp|avif|bmp)$/i);
+const urlValue = z.union([z.string().url(), storedMediaUrl, z.literal('')]).optional();
+const serviceSchema = z
+  .union([
+    z.string().min(1),
+    z
+      .object({
+        type: z.string().optional(),
+        name: z.string().optional(),
+        description: z.string().default('')
+      })
+      .refine((service) => service.name?.trim() || service.type?.trim(), {
+        message: 'service name is required'
+      })
+  ])
+  .transform((service) =>
+    typeof service === 'string'
+      ? { name: service, description: '' }
+      : { name: service.name?.trim() || service.type.trim(), description: service.description ?? '' }
+  );
 
 const t20SnapshotSchema = z
   .object({
@@ -193,7 +210,7 @@ export const questObjectiveSchema = z
     objectiveId: z.string().min(1).optional(),
     id: z.string().min(1).optional(),
     type: extensibleString,
-    text: z.string().min(1),
+    text: z.string().optional().default(''),
     order: z.number().int().nonnegative(),
     requiredQuantity: z.number().int().positive().optional(),
     quantity: z.number().int().positive().optional(),
@@ -221,6 +238,8 @@ export const questRewardSchema = z.object({
 });
 
 export const questSchema = baseEntitySchema.extend({
+  imageURL: urlValue,
+  imageUrl: urlValue,
   subtitle: z.string().optional(),
   type: extensibleString.default('side'),
   state: extensibleString.default('available'),
@@ -250,7 +269,7 @@ export const questSchema = baseEntitySchema.extend({
   timeLimitMinutes: z.number().int().positive().optional()
 });
 
-export const entitySchemas = {
+export const legacyEntitySchemas = {
   npc: npcSchema,
   location: locationSchema,
   item: itemSchema,
@@ -267,7 +286,9 @@ export function assertNamespacedId(type, id) {
     quest: 'quest.'
   };
   if (!prefixes[type] || !id.startsWith(prefixes[type])) {
-    throw new Error(`Invalid ${type} id: ${id}`);
+    const error = new Error(`O ID de ${type} deve começar com "${prefixes[type]}".`);
+    error.code = 'INVALID_ENTITY_ID';
+    throw error;
   }
   return true;
 }
@@ -351,42 +372,49 @@ export function buildBacklinks(entities) {
 export function rollDrops(references, random = Math.random) {
   return references
     .filter((ref) => ref.type === 'item' && ref.role === 'drops')
-    .filter((ref) => {
+    .map((ref) => {
       const chance = ref.chance ?? 100;
       if (!Number.isInteger(chance) || chance < 1 || chance > 100) {
         throw new Error(`Invalid drop chance for ${ref.id}`);
       }
-      return Math.floor(random() * 100) + 1 <= chance;
-    });
+
+      const hasQuantityRange = ref.quantityMin != null || ref.quantityMax != null;
+      if (hasQuantityRange) {
+        const quantityMin = Number(ref.quantityMin ?? ref.quantityMax ?? 1);
+        const quantityMax = Number(ref.quantityMax ?? ref.quantityMin ?? 1);
+        if (!Number.isInteger(quantityMin) || !Number.isInteger(quantityMax) || quantityMin < 1 || quantityMax < quantityMin) {
+          throw new Error(`Invalid item quantity range for ${ref.id}`);
+        }
+        if (Math.floor(random() * 100) + 1 > chance) return null;
+        const quantity = quantityMin + Math.floor(random() * (quantityMax - quantityMin + 1));
+        return { ...ref, quantity };
+      }
+
+      return Math.floor(random() * 100) + 1 <= chance ? { ...ref } : null;
+    })
+    .filter(Boolean);
 }
 
 export function evaluateQuestProgress(quest, progressByObjective = {}) {
   const objectives = [...quest.objectives].sort((a, b) => a.order - b.order);
-  let orderedBlocked = false;
-  let completedRequired = 0;
-  let requiredTotal = 0;
-  const objectiveStates = {};
-
-  for (const objective of objectives) {
-    const value = Math.max(0, Number(progressByObjective[objective.objectiveId] ?? 0));
-    const complete = value >= objective.requiredQuantity;
-    if (!objective.optional) requiredTotal += 1;
-
-    const blocked = quest.objectiveMode === 'ordered' && orderedBlocked;
-    objectiveStates[objective.objectiveId] = { value, complete, blocked };
-
-    if (!objective.optional && complete) completedRequired += 1;
-    if (quest.objectiveMode === 'ordered' && !objective.optional && !complete)
-      orderedBlocked = true;
+  const byId = new Map(objectives.map(o => [o.objectiveId, o]));
+  const states = {}; const visiting = new Set();
+  function evaluate(id) {
+    if (states[id]) return states[id];
+    const objective = byId.get(id);
+    if (!objective || visiting.has(id)) return { complete: false, blocked: true, value: 0 };
+    visiting.add(id);
+    const previous = quest.objectiveMode === 'ordered' ? objectives.filter(o => o.order < objective.order && !o.optional).map(o => o.objectiveId) : [];
+    const blocked = [...previous, ...(objective.dependsOn ?? [])].some(dependency => !evaluate(dependency).complete);
+    const rawValue = Number(progressByObjective[id] ?? 0);
+    const value = Number.isFinite(rawValue) ? Math.max(0, rawValue) : 0;
+    visiting.delete(id);
+    return states[id] = { value, complete: !blocked && value >= (objective.requiredQuantity ?? 1), blocked };
   }
-
-  const percentage =
-    requiredTotal === 0 ? 100 : Math.round((completedRequired / requiredTotal) * 100);
-  return {
-    percentage,
-    readyToComplete: completedRequired === requiredTotal,
-    objectives: objectiveStates
-  };
+  objectives.forEach(o => evaluate(o.objectiveId));
+  const required = objectives.filter(o => !o.optional);
+  const complete = required.filter(o => states[o.objectiveId].complete).length;
+  return { percentage: required.length ? Math.round(complete / required.length * 100) : 100, readyToComplete: complete === required.length, objectives: states };
 }
 
 export function visiblePlayerProgress(quest, evaluation) {
@@ -469,3 +497,10 @@ export class ManualCharacterProvider {
 }
 
 export class MockCharacterProvider extends ManualCharacterProvider {}
+
+// The v2 contract is the canonical public model. Legacy schemas remain
+// available to the API compatibility adapter and are intentionally not used
+// by JSON parsing.
+export * from './v2.js';
+
+export * from './entityMetadata.js';

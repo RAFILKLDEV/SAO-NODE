@@ -1,0 +1,1 @@
+ALTER TABLE "Membership" ADD COLUMN "characterImageUrl" TEXT;

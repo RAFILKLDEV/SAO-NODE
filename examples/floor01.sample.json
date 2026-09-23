@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "1.0",
+  "packId": "aincrad.floor01.demo",
+  "name": "Aincrad Primeiro Andar",
+  "language": "pt-BR",
+  "presentContainers": ["npc", "location", "item", "monster", "quest"],
+  "entities": [
+    {
+      "type": "npc",
+      "data": {
+        "id": "npc.f1.greenfields.ragnar",
+        "name": "Ragnar",
+        "profession": "Ferreiro",
+        "level": "3",
+        "active": true,
+        "imageURL": "",
+        "tags": ["merchant", "quest-giver"],
+        "fields": [
+          { "key": "shortDescription", "value": "Ferreiro da vila de Greenfields.", "visibility": "public" },
+          { "key": "gmNotes", "value": "Conhece rotas antigas para Tolbana.", "visibility": "gm" }
+        ],
+        "references": [{ "type": "location", "id": "loc.f1.greenfields.blacksmith", "role": "works-at" }]
+      }
+    },
+    {
+      "type": "location",
+      "data": {
+        "id": "loc.f1.greenfields.blacksmith",
+        "name": "Forja de Greenfields",
+        "type": "building",
+        "active": true,
+        "imageURL": "",
+        "fields": [{ "key": "description", "value": "Uma forja movimentada perto do mercado.", "visibility": "public" }],
+        "references": []
+      }
+    },
+    {
+      "type": "item",
+      "data": {
+        "id": "item.f1.greenfields.healing-potion",
+        "name": "Poção de Cura Menor",
+        "category": "consumable",
+        "rarity": "common",
+        "active": true,
+        "imageURL": "",
+        "value": { "amount": "25", "currency": "T$" },
+        "tags": ["potion", "healing"],
+        "fields": [{ "key": "shortDescription", "value": "Recupera uma pequena quantidade de pontos de vida.", "visibility": "public" }],
+        "references": []
+      }
+    },
+    {
+      "type": "monster",
+      "data": {
+        "id": "monster.f1.boar",
+        "name": "Javali Selvagem",
+        "group": "beast",
+        "active": true,
+        "imageURL": "",
+        "tags": ["animal"],
+        "fields": [],
+        "references": [
+          { "type": "item", "id": "item.f1.greenfields.healing-potion", "role": "drops", "chance": 5 },
+          { "type": "location", "id": "loc.f1.greenfields.blacksmith", "role": "near" }
+        ],
+        "attacks": [{ "id": "tusk-charge", "visibility": "public", "data": { "text": "Investida com presas." } }]
+      }
+    },
+    {
+      "type": "quest",
+      "data": {
+        "id": "quest.f1.greenfields.boars",
+        "name": "Problema com Javalis",
+        "type": "side",
+        "state": "available",
+        "objectiveMode": "ordered",
+        "requirementLogic": "all",
+        "active": true,
+        "imageURL": "",
+        "fields": [
+          { "key": "shortDescription", "value": "Ajude os fazendeiros próximos de Greenfields.", "visibility": "public" },
+          { "key": "description", "value": "Os javalis estão destruindo as plantações ao sul.", "visibility": "discoverable" }
+        ],
+        "references": [
+          { "type": "npc", "id": "npc.f1.greenfields.ragnar", "role": "quest-giver" },
+          { "type": "monster", "id": "monster.f1.boar", "role": "target" }
+        ],
+        "objectives": [
+          { "objectiveId": "talk-ragnar", "type": "talk", "text": "Fale com Ragnar", "order": 1, "requiredQuantity": 1, "visibility": "public", "playerEditable": true, "target": { "type": "npc", "id": "npc.f1.greenfields.ragnar" } },
+          { "objectiveId": "kill-boars", "type": "kill", "text": "Derrote 5 javalis", "order": 2, "requiredQuantity": 5, "visibility": "public", "playerEditable": true, "target": { "type": "monster", "id": "monster.f1.boar" } }
+        ]
+      }
+    }
+  ]
+}

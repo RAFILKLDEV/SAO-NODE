@@ -5,7 +5,7 @@
 - `apps/api`: Fastify, sessão, autorização, Prisma, Socket.IO e OpenAPI.
 - `apps/web`: React/Vite, Router, TanStack Query, formulários e UI responsiva.
 - `packages/domain`: regras puras e schemas de domínio.
-- `packages/xml`: parser seguro, validação XSD, modelo intermediário, diff e exportação.
+- `packages/json`: documento versionado, validação Zod, diff e exportação.
 - `packages/shared`: constantes e contratos compartilhados.
 
 ## Fluxo de requisição
@@ -22,11 +22,11 @@
 
 Entidades possuem `version`; update exige `If-Match`. Progresso também é versionado. Conflitos retornam 409 em vez de sobrescrever silenciosamente.
 
-## XML
+## JSON
 
-O preview recebe upload multipart, valida extensão/MIME/tamanho, rejeita DTD/ENTITY, testa well-formed, XSD e Zod, resolve warnings e cria diff. O apply usa um preview efêmero vinculado a usuário+campanha e executa toda a seleção em uma transação Prisma.
+O preview recebe JSON colado ou carregado, valida tamanho, sintaxe, versão e schemas Zod, resolve avisos e cria o diff. O apply usa uma prévia efêmera vinculada a usuário+campanha e executa toda a seleção em uma transação Prisma.
 
-`REMOVED_FROM_XML` nunca vem selecionado e, quando escolhido, faz soft-delete. Grants, auditoria e runtime permanecem intactos.
+`REMOVED_FROM_JSON` nunca vem selecionado e, quando escolhido, faz soft-delete. Grants, auditoria e runtime permanecem intactos.
 
 ## Tempo real
 

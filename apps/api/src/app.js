@@ -19,8 +19,9 @@ import { progressRoutes } from './routes/progress.js';
 import { searchRoutes } from './routes/search.js';
 import { dropRoutes } from './routes/drops.js';
 import { auditRoutes } from './routes/audit.js';
-import { xmlRoutes } from './routes/xml.js';
+import { jsonRoutes } from './routes/json.js';
 import { characterRoutes } from './routes/characters.js';
+import { mediaRoutes } from './routes/media.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -28,11 +29,13 @@ export async function buildApp() {
       level: process.env.LOG_LEVEL ?? 'info',
       redact: ['req.headers.cookie', 'req.headers.authorization', 'res.headers.set-cookie']
     },
-    bodyLimit: config.maxXmlBytes + 1024 * 1024
+    bodyLimit: config.maxJsonBytes + 1024 * 1024
   });
 
   app.decorate('realtime', null);
   app.decorate('importPreviews', new Map());
+  app.decorateRequest('viewerContext', null);
+  app.decorateRequest('backlinkIndex', null);
 
   await app.register(cookie);
   await app.register(cors, {
@@ -47,7 +50,7 @@ export async function buildApp() {
   });
   await app.register(rateLimit, { global: false });
   await app.register(multipart, {
-    limits: { fileSize: config.maxXmlBytes, files: 1, fields: 10 }
+    limits: { fileSize: config.maxImageBytes, files: 1, fields: 10 }
   });
   await app.register(swagger, {
     openapi: {
@@ -66,6 +69,46 @@ export async function buildApp() {
     }
   });
 
+  // Register the handler before route plugins so Fastify's encapsulated route
+  // contexts inherit it.
+  app.setErrorHandler((error, _request, reply) => {
+    // Workspaces/containers can load more than one Zod module instance, which
+    // makes instanceof alone unreliable for otherwise valid ZodError objects.
+    if (error instanceof ZodError || error?.name === 'ZodError')
+      return reply.code(400).send(
+        apiError('INVALID_INPUT', 'Dados inválidos', {
+          issues: error.issues.map((issue) => ({
+            path: issue.path.join('.'),
+            message: issue.message
+          }))
+        })
+      );
+    if (error.code === 'INVALID_ENTITY_ID')
+      return reply.code(400).send(apiError('INVALID_INPUT', error.message));
+    if (error.code === 'INVALID_REMOTE_URL')
+      return reply.code(400).send(apiError('INVALID_INPUT', error.message));
+    if (error.code === 'INVALID_VIEWER')
+      return reply.code(400).send(apiError('INVALID_VIEWER', error.message));
+    if (error.code === 'INVALID_CONTENT') return reply.code(400).send(apiError('INVALID_CONTENT', error.message));
+    if (error.code === 'P2034') return reply.code(409).send(apiError('VERSION_CONFLICT', 'A campanha mudou. Atualize a pr?via.'));
+    if (error.code === 'VERSION_CONFLICT')
+      return reply.code(409).send(apiError('VERSION_CONFLICT', error.message));
+    if (error.code === 'P2002')
+      return reply
+        .code(409)
+        .send(apiError('CONFLICT', 'A record with this unique key already exists'));
+    if (error.code === 'FST_REQ_FILE_TOO_LARGE')
+      return reply
+        .code(413)
+        .send(apiError('FILE_TOO_LARGE', 'Uploaded file exceeds the configured limit'));
+    if (Number.isInteger(error.statusCode) && error.statusCode >= 400 && error.statusCode < 500)
+      return reply
+        .code(error.statusCode)
+        .send(apiError(error.code ?? 'BAD_REQUEST', error.message));
+    app.log.error({ err: error }, 'request failed');
+    return reply.code(500).send(apiError('INTERNAL_ERROR', 'Internal server error'));
+  });
+
   await app.register(authRoutes);
   await app.register(campaignRoutes);
   await app.register(entityRoutes);
@@ -75,17 +118,9 @@ export async function buildApp() {
   await app.register(searchRoutes);
   await app.register(dropRoutes);
   await app.register(auditRoutes);
-  await app.register(xmlRoutes);
+  await app.register(jsonRoutes);
   await app.register(characterRoutes);
-
-  app.setErrorHandler((error, _request, reply) => {
-    if (error instanceof ZodError) return reply.code(400).send(apiError('INVALID_INPUT', 'Validation failed', error.flatten()));
-    if (error.code === 'VERSION_CONFLICT') return reply.code(409).send(apiError('VERSION_CONFLICT', error.message));
-    if (error.code === 'P2002') return reply.code(409).send(apiError('CONFLICT', 'A record with this unique key already exists'));
-    if (error.code === 'FST_REQ_FILE_TOO_LARGE') return reply.code(413).send(apiError('FILE_TOO_LARGE', 'Uploaded file exceeds the configured limit'));
-    app.log.error({ err: error }, 'request failed');
-    return reply.code(500).send(apiError('INTERNAL_ERROR', 'Internal server error'));
-  });
+  await app.register(mediaRoutes);
 
   return app;
 }

@@ -1,3 +1,4 @@
+import { getEntityForRequest } from '../services/content.js';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { audit } from '../lib/audit.js';
@@ -22,6 +23,7 @@ function questFromEntity(entity) {
       requiredQuantity: objective.requiredQuantity,
       optional: objective.optional,
       secret: objective.secret,
+      dependsOn: objective.dependsOn,
       playerEditable: objective.playerEditable
     }))
   };
@@ -43,7 +45,7 @@ async function canAccessProgress(request, progress) {
   return Boolean(group?.members.some((member) => member.userId === request.auth.user.id));
 }
 
-function serializeProgress(progress, request) {
+async function serializeProgress(progress, request) {
   const { quest, evaluation } = evaluationFor(progress);
   if (isGm(request)) {
     return {
@@ -57,16 +59,25 @@ function serializeProgress(progress, request) {
       version: progress.version,
       percentage: evaluation.percentage,
       readyToComplete: evaluation.readyToComplete,
-      objectives: progress.objectives.map((entry) => ({ objectiveId: entry.objectiveId, value: entry.value, orphaned: entry.orphaned }))
+      objectives: progress.objectives.map((entry) => ({
+        objectiveId: entry.objectiveId,
+        text: progress.questEntity.questObjectives.find((objective) => objective.objectiveId === entry.objectiveId)?.text ?? 'Objetivo removido',
+        value: entry.value,
+        requiredQuantity: progress.questEntity.questObjectives.find((objective) => objective.objectiveId === entry.objectiveId)?.requiredQuantity ?? 1,
+        orphaned: entry.orphaned
+      }))
     };
   }
 
-  const visibleObjectives = quest.objectives.filter((objective) => !objective.secret);
+  const visibleQuest = await getEntityForRequest({ request, type: 'quest', domainId: progress.questEntity.domainId });
+  if (!visibleQuest) return null;
+  const visibleIds = new Set(visibleQuest.objectives.map(o => o.objectiveId));
+  const visibleObjectives = quest.objectives.filter(objective => visibleIds.has(objective.objectiveId));
   const visibleValues = Object.fromEntries(
     progress.objectives.filter((entry) => visibleObjectives.some((objective) => objective.objectiveId === entry.objectiveId)).map((entry) => [entry.objectiveId, entry.value])
   );
   const visibleEvaluation = evaluateQuestProgress({ ...quest, objectives: visibleObjectives }, visibleValues);
-  const hasHiddenRequired = quest.objectives.some((objective) => objective.secret && !objective.optional);
+  const hasHiddenRequired = quest.objectives.some((objective) => !visibleIds.has(objective.objectiveId) && !objective.optional);
   return {
     id: progress.id,
     questId: progress.questEntity.domainId,
@@ -84,8 +95,11 @@ function serializeProgress(progress, request) {
         const definition = visibleObjectives.find((objective) => objective.objectiveId === entry.objectiveId);
         return {
           objectiveId: entry.objectiveId,
+          text: progress.questEntity.questObjectives.find((objective) => objective.objectiveId === entry.objectiveId)?.text ?? 'Objetivo removido',
           value: entry.value,
-          editable: Boolean(definition?.playerEditable) && !visibleEvaluation.objectives[entry.objectiveId]?.blocked
+          requiredQuantity: definition?.requiredQuantity ?? 1,
+          optional: Boolean(definition?.optional),
+          editable: Boolean(definition?.playerEditable) && !evaluation.objectives[entry.objectiveId]?.blocked
         };
       })
   };
@@ -104,8 +118,8 @@ export async function progressRoutes(app) {
       orderBy: { startedAt: 'desc' }
     });
     const allowed = [];
-    for (const row of rows) if (await canAccessProgress(request, row)) allowed.push(serializeProgress(row, request));
-    return allowed;
+    for (const row of rows) if (await canAccessProgress(request, row)) allowed.push(await serializeProgress(row, request));
+    return allowed.filter(Boolean);
   });
 
   app.post('/api/v1/campaigns/:campaignId/progress', { preHandler: [authenticate, requireCampaign, requireGm, requireCsrf] }, async (request, reply) => {
@@ -115,7 +129,7 @@ export async function progressRoutes(app) {
       where: { campaignId_type_domainId: { campaignId: request.campaign.id, type: 'quest', domainId: parsed.data.questId } },
       include: { questObjectives: true }
     });
-    if (!quest) return reply.code(404).send(apiError('NOT_FOUND', 'Quest not found'));
+    if (!quest || quest.deletedAt) return reply.code(404).send(apiError('NOT_FOUND', 'Quest not found'));
 
     if (parsed.data.ownerType === 'player') {
       const user = await prisma.user.findUnique({ where: { login: parsed.data.ownerId } });
@@ -143,7 +157,7 @@ export async function progressRoutes(app) {
       return tx.questProgress.findUnique({ where: { id: saved.id }, include: progressInclude });
     });
     request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('progress.changed', { id: progress.id, questId: quest.domainId });
-    return reply.code(201).send(serializeProgress(progress, request));
+    return reply.code(201).send(await serializeProgress(progress, request));
   });
 
   app.patch('/api/v1/campaigns/:campaignId/progress/:progressId/objectives/:objectiveId', { preHandler: [authenticate, requireCampaign, requireCsrf] }, async (request, reply) => {
@@ -155,7 +169,8 @@ export async function progressRoutes(app) {
     if (!objective) return reply.code(404).send(apiError('NOT_FOUND', 'Objective not found'));
 
     const gm = isGm(request);
-    if (!gm && (objective.secret || !objective.playerEditable)) {
+    const visibleQuest = gm ? null : await getEntityForRequest({ request, type: 'quest', domainId: progress.questEntity.domainId });
+    if (!gm && (!visibleQuest?.objectives.some(o => o.objectiveId === objective.objectiveId) || !objective.playerEditable)) {
       return reply.code(403).send(apiError('FORBIDDEN', 'This objective is not player-editable'));
     }
 
@@ -168,13 +183,14 @@ export async function progressRoutes(app) {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
+      const locked = await tx.questProgress.updateMany({ where: { id: progress.id, version: progress.version }, data: { version: { increment: 1 } } });
+      if (locked.count !== 1) { const error = new Error('Progress was changed by another user'); error.code = 'VERSION_CONFLICT'; throw error; }
       const before = progress.objectives.find((entry) => entry.objectiveId === objective.objectiveId)?.value ?? 0;
       await tx.questObjectiveProgress.upsert({
         where: { progressId_objectiveId: { progressId: progress.id, objectiveId: objective.objectiveId } },
         create: { progressId: progress.id, questObjectiveId: objective.id, objectiveId: objective.objectiveId, value: parsed.data.value, updatedByUserId: request.auth.user.id },
         update: { value: parsed.data.value, questObjectiveId: objective.id, orphaned: false, updatedByUserId: request.auth.user.id }
       });
-      await tx.questProgress.update({ where: { id: progress.id }, data: { version: { increment: 1 } } });
       const refreshed = await tx.questProgress.findUnique({ where: { id: progress.id }, include: progressInclude });
       const state = evaluationFor(refreshed).evaluation;
       if (state.readyToComplete && refreshed.state === 'active') {

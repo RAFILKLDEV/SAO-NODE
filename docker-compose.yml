@@ -8,12 +8,12 @@ services:
     volumes:
       - sao_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sao -d sao_rpg"]
+      test: ['CMD-SHELL', 'pg_isready -U sao -d sao_rpg']
       interval: 5s
       timeout: 3s
       retries: 20
     ports:
-      - "5432:5432"
+      - '127.0.0.1:5432:5432'
 
   api:
     build:
@@ -26,19 +26,31 @@ services:
       WEB_ORIGIN: http://localhost:5173
       SESSION_COOKIE_NAME: sao_session
       SESSION_TTL_HOURS: 168
-      COOKIE_SECURE: "false"
-      MAX_XML_BYTES: 5242880
+      COOKIE_SECURE: 'false'
+      MAX_JSON_BYTES: 5242880
+      MAX_IMAGE_BYTES: 52428800
+      UPLOAD_DIR: /app/data/uploads
+      DISABLE_LOGIN: 'true'
+      LOCAL_ADMIN_LOGIN: Rafilkl
+      LOCAL_ADMIN_PASSWORD: asadasan123
+      LOCAL_ADMIN_NAME: Rafilkl
     depends_on:
       db:
         condition: service_healthy
-    command: ["sh", "-c", "npm run prisma:migrate -w @sao/api && npm run start -w @sao/api"]
+    command: ['sh', '-c', 'npm run prisma:migrate -w @sao/api && npm run start -w @sao/api']
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3001/health'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"'
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
     ports:
-      - "3001:3001"
+      - '127.0.0.1:3001:3001'
+    volumes:
+      - sao_uploads:/app/data/uploads
 
   web:
     build:
@@ -48,7 +60,8 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "5173:80"
+      - '5173:80'
 
 volumes:
   sao_pgdata:
+  sao_uploads:

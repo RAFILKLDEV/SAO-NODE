@@ -16,13 +16,13 @@ Gate de existência, grants por usuário/grupo, auditoria, filtragem server-side
 
 Grupos, bindings, associações de NPC, progresso por jogador/grupo, ordered/free, edição segura e reconciliação de objetivos.
 
-## Fase 5 — XML
+## Fase 5 — JSON
 
-Parser seguro, XSD, intermediário Zod, warnings, diff seletivo, transação, soft-delete, exportação determinística e conversor JSON legado.
+Documento versionado, validação Zod, avisos, diff seletivo, transação, soft-delete e exportação determinística.
 
 ## Fase 6 — interface
 
-React responsivo, navegação, CRUD estrutural, pesquisa, hierarquia, abas de Monstro, progresso, Descobertas, XML e auditoria.
+React responsivo, navegação, CRUD estrutural, pesquisa, hierarquia, abas de Monstro, progresso, Descobertas, JSON e auditoria.
 
 ## Fase 7 — operação e validação
 

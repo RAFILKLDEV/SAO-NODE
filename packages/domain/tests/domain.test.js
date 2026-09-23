@@ -14,6 +14,14 @@ describe('domain invariants', () => {
   it('validates namespaced ids', () => {
     expect(assertNamespacedId('npc', 'npc.f1.greenfields.ragnar')).toBe(true);
     expect(() => assertNamespacedId('npc', 'item.f1.bad')).toThrow();
+    let invalidIdError;
+    try {
+      assertNamespacedId('monster', 'goblin');
+    } catch (error) {
+      invalidIdError = error;
+    }
+    expect(invalidIdError).toMatchObject({ code: 'INVALID_ENTITY_ID' });
+    expect(invalidIdError.message).toContain('monster.');
   });
 
   it('calculates travel using 90m/min', () => {
@@ -27,7 +35,9 @@ describe('domain invariants', () => {
       { id: 'loc.c', name: 'C', parentId: 'loc.missing' }
     ]);
     expect(tree).toHaveLength(3);
-    expect(tree.flatMap((node) => node.warnings)).toEqual(expect.arrayContaining(['cycle', 'orphan-parent']));
+    expect(tree.flatMap((node) => node.warnings)).toEqual(
+      expect.arrayContaining(['cycle', 'orphan-parent'])
+    );
   });
 
   it('rolls each drop independently', () => {
@@ -37,6 +47,15 @@ describe('domain invariants', () => {
     ];
     expect(rollDrops(refs, () => 0)).toHaveLength(2);
     expect(rollDrops(refs, () => 0.99)).toHaveLength(1);
+  });
+
+  it('adds a material quantity range for valid drops', () => {
+    const refs = [{ type: 'item', id: 'item.material', role: 'drops', chance: 100, quantityMin: 30, quantityMax: 60 }];
+    const rolled = rollDrops(refs, () => 0.1);
+
+    expect(rolled).toHaveLength(1);
+    expect(rolled[0].quantity).toBeGreaterThanOrEqual(30);
+    expect(rolled[0].quantity).toBeLessThanOrEqual(60);
   });
 
   it('supports ordered quest blocking and optional objectives', () => {

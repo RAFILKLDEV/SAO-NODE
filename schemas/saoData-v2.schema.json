@@ -1,0 +1,2976 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "packId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "default": "pt-BR",
+      "type": "string"
+    },
+    "containers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "npc",
+          "location",
+          "item",
+          "monster",
+          "quest"
+        ]
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "npc"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "tags": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "discoveryRevision": {
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "visibility": {
+                    "default": {
+                      "sections": {}
+                    },
+                    "type": "object",
+                    "properties": {
+                      "entity": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "gm",
+                          "discoverable"
+                        ]
+                      },
+                      "sections": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "sections"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "media": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string"
+                      },
+                      "portrait": {
+                        "type": "string"
+                      },
+                      "token": {
+                        "type": "string"
+                      },
+                      "map": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "links": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "npc",
+                            "location",
+                            "item",
+                            "monster",
+                            "quest"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "role": {
+                          "default": "related",
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: related (Relacionado), friend (Amigo), ally (Aliado), enemy (Inimigo), family (Família), rival (Rival), visited (Visitado), part-of (Parte de), used-by (Utilizado por), managed-by (Administrado por), start (Início), completion (Entrega), next (Próxima missão), parent (Superior), connection (Conexão), requirement (Requisito), reward (Recompensa), drops (Drop), drop (Drop). Aceita valores personalizados.",
+                          "examples": [
+                            "related",
+                            "friend",
+                            "ally",
+                            "enemy",
+                            "family",
+                            "rival",
+                            "visited",
+                            "part-of",
+                            "used-by",
+                            "managed-by",
+                            "start",
+                            "completion",
+                            "next",
+                            "parent",
+                            "connection",
+                            "requirement",
+                            "reward",
+                            "drops",
+                            "drop"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "related",
+                              "label": "Relacionado"
+                            },
+                            {
+                              "value": "friend",
+                              "label": "Amigo"
+                            },
+                            {
+                              "value": "ally",
+                              "label": "Aliado"
+                            },
+                            {
+                              "value": "enemy",
+                              "label": "Inimigo"
+                            },
+                            {
+                              "value": "family",
+                              "label": "Família"
+                            },
+                            {
+                              "value": "rival",
+                              "label": "Rival"
+                            },
+                            {
+                              "value": "visited",
+                              "label": "Visitado"
+                            },
+                            {
+                              "value": "part-of",
+                              "label": "Parte de"
+                            },
+                            {
+                              "value": "used-by",
+                              "label": "Utilizado por"
+                            },
+                            {
+                              "value": "managed-by",
+                              "label": "Administrado por"
+                            },
+                            {
+                              "value": "start",
+                              "label": "Início"
+                            },
+                            {
+                              "value": "completion",
+                              "label": "Entrega"
+                            },
+                            {
+                              "value": "next",
+                              "label": "Próxima missão"
+                            },
+                            {
+                              "value": "parent",
+                              "label": "Superior"
+                            },
+                            {
+                              "value": "connection",
+                              "label": "Conexão"
+                            },
+                            {
+                              "value": "requirement",
+                              "label": "Requisito"
+                            },
+                            {
+                              "value": "reward",
+                              "label": "Recompensa"
+                            },
+                            {
+                              "value": "drops",
+                              "label": "Drop"
+                            },
+                            {
+                              "value": "drop",
+                              "label": "Drop"
+                            }
+                          ]
+                        },
+                        "slot": {
+                          "default": "references",
+                          "type": "string",
+                          "enum": [
+                            "references",
+                            "locations",
+                            "relations"
+                          ]
+                        },
+                        "chance": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "quantityMin": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "quantityMax": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "role",
+                        "slot"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "extensions": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/$defs/__schema0"
+                    }
+                  },
+                  "identity": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "race": {
+                        "type": "string"
+                      },
+                      "gender": {
+                        "type": "string"
+                      },
+                      "age": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "profession": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "level": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "factions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "services": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "default": "",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "description"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "character": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "default": "none",
+                        "type": "string",
+                        "enum": [
+                          "none",
+                          "embedded",
+                          "linked"
+                        ]
+                      },
+                      "providerId": {
+                        "default": "Ambesek.T20",
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "externalId": {
+                        "default": "",
+                        "type": "string"
+                      },
+                      "uri": {
+                        "default": "",
+                        "type": "string"
+                      },
+                      "snapshot": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "$ref": "#/$defs/__schema0"
+                        }
+                      }
+                    },
+                    "required": [
+                      "mode",
+                      "providerId",
+                      "externalId",
+                      "uri"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "active",
+                  "tags",
+                  "discoveryRevision",
+                  "visibility",
+                  "media",
+                  "fields",
+                  "links",
+                  "extensions",
+                  "identity",
+                  "factions",
+                  "services"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "location"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "tags": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "discoveryRevision": {
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "visibility": {
+                    "default": {
+                      "sections": {}
+                    },
+                    "type": "object",
+                    "properties": {
+                      "entity": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "gm",
+                          "discoverable"
+                        ]
+                      },
+                      "sections": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "sections"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "media": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string"
+                      },
+                      "portrait": {
+                        "type": "string"
+                      },
+                      "token": {
+                        "type": "string"
+                      },
+                      "map": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "links": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "npc",
+                            "location",
+                            "item",
+                            "monster",
+                            "quest"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "role": {
+                          "default": "related",
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: related (Relacionado), friend (Amigo), ally (Aliado), enemy (Inimigo), family (Família), rival (Rival), visited (Visitado), part-of (Parte de), used-by (Utilizado por), managed-by (Administrado por), start (Início), completion (Entrega), next (Próxima missão), parent (Superior), connection (Conexão), requirement (Requisito), reward (Recompensa), drops (Drop), drop (Drop). Aceita valores personalizados.",
+                          "examples": [
+                            "related",
+                            "friend",
+                            "ally",
+                            "enemy",
+                            "family",
+                            "rival",
+                            "visited",
+                            "part-of",
+                            "used-by",
+                            "managed-by",
+                            "start",
+                            "completion",
+                            "next",
+                            "parent",
+                            "connection",
+                            "requirement",
+                            "reward",
+                            "drops",
+                            "drop"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "related",
+                              "label": "Relacionado"
+                            },
+                            {
+                              "value": "friend",
+                              "label": "Amigo"
+                            },
+                            {
+                              "value": "ally",
+                              "label": "Aliado"
+                            },
+                            {
+                              "value": "enemy",
+                              "label": "Inimigo"
+                            },
+                            {
+                              "value": "family",
+                              "label": "Família"
+                            },
+                            {
+                              "value": "rival",
+                              "label": "Rival"
+                            },
+                            {
+                              "value": "visited",
+                              "label": "Visitado"
+                            },
+                            {
+                              "value": "part-of",
+                              "label": "Parte de"
+                            },
+                            {
+                              "value": "used-by",
+                              "label": "Utilizado por"
+                            },
+                            {
+                              "value": "managed-by",
+                              "label": "Administrado por"
+                            },
+                            {
+                              "value": "start",
+                              "label": "Início"
+                            },
+                            {
+                              "value": "completion",
+                              "label": "Entrega"
+                            },
+                            {
+                              "value": "next",
+                              "label": "Próxima missão"
+                            },
+                            {
+                              "value": "parent",
+                              "label": "Superior"
+                            },
+                            {
+                              "value": "connection",
+                              "label": "Conexão"
+                            },
+                            {
+                              "value": "requirement",
+                              "label": "Requisito"
+                            },
+                            {
+                              "value": "reward",
+                              "label": "Recompensa"
+                            },
+                            {
+                              "value": "drops",
+                              "label": "Drop"
+                            },
+                            {
+                              "value": "drop",
+                              "label": "Drop"
+                            }
+                          ]
+                        },
+                        "slot": {
+                          "default": "references",
+                          "type": "string",
+                          "enum": [
+                            "references",
+                            "locations",
+                            "relations"
+                          ]
+                        },
+                        "chance": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "quantityMin": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "quantityMax": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "role",
+                        "slot"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "extensions": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/$defs/__schema0"
+                    }
+                  },
+                  "type": {
+                    "default": "region",
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Valores conhecidos: region (Região), city (Cidade), district (Distrito), bank (Banco), market (Mercado), workshop (Oficina), plaza (Praça), government (Centro administrativo), storage (Armazenamento), temple (Templo), inn (Hospedaria), shop (Loja), residence (Residência), building (Edifício), floor (Andar), dungeon (Masmorra), room (Sala), landmark (Ponto de interesse). Aceita valores personalizados.",
+                    "examples": [
+                      "region",
+                      "city",
+                      "district",
+                      "bank",
+                      "market",
+                      "workshop",
+                      "plaza",
+                      "government",
+                      "storage",
+                      "temple",
+                      "inn",
+                      "shop",
+                      "residence",
+                      "building",
+                      "floor",
+                      "dungeon",
+                      "room",
+                      "landmark"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "region",
+                        "label": "Região"
+                      },
+                      {
+                        "value": "city",
+                        "label": "Cidade"
+                      },
+                      {
+                        "value": "district",
+                        "label": "Distrito"
+                      },
+                      {
+                        "value": "bank",
+                        "label": "Banco"
+                      },
+                      {
+                        "value": "market",
+                        "label": "Mercado"
+                      },
+                      {
+                        "value": "workshop",
+                        "label": "Oficina"
+                      },
+                      {
+                        "value": "plaza",
+                        "label": "Praça"
+                      },
+                      {
+                        "value": "government",
+                        "label": "Centro administrativo"
+                      },
+                      {
+                        "value": "storage",
+                        "label": "Armazenamento"
+                      },
+                      {
+                        "value": "temple",
+                        "label": "Templo"
+                      },
+                      {
+                        "value": "inn",
+                        "label": "Hospedaria"
+                      },
+                      {
+                        "value": "shop",
+                        "label": "Loja"
+                      },
+                      {
+                        "value": "residence",
+                        "label": "Residência"
+                      },
+                      {
+                        "value": "building",
+                        "label": "Edifício"
+                      },
+                      {
+                        "value": "floor",
+                        "label": "Andar"
+                      },
+                      {
+                        "value": "dungeon",
+                        "label": "Masmorra"
+                      },
+                      {
+                        "value": "room",
+                        "label": "Sala"
+                      },
+                      {
+                        "value": "landmark",
+                        "label": "Ponto de interesse"
+                      }
+                    ]
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Valores conhecidos: safe (Seguro), dangerous (Perigoso), unknown (Desconhecido), blocked (Bloqueado). Aceita valores personalizados.",
+                    "examples": [
+                      "safe",
+                      "dangerous",
+                      "unknown",
+                      "blocked"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "safe",
+                        "label": "Seguro"
+                      },
+                      {
+                        "value": "dangerous",
+                        "label": "Perigoso"
+                      },
+                      {
+                        "value": "unknown",
+                        "label": "Desconhecido"
+                      },
+                      {
+                        "value": "blocked",
+                        "label": "Bloqueado"
+                      }
+                    ]
+                  },
+                  "parentId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "placement": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "floor": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "environment": {
+                    "type": "string"
+                  },
+                  "recommendedLevel": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "services": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "default": "",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "description"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "connections": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "target": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "location"
+                            },
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "direction": {
+                          "type": "string"
+                        },
+                        "distanceKm": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "travelMinutes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "access": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "discoverable",
+                            "hidden",
+                            "conditional",
+                            "blocked"
+                          ]
+                        },
+                        "unlockCondition": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "target",
+                        "access",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "active",
+                  "tags",
+                  "discoveryRevision",
+                  "visibility",
+                  "media",
+                  "fields",
+                  "links",
+                  "extensions",
+                  "type",
+                  "placement",
+                  "services",
+                  "connections"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "item"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "tags": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "discoveryRevision": {
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "visibility": {
+                    "default": {
+                      "sections": {}
+                    },
+                    "type": "object",
+                    "properties": {
+                      "entity": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "gm",
+                          "discoverable"
+                        ]
+                      },
+                      "sections": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "sections"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "media": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string"
+                      },
+                      "portrait": {
+                        "type": "string"
+                      },
+                      "token": {
+                        "type": "string"
+                      },
+                      "map": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "links": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "npc",
+                            "location",
+                            "item",
+                            "monster",
+                            "quest"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "role": {
+                          "default": "related",
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: related (Relacionado), friend (Amigo), ally (Aliado), enemy (Inimigo), family (Família), rival (Rival), visited (Visitado), part-of (Parte de), used-by (Utilizado por), managed-by (Administrado por), start (Início), completion (Entrega), next (Próxima missão), parent (Superior), connection (Conexão), requirement (Requisito), reward (Recompensa), drops (Drop), drop (Drop). Aceita valores personalizados.",
+                          "examples": [
+                            "related",
+                            "friend",
+                            "ally",
+                            "enemy",
+                            "family",
+                            "rival",
+                            "visited",
+                            "part-of",
+                            "used-by",
+                            "managed-by",
+                            "start",
+                            "completion",
+                            "next",
+                            "parent",
+                            "connection",
+                            "requirement",
+                            "reward",
+                            "drops",
+                            "drop"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "related",
+                              "label": "Relacionado"
+                            },
+                            {
+                              "value": "friend",
+                              "label": "Amigo"
+                            },
+                            {
+                              "value": "ally",
+                              "label": "Aliado"
+                            },
+                            {
+                              "value": "enemy",
+                              "label": "Inimigo"
+                            },
+                            {
+                              "value": "family",
+                              "label": "Família"
+                            },
+                            {
+                              "value": "rival",
+                              "label": "Rival"
+                            },
+                            {
+                              "value": "visited",
+                              "label": "Visitado"
+                            },
+                            {
+                              "value": "part-of",
+                              "label": "Parte de"
+                            },
+                            {
+                              "value": "used-by",
+                              "label": "Utilizado por"
+                            },
+                            {
+                              "value": "managed-by",
+                              "label": "Administrado por"
+                            },
+                            {
+                              "value": "start",
+                              "label": "Início"
+                            },
+                            {
+                              "value": "completion",
+                              "label": "Entrega"
+                            },
+                            {
+                              "value": "next",
+                              "label": "Próxima missão"
+                            },
+                            {
+                              "value": "parent",
+                              "label": "Superior"
+                            },
+                            {
+                              "value": "connection",
+                              "label": "Conexão"
+                            },
+                            {
+                              "value": "requirement",
+                              "label": "Requisito"
+                            },
+                            {
+                              "value": "reward",
+                              "label": "Recompensa"
+                            },
+                            {
+                              "value": "drops",
+                              "label": "Drop"
+                            },
+                            {
+                              "value": "drop",
+                              "label": "Drop"
+                            }
+                          ]
+                        },
+                        "slot": {
+                          "default": "references",
+                          "type": "string",
+                          "enum": [
+                            "references",
+                            "locations",
+                            "relations"
+                          ]
+                        },
+                        "chance": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "quantityMin": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "quantityMax": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "role",
+                        "slot"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "extensions": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/$defs/__schema0"
+                    }
+                  },
+                  "category": {
+                    "default": "misc",
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Valores conhecidos: weapon (Arma), armor (Armadura), shield (Escudo), ammunition (Munição), consumable (Consumível), equipment (Equipamento), tool (Ferramenta), material (Material), treasure (Tesouro), quest (Missão), misc (Diversos). Aceita valores personalizados.",
+                    "examples": [
+                      "weapon",
+                      "armor",
+                      "shield",
+                      "ammunition",
+                      "consumable",
+                      "equipment",
+                      "tool",
+                      "material",
+                      "treasure",
+                      "quest",
+                      "misc"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "weapon",
+                        "label": "Arma"
+                      },
+                      {
+                        "value": "armor",
+                        "label": "Armadura"
+                      },
+                      {
+                        "value": "shield",
+                        "label": "Escudo"
+                      },
+                      {
+                        "value": "ammunition",
+                        "label": "Munição"
+                      },
+                      {
+                        "value": "consumable",
+                        "label": "Consumível"
+                      },
+                      {
+                        "value": "equipment",
+                        "label": "Equipamento"
+                      },
+                      {
+                        "value": "tool",
+                        "label": "Ferramenta"
+                      },
+                      {
+                        "value": "material",
+                        "label": "Material"
+                      },
+                      {
+                        "value": "treasure",
+                        "label": "Tesouro"
+                      },
+                      {
+                        "value": "quest",
+                        "label": "Missão"
+                      },
+                      {
+                        "value": "misc",
+                        "label": "Diversos"
+                      }
+                    ]
+                  },
+                  "rarity": {
+                    "default": "common",
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Valores conhecidos: common (Comum), uncommon (Incomum), rare (Raro), epic (Épico), legendary (Lendário), unique (Único). Aceita valores personalizados.",
+                    "examples": [
+                      "common",
+                      "uncommon",
+                      "rare",
+                      "epic",
+                      "legendary",
+                      "unique"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "common",
+                        "label": "Comum"
+                      },
+                      {
+                        "value": "uncommon",
+                        "label": "Incomum"
+                      },
+                      {
+                        "value": "rare",
+                        "label": "Raro"
+                      },
+                      {
+                        "value": "epic",
+                        "label": "Épico"
+                      },
+                      {
+                        "value": "legendary",
+                        "label": "Lendário"
+                      },
+                      {
+                        "value": "unique",
+                        "label": "Único"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "stats": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "operation": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: set (Definir valor), add (Adicionar), subtract (Subtrair), multiply (Multiplicar). Aceita valores personalizados.",
+                          "examples": [
+                            "set",
+                            "add",
+                            "subtract",
+                            "multiply"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "set",
+                              "label": "Definir valor"
+                            },
+                            {
+                              "value": "add",
+                              "label": "Adicionar"
+                            },
+                            {
+                              "value": "subtract",
+                              "label": "Subtrair"
+                            },
+                            {
+                              "value": "multiply",
+                              "label": "Multiplicar"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "active",
+                  "tags",
+                  "discoveryRevision",
+                  "visibility",
+                  "media",
+                  "fields",
+                  "links",
+                  "extensions",
+                  "category",
+                  "rarity",
+                  "stats"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "monster"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "tags": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "discoveryRevision": {
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "visibility": {
+                    "default": {
+                      "sections": {}
+                    },
+                    "type": "object",
+                    "properties": {
+                      "entity": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "gm",
+                          "discoverable"
+                        ]
+                      },
+                      "sections": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "sections"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "media": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string"
+                      },
+                      "portrait": {
+                        "type": "string"
+                      },
+                      "token": {
+                        "type": "string"
+                      },
+                      "map": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "links": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "npc",
+                            "location",
+                            "item",
+                            "monster",
+                            "quest"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "role": {
+                          "default": "related",
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: related (Relacionado), friend (Amigo), ally (Aliado), enemy (Inimigo), family (Família), rival (Rival), visited (Visitado), part-of (Parte de), used-by (Utilizado por), managed-by (Administrado por), start (Início), completion (Entrega), next (Próxima missão), parent (Superior), connection (Conexão), requirement (Requisito), reward (Recompensa), drops (Drop), drop (Drop). Aceita valores personalizados.",
+                          "examples": [
+                            "related",
+                            "friend",
+                            "ally",
+                            "enemy",
+                            "family",
+                            "rival",
+                            "visited",
+                            "part-of",
+                            "used-by",
+                            "managed-by",
+                            "start",
+                            "completion",
+                            "next",
+                            "parent",
+                            "connection",
+                            "requirement",
+                            "reward",
+                            "drops",
+                            "drop"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "related",
+                              "label": "Relacionado"
+                            },
+                            {
+                              "value": "friend",
+                              "label": "Amigo"
+                            },
+                            {
+                              "value": "ally",
+                              "label": "Aliado"
+                            },
+                            {
+                              "value": "enemy",
+                              "label": "Inimigo"
+                            },
+                            {
+                              "value": "family",
+                              "label": "Família"
+                            },
+                            {
+                              "value": "rival",
+                              "label": "Rival"
+                            },
+                            {
+                              "value": "visited",
+                              "label": "Visitado"
+                            },
+                            {
+                              "value": "part-of",
+                              "label": "Parte de"
+                            },
+                            {
+                              "value": "used-by",
+                              "label": "Utilizado por"
+                            },
+                            {
+                              "value": "managed-by",
+                              "label": "Administrado por"
+                            },
+                            {
+                              "value": "start",
+                              "label": "Início"
+                            },
+                            {
+                              "value": "completion",
+                              "label": "Entrega"
+                            },
+                            {
+                              "value": "next",
+                              "label": "Próxima missão"
+                            },
+                            {
+                              "value": "parent",
+                              "label": "Superior"
+                            },
+                            {
+                              "value": "connection",
+                              "label": "Conexão"
+                            },
+                            {
+                              "value": "requirement",
+                              "label": "Requisito"
+                            },
+                            {
+                              "value": "reward",
+                              "label": "Recompensa"
+                            },
+                            {
+                              "value": "drops",
+                              "label": "Drop"
+                            },
+                            {
+                              "value": "drop",
+                              "label": "Drop"
+                            }
+                          ]
+                        },
+                        "slot": {
+                          "default": "references",
+                          "type": "string",
+                          "enum": [
+                            "references",
+                            "locations",
+                            "relations"
+                          ]
+                        },
+                        "chance": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "quantityMin": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "quantityMax": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "role",
+                        "slot"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "extensions": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/$defs/__schema0"
+                    }
+                  },
+                  "group": {
+                    "type": "string"
+                  },
+                  "statBlocks": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "nd": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Valores conhecidos: animal (Animal), construct (Constructo), humanoid (Humanoide), monstrosity (Monstruosidade), undead (Morto-vivo), other (Outro). Aceita valores personalizados.",
+                          "examples": [
+                            "animal",
+                            "construct",
+                            "humanoid",
+                            "monstrosity",
+                            "undead",
+                            "other"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "animal",
+                              "label": "Animal"
+                            },
+                            {
+                              "value": "construct",
+                              "label": "Constructo"
+                            },
+                            {
+                              "value": "humanoid",
+                              "label": "Humanoide"
+                            },
+                            {
+                              "value": "monstrosity",
+                              "label": "Monstruosidade"
+                            },
+                            {
+                              "value": "undead",
+                              "label": "Morto-vivo"
+                            },
+                            {
+                              "value": "other",
+                              "label": "Outro"
+                            }
+                          ]
+                        },
+                        "subtype": {
+                          "type": "string",
+                          "description": "Valores conhecidos: none (Nenhum), goblinoid (Goblinóide), dragon (Dragão), elemental (Elemental), other (Outro). Aceita valores personalizados.",
+                          "examples": [
+                            "none",
+                            "goblinoid",
+                            "dragon",
+                            "elemental",
+                            "other"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "none",
+                              "label": "Nenhum"
+                            },
+                            {
+                              "value": "goblinoid",
+                              "label": "Goblinóide"
+                            },
+                            {
+                              "value": "dragon",
+                              "label": "Dragão"
+                            },
+                            {
+                              "value": "elemental",
+                              "label": "Elemental"
+                            },
+                            {
+                              "value": "other",
+                              "label": "Outro"
+                            }
+                          ]
+                        },
+                        "size": {
+                          "type": "string",
+                          "description": "Valores conhecidos: tiny (Minúsculo), small (Pequeno), medium (Médio), large (Grande), huge (Enorme), gargantuan (Colossal). Aceita valores personalizados.",
+                          "examples": [
+                            "tiny",
+                            "small",
+                            "medium",
+                            "large",
+                            "huge",
+                            "gargantuan"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "tiny",
+                              "label": "Minúsculo"
+                            },
+                            {
+                              "value": "small",
+                              "label": "Pequeno"
+                            },
+                            {
+                              "value": "medium",
+                              "label": "Médio"
+                            },
+                            {
+                              "value": "large",
+                              "label": "Grande"
+                            },
+                            {
+                              "value": "huge",
+                              "label": "Enorme"
+                            },
+                            {
+                              "value": "gargantuan",
+                              "label": "Colossal"
+                            }
+                          ]
+                        },
+                        "combat": {
+                          "default": {},
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema0"
+                          }
+                        },
+                        "resources": {
+                          "default": {},
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema0"
+                          }
+                        },
+                        "resistances": {
+                          "default": {},
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema0"
+                          }
+                        },
+                        "attributes": {
+                          "default": {},
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema0"
+                          }
+                        },
+                        "statsVisibility": {
+                          "default": {},
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "enum": [
+                              "public",
+                              "gm",
+                              "discoverable"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "combat",
+                        "resources",
+                        "resistances",
+                        "attributes",
+                        "statsVisibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "components": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "movement",
+                            "attack",
+                            "ability",
+                            "skill",
+                            "trait"
+                          ]
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        },
+                        "data": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema0"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "visibility",
+                        "data"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "active",
+                  "tags",
+                  "discoveryRevision",
+                  "visibility",
+                  "media",
+                  "fields",
+                  "links",
+                  "extensions",
+                  "statBlocks",
+                  "components"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "quest"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "tags": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "discoveryRevision": {
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "visibility": {
+                    "default": {
+                      "sections": {}
+                    },
+                    "type": "object",
+                    "properties": {
+                      "entity": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "gm",
+                          "discoverable"
+                        ]
+                      },
+                      "sections": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "sections"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "media": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string"
+                      },
+                      "portrait": {
+                        "type": "string"
+                      },
+                      "token": {
+                        "type": "string"
+                      },
+                      "map": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "links": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "npc",
+                            "location",
+                            "item",
+                            "monster",
+                            "quest"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "role": {
+                          "default": "related",
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: related (Relacionado), friend (Amigo), ally (Aliado), enemy (Inimigo), family (Família), rival (Rival), visited (Visitado), part-of (Parte de), used-by (Utilizado por), managed-by (Administrado por), start (Início), completion (Entrega), next (Próxima missão), parent (Superior), connection (Conexão), requirement (Requisito), reward (Recompensa), drops (Drop), drop (Drop). Aceita valores personalizados.",
+                          "examples": [
+                            "related",
+                            "friend",
+                            "ally",
+                            "enemy",
+                            "family",
+                            "rival",
+                            "visited",
+                            "part-of",
+                            "used-by",
+                            "managed-by",
+                            "start",
+                            "completion",
+                            "next",
+                            "parent",
+                            "connection",
+                            "requirement",
+                            "reward",
+                            "drops",
+                            "drop"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "related",
+                              "label": "Relacionado"
+                            },
+                            {
+                              "value": "friend",
+                              "label": "Amigo"
+                            },
+                            {
+                              "value": "ally",
+                              "label": "Aliado"
+                            },
+                            {
+                              "value": "enemy",
+                              "label": "Inimigo"
+                            },
+                            {
+                              "value": "family",
+                              "label": "Família"
+                            },
+                            {
+                              "value": "rival",
+                              "label": "Rival"
+                            },
+                            {
+                              "value": "visited",
+                              "label": "Visitado"
+                            },
+                            {
+                              "value": "part-of",
+                              "label": "Parte de"
+                            },
+                            {
+                              "value": "used-by",
+                              "label": "Utilizado por"
+                            },
+                            {
+                              "value": "managed-by",
+                              "label": "Administrado por"
+                            },
+                            {
+                              "value": "start",
+                              "label": "Início"
+                            },
+                            {
+                              "value": "completion",
+                              "label": "Entrega"
+                            },
+                            {
+                              "value": "next",
+                              "label": "Próxima missão"
+                            },
+                            {
+                              "value": "parent",
+                              "label": "Superior"
+                            },
+                            {
+                              "value": "connection",
+                              "label": "Conexão"
+                            },
+                            {
+                              "value": "requirement",
+                              "label": "Requisito"
+                            },
+                            {
+                              "value": "reward",
+                              "label": "Recompensa"
+                            },
+                            {
+                              "value": "drops",
+                              "label": "Drop"
+                            },
+                            {
+                              "value": "drop",
+                              "label": "Drop"
+                            }
+                          ]
+                        },
+                        "slot": {
+                          "default": "references",
+                          "type": "string",
+                          "enum": [
+                            "references",
+                            "locations",
+                            "relations"
+                          ]
+                        },
+                        "chance": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "quantityMin": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "quantityMax": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "role",
+                        "slot"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "extensions": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/$defs/__schema0"
+                    }
+                  },
+                  "type": {
+                    "default": "side",
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Valores conhecidos: main (Principal), side (Secundária), daily (Diária), event (Evento). Aceita valores personalizados.",
+                    "examples": [
+                      "main",
+                      "side",
+                      "daily",
+                      "event"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "main",
+                        "label": "Principal"
+                      },
+                      {
+                        "value": "side",
+                        "label": "Secundária"
+                      },
+                      {
+                        "value": "daily",
+                        "label": "Diária"
+                      },
+                      {
+                        "value": "event",
+                        "label": "Evento"
+                      }
+                    ]
+                  },
+                  "state": {
+                    "default": "available",
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Valores conhecidos: available (Disponível), active (Ativa), completed (Concluída), failed (Falhou), hidden (Oculta). Aceita valores personalizados.",
+                    "examples": [
+                      "available",
+                      "active",
+                      "completed",
+                      "failed",
+                      "hidden"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "available",
+                        "label": "Disponível"
+                      },
+                      {
+                        "value": "active",
+                        "label": "Ativa"
+                      },
+                      {
+                        "value": "completed",
+                        "label": "Concluída"
+                      },
+                      {
+                        "value": "failed",
+                        "label": "Falhou"
+                      },
+                      {
+                        "value": "hidden",
+                        "label": "Oculta"
+                      }
+                    ]
+                  },
+                  "briefing": {
+                    "type": "string"
+                  },
+                  "completionText": {
+                    "type": "string"
+                  },
+                  "recommendedLevel": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "startSource": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "npc",
+                          "location",
+                          "item",
+                          "monster",
+                          "quest"
+                        ]
+                      },
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "completionReceiver": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "npc",
+                          "location",
+                          "item",
+                          "monster",
+                          "quest"
+                        ]
+                      },
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "prerequisites": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "requirements": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "minimum": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "quantity": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "state": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "nextQuests": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "requirementLogic": {
+                    "default": "all",
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "any"
+                    ]
+                  },
+                  "objectiveMode": {
+                    "default": "free",
+                    "type": "string",
+                    "enum": [
+                      "ordered",
+                      "free"
+                    ]
+                  },
+                  "objectives": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "objectiveId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: talk (Falar), kill (Matar), collect (Coletar), explore (Explorar), deliver (Entregar), interact (Interagir), survive (Sobreviver), custom (Personalizado). Aceita valores personalizados.",
+                          "examples": [
+                            "talk",
+                            "kill",
+                            "collect",
+                            "explore",
+                            "deliver",
+                            "interact",
+                            "survive",
+                            "custom"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "talk",
+                              "label": "Falar"
+                            },
+                            {
+                              "value": "kill",
+                              "label": "Matar"
+                            },
+                            {
+                              "value": "collect",
+                              "label": "Coletar"
+                            },
+                            {
+                              "value": "explore",
+                              "label": "Explorar"
+                            },
+                            {
+                              "value": "deliver",
+                              "label": "Entregar"
+                            },
+                            {
+                              "value": "interact",
+                              "label": "Interagir"
+                            },
+                            {
+                              "value": "survive",
+                              "label": "Sobreviver"
+                            },
+                            {
+                              "value": "custom",
+                              "label": "Personalizado"
+                            }
+                          ]
+                        },
+                        "text": {
+                          "default": "",
+                          "type": "string"
+                        },
+                        "order": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "requiredQuantity": {
+                          "default": 1,
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "optional": {
+                          "default": false,
+                          "type": "boolean"
+                        },
+                        "secret": {
+                          "default": false,
+                          "type": "boolean"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        },
+                        "target": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "npc",
+                                "location",
+                                "item",
+                                "monster",
+                                "quest"
+                              ]
+                            },
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "dependsOn": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "playerEditable": {
+                          "default": false,
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "objectiveId",
+                        "type",
+                        "text",
+                        "order",
+                        "requiredQuantity",
+                        "optional",
+                        "secret",
+                        "visibility",
+                        "dependsOn",
+                        "playerEditable"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "rewards": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "rewardId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "type": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: npc (Personagem), location (Local), item (Item), monster (Monstro), quest (Missão), currency (Moeda), xp (Experiência), custom (Personalizada). Aceita valores personalizados.",
+                          "examples": [
+                            "npc",
+                            "location",
+                            "item",
+                            "monster",
+                            "quest",
+                            "currency",
+                            "xp",
+                            "custom"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "npc",
+                              "label": "Personagem"
+                            },
+                            {
+                              "value": "location",
+                              "label": "Local"
+                            },
+                            {
+                              "value": "item",
+                              "label": "Item"
+                            },
+                            {
+                              "value": "monster",
+                              "label": "Monstro"
+                            },
+                            {
+                              "value": "quest",
+                              "label": "Missão"
+                            },
+                            {
+                              "value": "currency",
+                              "label": "Moeda"
+                            },
+                            {
+                              "value": "xp",
+                              "label": "Experiência"
+                            },
+                            {
+                              "value": "custom",
+                              "label": "Personalizada"
+                            }
+                          ]
+                        },
+                        "target": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "npc",
+                                "location",
+                                "item",
+                                "monster",
+                                "quest"
+                              ]
+                            },
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "amount": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "quantity": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "currency": {
+                          "type": "string"
+                        },
+                        "choiceGroup": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema0"
+                          }
+                        }
+                      },
+                      "required": [
+                        "rewardId",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "timeLimitMinutes": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "active",
+                  "tags",
+                  "discoveryRevision",
+                  "visibility",
+                  "media",
+                  "fields",
+                  "links",
+                  "extensions",
+                  "type",
+                  "state",
+                  "prerequisites",
+                  "requirements",
+                  "nextQuests",
+                  "requirementLogic",
+                  "objectiveMode",
+                  "objectives",
+                  "rewards"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packId",
+    "name",
+    "language",
+    "entities"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -3,7 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "concurrently -n api,web \"npm run dev -w @sao/api\" \"npm run dev -w @sao/web\"",
     "build": "npm run build -ws --if-present",
@@ -12,15 +15,28 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:integration": "node scripts/test-integration.mjs",
+    "data:artifacts": "node scripts/generate-data-artifacts.mjs",
+    "data:validate": "node scripts/validate-pack.mjs",
+    "data:migrate": "node scripts/migrate-data-v2.mjs",
     "db:generate": "npm run prisma:generate -w @sao/api",
     "db:migrate": "npm run prisma:migrate -w @sao/api",
-    "db:seed": "npm run prisma:seed -w @sao/api"
+    "db:seed": "npm run prisma:seed -w @sao/api",
+    "tunnel:raw": "npx wrangler tunnel quick-start http://localhost:5173",
+    "tunnel": "node -e \"const { spawn } = require('node:child_process'); const re = /https:\\/\\/[^\\s]+\\.trycloudflare\\.com/; const child = spawn('npx', ['wrangler', 'tunnel', 'quick-start', 'http://localhost:5173'], { shell: true, stdio: ['inherit', 'pipe', 'pipe'] }); const emit = (text) => { process.stdout.write(text); const match = text.match(re); if (match) { console.log('\\nTUNNEL_URL=' + match[0]); } }; child.stdout.on('data', (d) => emit(d.toString())); child.stderr.on('data', (d) => emit(d.toString())); child.on('exit', (code) => { if (code && code !== 0) process.exit(code); });\"",
+    "context:tree": "node scripts/codex-context.mjs tree",
+    "context:search": "node scripts/codex-context.mjs search",
+    "context:file": "node scripts/codex-context.mjs file",
+    "data:entity": "node scripts/codex-pack.mjs get",
+    "data:search": "node scripts/codex-pack.mjs search",
+    "data:refs": "node scripts/codex-pack.mjs refs"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@playwright/test": "^1.55.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.34.0",
+    "eslint-plugin-react": "^7.37.5",
     "globals": "^16.3.0",
     "prettier": "^3.6.2",
     "vitest": "^3.2.4"

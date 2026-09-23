@@ -1,13 +1,11 @@
 {
-  "name": "@sao/xml",
+  "name": "@sao/json",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "exports": "./src/index.js",
   "dependencies": {
     "@sao/domain": "0.1.0",
-    "@sao/shared": "0.1.0",
-    "fast-xml-parser": "^5.2.5",
-    "xmllint-wasm": "^3.0.1",
     "zod": "^4.1.5"
   }
 }

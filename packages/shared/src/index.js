@@ -30,7 +30,30 @@ export const referenceSchema = z.object({
   type: z.string().min(1),
   id: z.string().min(1),
   role: z.string().min(1).default('related'),
-  chance: z.number().int().min(1).max(100).optional()
+  // PostgreSQL returns an absent optional chance as null. Accept that API
+  // round-trip representation and normalize it back to an omitted value.
+  chance: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .nullable()
+    .optional()
+    .transform((value) => value ?? undefined),
+  quantityMin: z
+    .number()
+    .int()
+    .min(1)
+    .nullable()
+    .optional()
+    .transform((value) => value ?? undefined),
+  quantityMax: z
+    .number()
+    .int()
+    .min(1)
+    .nullable()
+    .optional()
+    .transform((value) => value ?? undefined)
 });
 
 export const narrativeFieldSchema = z.object({
@@ -42,12 +65,13 @@ export const narrativeFieldSchema = z.object({
 export const baseEntitySchema = z.object({
   id: z.string().min(3),
   name: z.string().min(1),
+  subtitle: z.string().optional(),
   active: z.boolean().default(true),
   discoveryRevision: z.number().int().nonnegative().default(0),
   sectionVisibility: z.record(z.string(), visibilitySchema).default({}),
   source: z
     .object({
-      kind: z.enum(['local', 'xml']).default('local'),
+      kind: z.enum(['local', 'json']).default('local'),
       packId: z.string().optional(),
       fileName: z.string().optional(),
       importedAt: z.union([z.number(), z.string()]).optional(),

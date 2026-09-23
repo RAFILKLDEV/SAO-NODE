@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "2.0",
+  "packId": "pack.locais.exemplo",
+  "name": "Exemplo de locais",
+  "language": "pt-BR",
+  "containers": [
+    "location"
+  ],
+  "entities": [
+    {
+      "type": "location",
+      "data": {
+        "id": "loc.cidade",
+        "name": "Cidade do Alvorecer",
+        "subtitle": "N?cleo urbano do primeiro andar",
+        "active": true,
+        "tags": [
+          "andar-1",
+          "cidade"
+        ],
+        "discoveryRevision": 0,
+        "visibility": {
+          "entity": "public",
+          "sections": {
+            "basic": "public",
+            "services": "public"
+          }
+        },
+        "media": {
+          "image": "",
+          "portrait": "",
+          "token": "",
+          "map": "",
+          "source": ""
+        },
+        "fields": [
+          {
+            "key": "descricao",
+            "value": "Cidade murada que acolhe os viajantes do primeiro andar.",
+            "visibility": "public"
+          },
+          {
+            "key": "segredos",
+            "value": "Um t?nel antigo passa sob a pra?a.",
+            "visibility": "gm"
+          }
+        ],
+        "links": [
+          {
+            "type": "location",
+            "id": "loc.praca",
+            "role": "related",
+            "slot": "references"
+          }
+        ],
+        "extensions": {},
+        "type": "city",
+        "state": "safe",
+        "placement": {
+          "floor": 1
+        },
+        "environment": "Urbano",
+        "recommendedLevel": "1?5",
+        "services": [
+          {
+            "name": "Hospedagem",
+            "description": "Estalagens recebem viajantes."
+          }
+        ],
+        "connections": []
+      }
+    },
+    {
+      "type": "location",
+      "data": {
+        "id": "loc.praca",
+        "name": "Pra?a Central",
+        "parentId": "loc.cidade",
+        "type": "plaza",
+        "state": "safe",
+        "placement": {
+          "floor": 1
+        },
+        "visibility": {
+          "entity": "public"
+        },
+        "fields": [
+          {
+            "key": "descricao",
+            "value": "Pra?a com fonte e bancas de com?rcio.",
+            "visibility": "public"
+          }
+        ],
+        "connections": [
+          {
+            "id": "rota.praca.portao",
+            "target": {
+              "type": "location",
+              "id": "loc.portao"
+            },
+            "type": "road",
+            "direction": "leste",
+            "distanceKm": 0.45,
+            "travelMinutes": 5,
+            "access": "public",
+            "unlockCondition": "",
+            "visibility": "public"
+          }
+        ]
+      }
+    },
+    {
+      "type": "location",
+      "data": {
+        "id": "loc.portao",
+        "name": "Port?o Leste",
+        "parentId": "loc.cidade",
+        "type": "landmark",
+        "state": "safe",
+        "placement": {
+          "floor": 1
+        },
+        "visibility": {
+          "entity": "public"
+        },
+        "fields": [
+          {
+            "key": "descricao",
+            "value": "Acesso vigiado ? cidade.",
+            "visibility": "public"
+          }
+        ],
+        "connections": [
+          {
+            "id": "rota.portao.praca",
+            "target": {
+              "type": "location",
+              "id": "loc.praca"
+            },
+            "type": "road",
+            "direction": "oeste",
+            "distanceKm": 0.45,
+            "travelMinutes": 5,
+            "access": "public",
+            "unlockCondition": "",
+            "visibility": "public"
+          }
+        ]
+      }
+    }
+  ]
+}

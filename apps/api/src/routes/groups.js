@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { audit } from '../lib/audit.js';
 import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import { apiError } from '@sao/shared';
+import { emitPermissionNotification } from '../lib/realtime.js';
 
 const groupSchema = z.object({ domainId: z.string().min(2), name: z.string().min(1) });
 const memberSchema = z.object({ userId: z.string().min(1) });
@@ -42,6 +43,31 @@ export async function groupRoutes(app) {
       await audit(tx, { campaignId: request.campaign.id, actorUserId: request.auth.user.id, action: 'group.member.add', subjectType: 'group', subjectId: group.domainId, after: { userId: parsed.data.userId } });
     });
     request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('permissions.changed', { reason: 'group-membership', groupId: group.domainId });
+    const grants = await prisma.grant.findMany({
+      where: {
+        campaignId: request.campaign.id,
+        subjectType: 'group',
+        subjectId: group.domainId,
+        allowance: 'allow'
+      },
+      select: { entityType: true, entityDomainId: true }
+    });
+    const entities = [
+      ...new Map(
+        grants.map((grant) => [
+          `${grant.entityType}:${grant.entityDomainId}`,
+          { entityType: grant.entityType, entityId: grant.entityDomainId }
+        ])
+      ).values()
+    ];
+    if (entities.length) {
+      emitPermissionNotification({
+        realtime: request.server.realtime,
+        campaignId: request.campaign.id,
+        userIds: [parsed.data.userId],
+        payload: { reason: 'group-membership', entities }
+      });
+    }
     return { ok: true };
   });
 

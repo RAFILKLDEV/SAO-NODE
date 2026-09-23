@@ -21,8 +21,19 @@ export function sessionCookieOptions() {
 
 export function assertSafeRemoteUrl(value) {
   if (!value) return value;
-  const url = new URL(value);
-  if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Only http/https URLs are allowed');
-  if (url.username || url.password) throw new Error('URL credentials are not allowed');
-  return url.toString();
+  if (/^\/api\/v1\/campaigns\/[^/]+\/media\/[a-f0-9-]+\.(?:png|jpe?g|gif|webp|avif|bmp)$/i.test(value))
+    return value;
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol))
+      throw new Error('A URL da imagem deve usar HTTP ou HTTPS.');
+    if (url.username || url.password) throw new Error('A URL da imagem não pode ter credenciais.');
+    return url.toString();
+  } catch (cause) {
+    const error = new Error(
+      cause.message === 'Invalid URL' ? 'URL de imagem inválida.' : cause.message
+    );
+    error.code = 'INVALID_REMOTE_URL';
+    throw error;
+  }
 }

@@ -1,0 +1,26 @@
+# Keep the build context small and avoid invalidating Docker cache with local output.
+.git
+.gitignore
+node_modules
+**/node_modules
+**/dist
+**/coverage
+**/.vite
+**/.cache
+**/.turbo
+.vscode
+.idea
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+Dockerfile*
+docker-compose*.yml
+apps/web/e2e
+apps/api/tests
+packages/*/tests
+data/backups
+test-results
+playwright-report
+SAO-NODE.zip

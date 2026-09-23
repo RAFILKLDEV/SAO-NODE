@@ -14,7 +14,9 @@ export async function dropRoutes(app) {
       type: reference.targetType,
       id: reference.targetDomainId,
       role: reference.role,
-      chance: reference.chance ?? undefined
+      chance: reference.chance ?? undefined,
+      quantityMin: reference.quantityMin ?? undefined,
+      quantityMax: reference.quantityMax ?? undefined
     }));
     const rolled = rollDrops(refs);
     const results = [];
@@ -22,7 +24,13 @@ export async function dropRoutes(app) {
       const item = await prisma.entity.findUnique({
         where: { campaignId_type_domainId: { campaignId: request.campaign.id, type: 'item', domainId: ref.id } }
       });
-      results.push({ id: ref.id, name: item?.deletedAt ? undefined : item?.name, chance: ref.chance ?? 100, broken: !item || Boolean(item.deletedAt) });
+      results.push({
+        id: ref.id,
+        name: item?.deletedAt ? undefined : item?.name,
+        chance: ref.chance ?? 100,
+        quantity: ref.quantity,
+        broken: !item || Boolean(item.deletedAt)
+      });
     }
     return { monsterId: monster.domainId, results };
   });

@@ -5,9 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Allow access through the current Cloudflare Tunnel hostname.
+    allowedHosts: ['concrete-drag-picks-around.trycloudflare.com'],
     proxy: {
-      '/api': 'http://localhost:3001',
-      '/socket.io': { target: 'http://localhost:3001', ws: true }
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:3001',
+      '/socket.io': { target: process.env.API_PROXY_TARGET ?? 'http://localhost:3001', ws: true }
     }
   }
 });

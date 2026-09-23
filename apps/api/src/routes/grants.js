@@ -4,6 +4,10 @@ import { audit } from '../lib/audit.js';
 import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import { ALLOWANCES, TARGET_KINDS, apiError } from '@sao/shared';
 import { evaluateGrant, summarizeGroupVisibility } from '@sao/domain';
+import {
+  emitPermissionNotification,
+  resolveGrantRecipientUserIds
+} from '../lib/realtime.js';
 
 const grantSchema = z.object({
   subjectType: z.enum(['user', 'group']),
@@ -45,7 +49,7 @@ async function baseVisibilityForGrant(grant) {
   if (grant.targetKind === 'entity') return entity.baseVisibility;
   if (grant.targetKind === 'field') {
     if (grant.targetKey.startsWith('section.'))
-      return entity.data?.sectionVisibility?.[grant.targetKey.slice('section.'.length)] ?? 'public';
+      return (entity.data?.visibility?.sections ?? entity.data?.sectionVisibility)?.[grant.targetKey.slice('section.'.length)] ?? 'public';
     return entity.fields.find((field) => field.key === grant.targetKey)?.visibility ?? 'gm';
   }
   if (grant.targetKind === 'objective')
@@ -68,9 +72,46 @@ async function baseVisibilityForGrant(grant) {
     );
   }
   if (grant.targetKind === 'monster_stat') {
-    return entity.data?.sheet?.statsVisibility?.[grant.targetKey] ?? 'public';
+    return (entity.data?.statBlocks?.['Ambesek.T20']?.statsVisibility ?? entity.data?.sheet?.statsVisibility)?.[grant.targetKey] ?? 'public';
   }
   return 'gm';
+}
+
+function grantTargets(entity) {
+  const targets = new Map();
+  const add = (kind, key, visibility) =>
+    targets.set(`${kind}:${key}`, { kind, key, visibility: visibility ?? 'public' });
+
+  add('entity', 'existence', entity.baseVisibility);
+  for (const field of entity.fields) add('field', field.key, field.visibility);
+  for (const [section, visibility] of Object.entries((entity.data?.visibility?.sections ?? entity.data?.sectionVisibility) ?? {}))
+    add('field', `section.${section}`, visibility);
+  for (const objective of entity.questObjectives) {
+    add('objective', objective.objectiveId, objective.visibility);
+    targets.get(`objective:${objective.objectiveId}`).secret = objective.secret;
+  }
+  for (const connection of entity.locationConnections)
+    add('location_connection', connection.connectionId, connection.visibility);
+  for (const component of entity.monsterComponents)
+    add(`monster_${component.kind}`, component.componentId, component.visibility);
+
+  if (entity.type === 'monster') {
+    const visibility = (entity.data?.statBlocks?.['Ambesek.T20']?.statsVisibility ?? entity.data?.sheet?.statsVisibility) ?? {};
+    for (const key of [
+      'basic',
+      'nd',
+      'type',
+      'subtype',
+      'size',
+      'combat',
+      'resources',
+      'resistances',
+      'attributes',
+      ...Object.keys(visibility)
+    ])
+      add('monster_stat', key, visibility[key]);
+  }
+  return [...targets.values()];
 }
 
 async function groupEffectiveState(grant) {
@@ -171,7 +212,124 @@ async function validateEntities(campaignId, grants) {
   return null;
 }
 
+function changedEntities(grants) {
+  return [
+    ...new Map(
+      grants.map((grant) => [
+        `${grant.entityType}:${grant.entityDomainId}`,
+        { entityType: grant.entityType, entityId: grant.entityDomainId }
+      ])
+    ).values()
+  ];
+}
+
+async function notifyGrantRecipients(request, grants, extra = {}) {
+  const allowedGrants = grants.filter((grant) => grant.allowance === 'allow');
+  if (!allowedGrants.length) return;
+  const userIds = await resolveGrantRecipientUserIds({
+    db: prisma,
+    campaignId: request.campaign.id,
+    grants: allowedGrants
+  });
+  emitPermissionNotification({
+    realtime: request.server.realtime,
+    campaignId: request.campaign.id,
+    userIds,
+    payload: { ...extra, entities: changedEntities(allowedGrants) }
+  });
+}
+
 export async function grantRoutes(app) {
+  app.get(
+    '/api/v1/campaigns/:campaignId/discoveries/:entityType/:entityId/viewers',
+    { preHandler: [authenticate, requireCampaign, requireGm] },
+    async (request, reply) => {
+      const entity = await prisma.entity.findUnique({
+        where: {
+          campaignId_type_domainId: {
+            campaignId: request.campaign.id,
+            type: request.params.entityType,
+            domainId: request.params.entityId
+          }
+        },
+        include: {
+          fields: true,
+          questObjectives: true,
+          locationConnections: true,
+          monsterComponents: true
+        }
+      });
+      if (!entity || entity.deletedAt)
+        return reply.code(404).send(apiError('NOT_FOUND', 'Entity not found'));
+
+      const [memberships, groupMemberships, grants] = await Promise.all([
+        prisma.membership.findMany({
+          where: { campaignId: request.campaign.id },
+          include: { user: true },
+          orderBy: { user: { name: 'asc' } }
+        }),
+        prisma.groupMember.findMany({
+          where: { group: { campaignId: request.campaign.id } },
+          select: { userId: true, group: { select: { domainId: true } } }
+        }),
+        prisma.grant.findMany({
+          where: {
+            campaignId: request.campaign.id,
+            entityType: entity.type,
+            entityDomainId: entity.domainId
+          }
+        })
+      ]);
+      const groupsByUser = new Map();
+      for (const member of groupMemberships) {
+        const groups = groupsByUser.get(member.userId) ?? [];
+        groups.push(member.group.domainId);
+        groupsByUser.set(member.userId, groups);
+      }
+      const users = memberships.map((membership) => ({
+        id: membership.user.id,
+        name: membership.user.name,
+        login: membership.user.login,
+        characterImageUrl: membership.characterImageUrl,
+        role: membership.role
+      }));
+      const viewers = {};
+      for (const target of grantTargets(entity)) {
+        viewers[`${target.kind}:${target.key}`] = memberships
+          .filter((membership) => {
+            const isGm = ['owner', 'gm', 'assistant_gm'].includes(membership.role);
+            if (isGm) return false;
+            const common = {
+              isGm,
+              userId: membership.userId,
+              groups: groupsByUser.get(membership.userId) ?? [],
+              grants
+            };
+            const entityAccess = evaluateGrant({
+              ...common,
+              baseVisibility: entity.baseVisibility,
+              grants: grants.filter(
+                (grant) => grant.targetKind === 'entity' && grant.targetKey === 'existence'
+              )
+            });
+            if (!entityAccess.allowed) return false;
+            const targetAccess = evaluateGrant({
+              ...common,
+              baseVisibility: target.visibility,
+              grants: grants.filter(
+                (grant) => grant.targetKind === target.kind && grant.targetKey === target.key
+              )
+            });
+            return (
+              targetAccess.allowed && (!target.secret || isGm || targetAccess.source !== 'public')
+            );
+          })
+          .map((membership) => membership.userId);
+      }
+      return { users, viewers };
+    }
+  );
+
   app.get(
     '/api/v1/campaigns/:campaignId/discoveries',
     { preHandler: [authenticate, requireCampaign, requireGm] },
@@ -204,12 +362,11 @@ export async function grantRoutes(app) {
       const saved = await prisma.$transaction((tx) =>
         upsertGrant(tx, request.campaign.id, request.auth.user.id, parsed.data)
       );
-      request.server.realtime
-        ?.to(`campaign:${request.campaign.id}`)
-        .emit('permissions.changed', {
-          entityType: parsed.data.entityType,
-          entityId: parsed.data.entityId
-        });
+      request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('permissions.changed', {
+        entityType: parsed.data.entityType,
+        entityId: parsed.data.entityId
+      });
+      await notifyGrantRecipients(request, [saved]);
       return saved;
     }
   );
@@ -233,9 +390,14 @@ export async function grantRoutes(app) {
         }
         return results;
       });
+      const entities = saved.map((grant) => ({
+        entityType: grant.entityType,
+        entityId: grant.entityDomainId
+      }));
       request.server.realtime
         ?.to(`campaign:${request.campaign.id}`)
-        .emit('permissions.changed', { reason: 'batch', count: saved.length });
+        .emit('permissions.changed', { reason: 'batch', count: saved.length, entities });
+      await notifyGrantRecipients(request, saved, { reason: 'batch' });
       return { count: saved.length };
     }
   );

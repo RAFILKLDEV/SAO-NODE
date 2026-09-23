@@ -56,6 +56,7 @@ model Membership {
   campaignId String
   userId     String
   role       String
+  characterImageUrl String?
   createdAt  DateTime @default(now())
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -97,6 +98,7 @@ model Entity {
   name       String
   active     Boolean  @default(true)
   baseVisibility String @default("public")
+  schemaVersion Int @default(2)
   data       Json
   source     Json?
   version    Int      @default(1)
@@ -138,12 +140,16 @@ model Reference {
   targetType     String
   targetDomainId String
   role           String
+  slot           String   @default("references")
   chance         Int?
+  quantityMin    Int?
+  quantityMax    Int?
   createdAt      DateTime @default(now())
   sourceEntity   Entity   @relation(fields: [sourceEntityId], references: [id], onDelete: Cascade)
 
   @@index([sourceEntityId])
   @@index([targetType, targetDomainId])
+  @@index([targetType, targetDomainId, slot])
 }
 
 model LocationConnection {

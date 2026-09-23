@@ -1,0 +1,663 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "packId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "default": "pt-BR",
+      "type": "string"
+    },
+    "containers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "location"
+        ]
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "location"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "tags": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "discoveryRevision": {
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "visibility": {
+                    "default": {
+                      "sections": {}
+                    },
+                    "type": "object",
+                    "properties": {
+                      "entity": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "gm",
+                          "discoverable"
+                        ]
+                      },
+                      "sections": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "sections"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "media": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "image": {
+                        "type": "string"
+                      },
+                      "portrait": {
+                        "type": "string"
+                      },
+                      "token": {
+                        "type": "string"
+                      },
+                      "map": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "links": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "npc",
+                            "location",
+                            "item",
+                            "monster",
+                            "quest"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "role": {
+                          "default": "related",
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Valores conhecidos: related (Relacionado), friend (Amigo), ally (Aliado), enemy (Inimigo), family (Família), rival (Rival), visited (Visitado), part-of (Parte de), used-by (Utilizado por), managed-by (Administrado por), start (Início), completion (Entrega), next (Próxima missão), parent (Superior), connection (Conexão), requirement (Requisito), reward (Recompensa), drops (Drop), drop (Drop). Aceita valores personalizados.",
+                          "examples": [
+                            "related",
+                            "friend",
+                            "ally",
+                            "enemy",
+                            "family",
+                            "rival",
+                            "visited",
+                            "part-of",
+                            "used-by",
+                            "managed-by",
+                            "start",
+                            "completion",
+                            "next",
+                            "parent",
+                            "connection",
+                            "requirement",
+                            "reward",
+                            "drops",
+                            "drop"
+                          ],
+                          "x-known-values": [
+                            {
+                              "value": "related",
+                              "label": "Relacionado"
+                            },
+                            {
+                              "value": "friend",
+                              "label": "Amigo"
+                            },
+                            {
+                              "value": "ally",
+                              "label": "Aliado"
+                            },
+                            {
+                              "value": "enemy",
+                              "label": "Inimigo"
+                            },
+                            {
+                              "value": "family",
+                              "label": "Família"
+                            },
+                            {
+                              "value": "rival",
+                              "label": "Rival"
+                            },
+                            {
+                              "value": "visited",
+                              "label": "Visitado"
+                            },
+                            {
+                              "value": "part-of",
+                              "label": "Parte de"
+                            },
+                            {
+                              "value": "used-by",
+                              "label": "Utilizado por"
+                            },
+                            {
+                              "value": "managed-by",
+                              "label": "Administrado por"
+                            },
+                            {
+                              "value": "start",
+                              "label": "Início"
+                            },
+                            {
+                              "value": "completion",
+                              "label": "Entrega"
+                            },
+                            {
+                              "value": "next",
+                              "label": "Próxima missão"
+                            },
+                            {
+                              "value": "parent",
+                              "label": "Superior"
+                            },
+                            {
+                              "value": "connection",
+                              "label": "Conexão"
+                            },
+                            {
+                              "value": "requirement",
+                              "label": "Requisito"
+                            },
+                            {
+                              "value": "reward",
+                              "label": "Recompensa"
+                            },
+                            {
+                              "value": "drops",
+                              "label": "Drop"
+                            },
+                            {
+                              "value": "drop",
+                              "label": "Drop"
+                            }
+                          ]
+                        },
+                        "slot": {
+                          "default": "references",
+                          "type": "string",
+                          "enum": [
+                            "references",
+                            "locations",
+                            "relations"
+                          ]
+                        },
+                        "chance": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "quantityMin": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "quantityMax": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "role",
+                        "slot"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "extensions": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/$defs/__schema0"
+                    }
+                  },
+                  "type": {
+                    "default": "region",
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Valores conhecidos: region (Região), city (Cidade), district (Distrito), bank (Banco), market (Mercado), workshop (Oficina), plaza (Praça), government (Centro administrativo), storage (Armazenamento), temple (Templo), inn (Hospedaria), shop (Loja), residence (Residência), building (Edifício), floor (Andar), dungeon (Masmorra), room (Sala), landmark (Ponto de interesse). Aceita valores personalizados.",
+                    "examples": [
+                      "region",
+                      "city",
+                      "district",
+                      "bank",
+                      "market",
+                      "workshop",
+                      "plaza",
+                      "government",
+                      "storage",
+                      "temple",
+                      "inn",
+                      "shop",
+                      "residence",
+                      "building",
+                      "floor",
+                      "dungeon",
+                      "room",
+                      "landmark"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "region",
+                        "label": "Região"
+                      },
+                      {
+                        "value": "city",
+                        "label": "Cidade"
+                      },
+                      {
+                        "value": "district",
+                        "label": "Distrito"
+                      },
+                      {
+                        "value": "bank",
+                        "label": "Banco"
+                      },
+                      {
+                        "value": "market",
+                        "label": "Mercado"
+                      },
+                      {
+                        "value": "workshop",
+                        "label": "Oficina"
+                      },
+                      {
+                        "value": "plaza",
+                        "label": "Praça"
+                      },
+                      {
+                        "value": "government",
+                        "label": "Centro administrativo"
+                      },
+                      {
+                        "value": "storage",
+                        "label": "Armazenamento"
+                      },
+                      {
+                        "value": "temple",
+                        "label": "Templo"
+                      },
+                      {
+                        "value": "inn",
+                        "label": "Hospedaria"
+                      },
+                      {
+                        "value": "shop",
+                        "label": "Loja"
+                      },
+                      {
+                        "value": "residence",
+                        "label": "Residência"
+                      },
+                      {
+                        "value": "building",
+                        "label": "Edifício"
+                      },
+                      {
+                        "value": "floor",
+                        "label": "Andar"
+                      },
+                      {
+                        "value": "dungeon",
+                        "label": "Masmorra"
+                      },
+                      {
+                        "value": "room",
+                        "label": "Sala"
+                      },
+                      {
+                        "value": "landmark",
+                        "label": "Ponto de interesse"
+                      }
+                    ]
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Valores conhecidos: safe (Seguro), dangerous (Perigoso), unknown (Desconhecido), blocked (Bloqueado). Aceita valores personalizados.",
+                    "examples": [
+                      "safe",
+                      "dangerous",
+                      "unknown",
+                      "blocked"
+                    ],
+                    "x-known-values": [
+                      {
+                        "value": "safe",
+                        "label": "Seguro"
+                      },
+                      {
+                        "value": "dangerous",
+                        "label": "Perigoso"
+                      },
+                      {
+                        "value": "unknown",
+                        "label": "Desconhecido"
+                      },
+                      {
+                        "value": "blocked",
+                        "label": "Bloqueado"
+                      }
+                    ]
+                  },
+                  "parentId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "placement": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "floor": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "environment": {
+                    "type": "string"
+                  },
+                  "recommendedLevel": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "services": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "default": "",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "description"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "connections": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "target": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "location"
+                            },
+                            "id": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "direction": {
+                          "type": "string"
+                        },
+                        "distanceKm": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "travelMinutes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "access": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "discoverable",
+                            "hidden",
+                            "conditional",
+                            "blocked"
+                          ]
+                        },
+                        "unlockCondition": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "default": "public",
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "gm",
+                            "discoverable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "target",
+                        "access",
+                        "visibility"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "active",
+                  "tags",
+                  "discoveryRevision",
+                  "visibility",
+                  "media",
+                  "fields",
+                  "links",
+                  "extensions",
+                  "type",
+                  "placement",
+                  "services",
+                  "connections"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "packId",
+    "name",
+    "language",
+    "entities"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      ]
+    }
+  },
+  "title": "saoData v2 ? pacote exclusivo de locais",
+  "description": "Extra?do do gerador oficial do backend em 2026-09-10; entidades e containers limitados a location. Refinamentos sem representa??o JSON Schema exigem parseSaoDataJson."
+}

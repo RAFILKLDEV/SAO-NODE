@@ -1,12 +1,14 @@
 # Modelo de domínio
 
+O modelo externo canônico é saoData v2. Os registros normalizados abaixo são a projeção persistida desse contrato; a compatibilidade v1 é tratada somente na fronteira do parser.
+
 ## Conteúdo
 
 `Entity` representa a identidade compartilhada de NPC, Location, Item, Monster e Quest. Guarda somente campos simples/extensíveis em `data`; itens que precisam de autorização, reconciliação ou consultas próprias ficam normalizados.
 
 - `NarrativeField`: `key`, `value`, `visibility` por campo.
-- `Reference`: destino por `targetType + targetDomainId`, `role` e `chance` opcional.
-- `LocationConnection`: conexão permanente, acesso, distância e visibilidade.
+- `Reference`: destino por `targetType + targetDomainId`, `slot`, `role` e chance opcional.
+- `LocationConnection`: conexão permanente, tipo, acesso, distância e visibilidade.
 - `MonsterComponent`: movimento, ataque, habilidade, perícia ou trait com ID e visibilidade próprios.
 - `QuestObjective`: `objectiveId` permanente, dependências, segredo, visibilidade e `playerEditable`.
 - `QuestReward`: recompensa extensível sem misturar progresso.
@@ -29,4 +31,4 @@ O contrato `CharacterProvider` vive em `packages/domain`; o provider manual/loca
 
 ## Dados derivados
 
-Backlinks, nomes de referência, árvore de Locais, pesquisa e estados de conclusão são derivados. Não entram no XML externo.
+Backlinks, nomes de referência, árvore de Locais, pesquisa e estados de conclusão são derivados. Backlinks são calculados automaticamente para que toda referência seja navegável nos dois sentidos; derivados não entram no JSON externo.

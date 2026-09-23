@@ -3,6 +3,7 @@ import { buildApp } from './app.js';
 import { config } from './lib/config.js';
 import { prisma } from './lib/prisma.js';
 import { hashToken } from './lib/security.js';
+import { campaignUserRoom } from './lib/realtime.js';
 
 function parseCookies(header = '') {
   return Object.fromEntries(
@@ -13,7 +14,10 @@ function parseCookies(header = '') {
       .map((part) => {
         const index = part.indexOf('=');
         if (index < 0) return [part, ''];
-        return [decodeURIComponent(part.slice(0, index)), decodeURIComponent(part.slice(index + 1))];
+        return [
+          decodeURIComponent(part.slice(0, index)),
+          decodeURIComponent(part.slice(index + 1))
+        ];
       })
   );
 }
@@ -52,6 +56,7 @@ io.use(async (socket, next) => {
 
 io.on('connection', (socket) => {
   socket.join(`campaign:${socket.data.campaignId}`);
+  socket.join(campaignUserRoom(socket.data.campaignId, socket.data.userId));
 });
 
 const shutdown = async () => {
@@ -63,4 +68,6 @@ const shutdown = async () => {
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
-await app.listen({ port: config.port, host: '0.0.0.0' });
+// The unspecified IPv6 address enables IPv6 and, on the supported platforms,
+// keeps IPv4 available through dual-stack sockets.
+await app.listen({ port: config.port, host: '::' });

@@ -1,7 +1,15 @@
 import { test, expect, request as playwrightRequest } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { PrismaClient } from '@prisma/client';
 
 const apiBase = process.env.E2E_API_URL ?? 'http://127.0.0.1:3001';
+const createdCampaigns = [];
+test.afterAll(async () => {
+  if (!process.env.E2E_DATABASE_URL || !createdCampaigns.length) return;
+  const prisma = new PrismaClient({ datasourceUrl: process.env.E2E_DATABASE_URL });
+  try { await prisma.campaign.deleteMany({ where: { id: { in: createdCampaigns } } }); }
+  finally { await prisma.$disconnect(); }
+});
 
 async function login(context, login, password) {
   const response = await context.post(`${apiBase}/api/v1/auth/login`, { data: { login, password } });
@@ -9,7 +17,7 @@ async function login(context, login, password) {
   return (await response.json()).csrfToken;
 }
 
-test('GM/player XML, discovery and progress flow', async () => {
+test('GM/player JSON v2, discovery, progress and editor flow', async ({ page }) => {
   const gm = await playwrightRequest.newContext();
   const player = await playwrightRequest.newContext();
   const gmCsrf = await login(gm, 'gm', 'gm123');
@@ -27,16 +35,17 @@ test('GM/player XML, discovery and progress flow', async () => {
   });
   expect(created.status()).toBe(201);
   const campaign = await created.json();
+  createdCampaigns.push(campaign.id);
 
   await gm.put(`${apiBase}/api/v1/campaigns/${campaign.id}/memberships`, {
     headers: { 'x-csrf-token': gmCsrf },
     data: { userId: playerUser.id, role: 'player' }
   });
 
-  const sample = await readFile(new URL('../../../examples/floor01.sample.xml', import.meta.url));
+  const sample = JSON.parse(await readFile(new URL('../../../examples/floor01.v2.sample.json', import.meta.url), 'utf8'));
   const previewResponse = await gm.post(`${apiBase}/api/v1/campaigns/${campaign.id}/import/preview`, {
     headers: { 'x-csrf-token': gmCsrf },
-    multipart: { file: { name: 'floor01.sample.xml', mimeType: 'application/xml', buffer: sample } }
+    data: sample
   });
   expect(previewResponse.ok()).toBeTruthy();
   const preview = await previewResponse.json();
@@ -97,13 +106,17 @@ test('GM/player XML, discovery and progress flow', async () => {
   });
   expect(playerUpdate.ok()).toBeTruthy();
 
-  const exportResponse = await gm.get(`${apiBase}/api/v1/campaigns/${campaign.id}/export.xml`);
+  const exportResponse = await gm.get(`${apiBase}/api/v1/campaigns/${campaign.id}/export.json`);
   expect(exportResponse.ok()).toBeTruthy();
-  expect(await exportResponse.text()).toContain('<saoData');
+  const exported = await exportResponse.json();
+  expect(exported.schemaVersion).toBe('2.0');
+  expect((await (await gm.get(`${apiBase}/api/v1/campaigns/${campaign.id}/export.json?format=1`)).json()).schemaVersion).toBe('1.0');
+  const roundTrip = await gm.post(`${apiBase}/api/v1/campaigns/${campaign.id}/import/preview`, { headers: { 'x-csrf-token': gmCsrf }, data: exported });
+  expect((await roundTrip.json()).diff.every(entry => entry.status === 'EQUAL')).toBe(true);
 
   const rePreviewResponse = await gm.post(`${apiBase}/api/v1/campaigns/${campaign.id}/import/preview`, {
     headers: { 'x-csrf-token': gmCsrf },
-    multipart: { file: { name: 'floor01.sample.xml', mimeType: 'application/xml', buffer: sample } }
+    data: sample
   });
   const rePreview = await rePreviewResponse.json();
   const questEntry = rePreview.diff.find((entry) => entry.key === 'quest:quest.f1.greenfields.boars');
@@ -117,6 +130,28 @@ test('GM/player XML, discovery and progress flow', async () => {
   expect(playerProgress[0].objectives.find((objective) => objective.objectiveId === 'talk-ragnar').value).toBe(1);
   const preservedReveal = await (await player.get(`${apiBase}/api/v1/campaigns/${campaign.id}/quests/quest.f1.greenfields.boars`)).json();
   expect(preservedReveal.fields.some((field) => field.key === 'description')).toBe(true);
+
+  await page.goto('/login');
+  await page.getByLabel('Login', { exact: true }).fill('gm');
+  await page.getByLabel('Senha', { exact: true }).fill('gm123');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Escolha uma campanha' })).toBeVisible();
+  await page.getByRole('link', { name: 'E2E Campaign', exact: true }).click();
+  await page.goto(`/campaigns/${campaign.id}/quests?selected=quest.f1.greenfields.boars`);
+  await page.getByRole('button', { name: 'Editar', exact: true }).click();
+  const editor = page.getByRole('dialog');
+  await editor.getByLabel('Nome', { exact: true }).fill('Caçada revisada no editor');
+  const savedRequest = page.waitForRequest(request => request.method() === 'PUT' && request.url().includes('/quests/quest.f1.greenfields.boars'));
+  await editor.getByRole('button', { name: 'Salvar', exact: true }).click();
+  const payload = (await savedRequest).postDataJSON();
+  expect(payload).toHaveProperty('visibility');
+  expect(payload).toHaveProperty('links');
+  expect(payload).not.toHaveProperty('references');
+  expect(payload.rewards.map(reward => reward.rewardId)).toEqual(exported.entities.find(entry => entry.type === 'quest').data.rewards.map(reward => reward.rewardId));
+  await expect(editor).toBeHidden();
+  const afterEditor = await (await gm.get(`${apiBase}/api/v1/campaigns/${campaign.id}/quests/quest.f1.greenfields.boars?format=2`)).json();
+  expect(afterEditor.data.name).toBe('Caçada revisada no editor');
+  expect(afterEditor.data.rewards).toEqual(exported.entities.find(entry => entry.type === 'quest').data.rewards);
 
   await gm.dispose();
   await player.dispose();
