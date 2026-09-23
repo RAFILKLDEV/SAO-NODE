@@ -28,6 +28,29 @@ A aplicação local e os testes estão registrados em [data-v2-validation.md](da
 
 O normalizador preenche coleções vazias e defaults. Campos desconhecidos no v2 são erros; dados adicionais devem ficar em `extensions`, que é conteúdo de GM por padrão. Cada pacote pode conter somente alguns tipos; `containers` define quais tipos participam do diff de remoções. Sua omissão deriva os tipos presentes nas entidades.
 
+## Operações compactas
+
+Para alterar campos de entidades já existentes sem reenviar a ficha completa, a importação também aceita um envelope `operations`. Cada alvo aparece uma única vez e usa os mesmos comandos `set`, `add` e `remove` do `PATCH` de entidade.
+
+```json
+{
+  "schemaVersion": "2.0",
+  "packId": "imagens.monstros",
+  "name": "Atualizar imagens",
+  "operations": [
+    {
+      "type": "monster",
+      "id": "monster.burafonte",
+      "set": {
+        "/media/image": "https://www.tibiawiki.com.br/images/e/e3/Armadile.gif"
+      }
+    }
+  ]
+}
+```
+
+As operações são aplicadas sobre o estado atual para gerar a prévia, validar o resultado e preservar todos os campos omitidos. Elas só atualizam entidades existentes, não declaram `containers` e nunca geram `REMOVED_FROM_JSON`; a prévia continua permitindo selecionar os alvos antes da transação final.
+
 | Entidade | Estrutura específica | Namespace |
 | --- | --- | --- |
 | NPC | `identity`, `services`, `factions`, `character` | `npc.` |

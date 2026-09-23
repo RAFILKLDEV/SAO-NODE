@@ -1,4 +1,4 @@
-import { validateEntityCatalog } from '@sao/domain';
+import { normalizeEntity, validateEntityCatalog } from '@sao/domain';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { config } from '../lib/config.js';
@@ -13,6 +13,7 @@ import {
   parseSaoDataJson
 } from '@sao/json';
 import {
+  applyEntityChangeDocument,
   entityRecordToCanonical,
   softRemoveImportedEntityTx,
   upsertImportedEntityTx
@@ -75,12 +76,41 @@ export async function jsonRoutes(app) {
           ...(entity.deletedAt ? { __deleted: true } : {})
         }
       }));
-      try { validateEntityCatalog(parsed.pack.entities, existingRows.filter(e => !e.deletedAt).map(e => ({ type: e.type, data: entityRecordToCanonical(e) }))); }
+      const operations = parsed.pack.operations ?? [];
+      let pack = parsed.pack;
+      if (operations.length > 0) {
+        const currentByKey = new Map(
+          existingRows
+            .filter((entity) => !entity.deletedAt)
+            .map((entity) => [`${entity.type}:${entity.domainId}`, entity])
+        );
+        try {
+          pack = {
+            ...parsed.pack,
+            entities: operations.map((operation) => {
+              const current = currentByKey.get(`${operation.type}:${operation.id}`);
+              if (!current) throw new Error(`Entidade da operação não encontrada: ${operation.type}:${operation.id}`);
+              const next = applyEntityChangeDocument(entityRecordToCanonical(current), operation);
+              return {
+                type: operation.type,
+                data: normalizeEntity(operation.type, { ...next, id: operation.id }, { format: '2.0' })
+              };
+            })
+          };
+        } catch (error) {
+          return reply.code(400).send(apiError('INVALID_CONTENT', error.message));
+        }
+      }
+      let warnings;
+      try { warnings = validateEntityCatalog(pack.entities, existingRows.filter(e => !e.deletedAt).map(e => ({ type: e.type, data: entityRecordToCanonical(e) }))); }
       catch (error) { return reply.code(400).send(apiError('INVALID_CONTENT', error.message)); }
-      const diff = buildDiff(existing.filter(e => parsed.pack.containers.includes(e.type)), parsed.pack);
+      const diff = buildDiff(
+        operations.length > 0 ? existing : existing.filter(e => pack.containers.includes(e.type)),
+        pack
+      );
 
-      const warnings = [];
-      for (const warning of parsed.warnings) {
+      const unresolvedWarnings = [];
+      for (const warning of [...parsed.warnings, ...warnings]) {
         const target = await prisma.entity.findUnique({
           where: {
             campaignId_type_domainId: {
@@ -90,15 +120,15 @@ export async function jsonRoutes(app) {
             }
           }
         });
-        if (!target || target.deletedAt) warnings.push(warning);
+        if (!target || target.deletedAt) unresolvedWarnings.push(warning);
       }
 
       const previewId = randomToken(18);
       app.importPreviews.set(previewId, {
         campaignId: request.campaign.id,
         userId: request.auth.user.id,
-        fileName: `${parsed.pack.packId}.json`,
-        pack: parsed.pack,
+        fileName: `${pack.packId}.json`,
+        pack,
         diff,
         versions: Object.fromEntries(existingRows.map(e => [`${e.type}:${e.domainId}`, e.version])),
         expiresAt: Date.now() + 15 * 60 * 1000
@@ -106,14 +136,15 @@ export async function jsonRoutes(app) {
       return {
         previewId,
         pack: {
-          schemaVersion: parsed.pack.schemaVersion,
-          packId: parsed.pack.packId,
-          name: parsed.pack.name,
-          language: parsed.pack.language,
-          containers: parsed.pack.containers,
+          schemaVersion: pack.schemaVersion,
+          packId: pack.packId,
+          name: pack.name,
+          language: pack.language,
+          containers: pack.containers,
+          operationCount: operations.length,
           diagnostics: parsed.diagnostics
         },
-        warnings,
+        warnings: unresolvedWarnings,
         diff
       };
     }

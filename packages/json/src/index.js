@@ -32,6 +32,21 @@ const v1PackSchema = z.strictObject({
     z.strictObject({ type: z.enum(entityTypes), data: z.record(z.string(), z.unknown()) })
   )
 });
+const v2OperationsSchema = z.strictObject({
+  schemaVersion: z.literal(ROOT_VERSION),
+  packId: z.string().min(1),
+  name: z.string().min(1),
+  language: z.string().default('pt-BR'),
+  operations: z.array(
+    z.strictObject({
+      type: z.enum(entityTypes),
+      id: z.string().min(1),
+      set: z.record(z.string(), z.unknown()).optional(),
+      add: z.record(z.string(), z.unknown()).optional(),
+      remove: z.record(z.string(), z.unknown()).optional()
+    }).refine((operation) => Object.keys(operation).some((key) => ['set', 'add', 'remove'].includes(key)), 'A operação precisa de set, add ou remove')
+  ).min(1)
+});
 export function stable(value) {
   return stableValue(value);
 }
@@ -50,6 +65,28 @@ export function parseSaoDataJson(input, options = {}) {
   if (byteLength(source) > (options.maxBytes ?? MAX_DEFAULT))
     throw new Error('JSON exceeds maximum size');
   const raw = parseRaw(input);
+  if (raw?.schemaVersion === ROOT_VERSION && Object.hasOwn(raw, 'operations')) {
+    const envelope = v2OperationsSchema.parse(raw);
+    const keys = new Set();
+    for (const operation of envelope.operations) {
+      const key = `${operation.type}:${operation.id}`;
+      if (keys.has(key)) throw new Error(`Operação duplicada: ${key}`);
+      keys.add(key);
+    }
+    return {
+      pack: {
+        schemaVersion: ROOT_VERSION,
+        packId: envelope.packId,
+        name: envelope.name,
+        language: envelope.language,
+        containers: [],
+        entities: [],
+        operations: envelope.operations
+      },
+      warnings: [],
+      diagnostics: []
+    };
+  }
   const legacy = raw?.schemaVersion === LEGACY_VERSION;
   const envelope = (legacy ? v1PackSchema : v2PackSchema).parse(raw);
   const diagnostics = [];
@@ -225,16 +262,19 @@ export const JSON_IMPORT_TEMPLATE = {
 };
 export function saoDataJsonSchema() {
   return z.toJSONSchema(
-    v2PackSchema.extend({
-      entities: z.array(
-        z.discriminatedUnion(
-          'type',
-          entityTypes.map((type) =>
-            z.strictObject({ type: z.literal(type), data: entitySchemas[type] })
+    z.union([
+      v2PackSchema.extend({
+        entities: z.array(
+          z.discriminatedUnion(
+            'type',
+            entityTypes.map((type) =>
+              z.strictObject({ type: z.literal(type), data: entitySchemas[type] })
+            )
           )
         )
-      )
-    }),
+      }),
+      v2OperationsSchema
+    ]),
     { unrepresentable: 'any' }
   );
 }

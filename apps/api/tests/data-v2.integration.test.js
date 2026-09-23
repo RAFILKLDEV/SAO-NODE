@@ -177,6 +177,35 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))('v2 com PostgreSQL real',
     expect(legacy.json().schemaVersion).toBe('1.0');
     expect(parseSaoDataJson(legacy.json()).pack.entities).toEqual(parsed.pack.entities);
   });
+  it('aplica operações compactas sem marcar entidades ausentes como removidas', async () => {
+    const image = 'https://example.test/boar.gif';
+    const document = {
+      schemaVersion: '2.0',
+      packId: 'test.monster-images',
+      name: 'Atualizar imagens de monstros',
+      operations: [
+        { type: 'monster', id: 'monster.boar', set: { '/media/image': image } }
+      ]
+    };
+
+    const p = await preview(document);
+    expect(p.pack.operationCount).toBe(1);
+    expect(p.diff).toHaveLength(1);
+    expect(p.diff[0]).toMatchObject({ key: 'monster:monster.boar', status: 'ALTERED' });
+    expect(p.diff.some((entry) => entry.status === 'REMOVED_FROM_JSON')).toBe(false);
+    const result = await call('POST', 'import/apply', {
+      previewId: p.previewId,
+      selectedKeys: ['monster:monster.boar']
+    });
+    expect(result.statusCode, result.body).toBe(200);
+    expect(result.json()).toMatchObject({ updated: 1, removed: 0 });
+    const monster = (await call('GET', 'monsters/monster.boar?format=2')).json();
+    expect(monster.data.media.image).toBe(image);
+    expect(monster.data.components).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'bite' }),
+      expect.objectContaining({ id: 'rage' })
+    ]));
+  });
   it('mantém visibilidade, slots, habilidades e tipos de conexão', async () => {
     const gmNpc = (await call('GET', 'npcs/npc.guide?format=2')).json();
     expect(gmNpc.data.links[0]).toMatchObject({ slot: 'locations', id: 'loc.child' });

@@ -42,4 +42,23 @@ describe('saoData JSON', () => {
   it('rejects duplicate IDs', () => {
     expect(() => parseSaoDataJson({ ...document, entities: [...document.entities, document.entities[0]] })).toThrow(/duplicado/i);
   });
+
+  it('parses compact entity operations without declaring containers', () => {
+    const parsed = parseSaoDataJson({
+      schemaVersion: '2.0',
+      packId: 'test.images',
+      name: 'Atualizar imagens',
+      operations: [
+        {
+          type: 'monster',
+          id: 'monster.test.boar',
+          set: { '/media/image': 'https://example.test/boar.gif' }
+        }
+      ]
+    });
+
+    expect(parsed.pack).toMatchObject({ containers: [], entities: [] });
+    expect(parsed.pack.operations).toHaveLength(1);
+    expect(() => buildDiff([], parsed.pack)).not.toThrow();
+  });
 });
