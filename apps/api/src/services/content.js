@@ -455,6 +455,12 @@ function accessFor({ baseVisibility, context, grants, targetKind, targetKey }) {
   });
 }
 
+function collectionAccess({ baseVisibility, context, grants, targetKind, targetKey, section }) {
+  const hasDirectGrant = grants.some((grant) => grant.targetKind === targetKind && grant.targetKey === targetKey);
+  if (hasDirectGrant) return accessFor({ baseVisibility, context, grants, targetKind, targetKey });
+  return accessFor({ baseVisibility, context, grants, targetKind: 'field', targetKey: `section.${section}` });
+}
+
 function sectionAccess({ entity, section, request, context, grants, fallback = 'public' }) {
   return accessFor({
     baseVisibility: entity.data?.sectionVisibility?.[section] ?? fallback,
@@ -830,13 +836,14 @@ export async function serializeEntityForRequest(entity, request, options = {}) {
     result.connections = entity.locationConnections
       .filter(
         (connection) =>
-          accessFor({
+          collectionAccess({
             baseVisibility: connection.visibility,
             request,
             context,
             grants,
             targetKind: 'location_connection',
-            targetKey: connection.connectionId
+            targetKey: connection.connectionId,
+            section: 'connections'
           }).allowed
       )
       .map(async (connection) => ({
@@ -870,13 +877,14 @@ export async function serializeEntityForRequest(entity, request, options = {}) {
         .filter((component) => component.kind === kind)
         .filter(
           (component) =>
-            accessFor({
+            collectionAccess({
               baseVisibility: component.visibility,
               request,
               context,
               grants,
               targetKind: targetKindByComponent[kind],
-              targetKey: component.componentId
+              targetKey: component.componentId,
+              section: kind === 'movement' ? 'movements' : `${kind}s`
             }).allowed
         )
         .map((component) => ({

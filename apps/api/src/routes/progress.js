@@ -48,6 +48,10 @@ async function canAccessProgress(request, progress) {
 async function serializeProgress(progress, request) {
   const { quest, evaluation } = evaluationFor(progress);
   if (isGm(request)) {
+    // Progress records for removed objectives stay in the database as history,
+    // but must not appear in the current mission/progress menus.
+    const currentObjectiveIds = new Set(quest.objectives.map((objective) => objective.objectiveId));
+    const currentObjectives = progress.objectives.filter((entry) => !entry.orphaned && currentObjectiveIds.has(entry.objectiveId));
     return {
       id: progress.id,
       questId: progress.questEntity.domainId,
@@ -59,7 +63,7 @@ async function serializeProgress(progress, request) {
       version: progress.version,
       percentage: evaluation.percentage,
       readyToComplete: evaluation.readyToComplete,
-      objectives: progress.objectives.map((entry) => ({
+      objectives: currentObjectives.map((entry) => ({
         objectiveId: entry.objectiveId,
         text: progress.questEntity.questObjectives.find((objective) => objective.objectiveId === entry.objectiveId)?.text ?? 'Objetivo removido',
         value: entry.value,

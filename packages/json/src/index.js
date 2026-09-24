@@ -60,6 +60,27 @@ function parseRaw(input) {
     throw new Error(`JSON inválido: ${error.message}`);
   }
 }
+function unwrapMarkdownLink(value) {
+  if (typeof value !== 'string') return value;
+  const match = value.match(/^\[[^\]]*\]\((https?:\/\/[^\s)]+)\)(.*)$/i);
+  if (!match) return value;
+  return `${match[1]}${match[2].replaceAll('*', '')}`;
+}
+function normalizeOperationChanges(operation) {
+  return {
+    ...operation,
+    ...Object.fromEntries(
+      ['set', 'add', 'remove']
+        .filter((kind) => operation[kind])
+        .map((kind) => [
+          kind,
+          Object.fromEntries(
+            Object.entries(operation[kind]).map(([path, value]) => [path, unwrapMarkdownLink(value)])
+          )
+        ])
+    )
+  };
+}
 export function parseSaoDataJson(input, options = {}) {
   const source = typeof input === 'string' ? input : JSON.stringify(input);
   if (byteLength(source) > (options.maxBytes ?? MAX_DEFAULT))
@@ -81,7 +102,7 @@ export function parseSaoDataJson(input, options = {}) {
         language: envelope.language,
         containers: [],
         entities: [],
-        operations: envelope.operations
+        operations: envelope.operations.map(normalizeOperationChanges)
       },
       warnings: [],
       diagnostics: []

@@ -51,6 +51,8 @@ Para alterar campos de entidades já existentes sem reenviar a ficha completa, a
 
 As operações são aplicadas sobre o estado atual para gerar a prévia, validar o resultado e preservar todos os campos omitidos. Elas só atualizam entidades existentes, não declaram `containers` e nunca geram `REMOVED_FROM_JSON`; a prévia continua permitindo selecionar os alvos antes da transação final.
 
+Valores URL em `set`, `add` e `remove` aceitam tanto a URL pura quanto um link Markdown completo, como `[Imagem](https://exemplo.com/imagem.gif)`. O importador extrai e armazena somente a URL de destino. Também corrige URLs cortadas por Markdown quando um segmento fica após o link, incluindo `[Imagem](https://exemplo.com/wiki/Special):Redirect/file/imagem.gif` e trechos com ênfase, como `[Imagem](https://exemplo.com/arquivo-)*nome*.png`.
+
 | Entidade | Estrutura específica | Namespace |
 | --- | --- | --- |
 | NPC | `identity`, `services`, `factions`, `character` | `npc.` |

@@ -1,4 +1,4 @@
-import { isV2Entity, migrateV1Entity, normalizeEntity, toLegacyEntity } from '@sao/domain';
+import { isV2Entity, migrateV1Entity, normalizeEntity, toLegacyEntity, sectionFields } from '@sao/domain';
 import { prepareEntityPayload } from './entityForm.js';
 
 export function createEntityDraft(type, input) {
@@ -34,4 +34,25 @@ export function prepareCanonicalPayload(type, draft) {
   const controls = draftControls(type, draft);
   const clean = prepareEntityPayload(type, controls);
   return normalizeEntity(type, updateEntityDraft(type, clean), { format: '2.0' });
+}
+
+// Apply only to new records created in the editor. Existing records retain their permissions.
+export function discoverableCreation(type, data) {
+  const result = structuredClone(data);
+  const hidden = (value) => value === 'gm' ? 'gm' : 'discoverable';
+  const sections = new Set([...Object.keys(sectionFields[type] ?? {}), 'references', 'additional',
+    'extensions', 'extraStatBlocks', ...Object.keys(result.visibility?.sections ?? {})]);
+  result.visibility = { ...result.visibility, entity: 'discoverable', sections: Object.fromEntries(
+    [...sections].map((key) => [key, hidden(result.visibility?.sections?.[key])])
+  ) };
+  for (const collection of ['fields', 'objectives', 'connections', 'components']) {
+    if (result[collection]) result[collection] = result[collection].map((entry) => ({ ...entry, visibility: hidden(entry.visibility) }));
+  }
+  if (type === 'monster') {
+    for (const sheet of Object.values(result.statBlocks ?? {})) {
+      const keys = new Set(['basic', 'nd', 'type', 'subtype', 'size', 'combat', 'resources', 'resistances', 'attributes', ...Object.keys(sheet.statsVisibility ?? {})]);
+      sheet.statsVisibility = Object.fromEntries([...keys].map((key) => [key, hidden(sheet.statsVisibility?.[key])]));
+    }
+  }
+  return result;
 }

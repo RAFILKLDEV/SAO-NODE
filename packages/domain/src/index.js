@@ -414,7 +414,14 @@ export function evaluateQuestProgress(quest, progressByObjective = {}) {
   objectives.forEach(o => evaluate(o.objectiveId));
   const required = objectives.filter(o => !o.optional);
   const complete = required.filter(o => states[o.objectiveId].complete).length;
-  return { percentage: required.length ? Math.round(complete / required.length * 100) : 100, readyToComplete: complete === required.length, objectives: states };
+  const totalQuantity = required.reduce((sum, objective) => sum + Math.max(1, Number(objective.requiredQuantity ?? 1)), 0);
+  const achievedQuantity = required.reduce((sum, objective) => {
+    const state = states[objective.objectiveId];
+    if (state.blocked) return sum;
+    return sum + Math.min(state.value, Math.max(1, Number(objective.requiredQuantity ?? 1)));
+  }, 0);
+  const percentage = totalQuantity ? Math.round(achievedQuantity / totalQuantity * 100) : 100;
+  return { percentage, readyToComplete: complete === required.length, objectives: states };
 }
 
 export function visiblePlayerProgress(quest, evaluation) {
@@ -502,5 +509,6 @@ export class MockCharacterProvider extends ManualCharacterProvider {}
 // available to the API compatibility adapter and are intentionally not used
 // by JSON parsing.
 export * from './v2.js';
+export * from './associations.js';
 
 export * from './entityMetadata.js';

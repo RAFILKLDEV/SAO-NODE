@@ -10,7 +10,7 @@ import { api } from '../lib/api.js';
 import { LocationImage, LocationImagePicker } from '../components/LocationImage.jsx';
 import { locationImageUrlError } from '../lib/locationImage.js';
 
-import { createEntityDraft, draftControls, updateEntityDraft, prepareCanonicalPayload } from '../lib/entityDraft.js';
+import { createEntityDraft, draftControls, updateEntityDraft, prepareCanonicalPayload, discoverableCreation } from '../lib/entityDraft.js';
 
 import { hasRenderableContent } from '../lib/entityContent.js';
 
@@ -45,7 +45,8 @@ import {
 } from '../lib/locationMenu.js';
 
 import { filterMonstersByLocation } from '../lib/monsterLocationFilter.js';
-import { baseDiscoveryTargets, discoveryTargetKey, npcDiscoveryTargets, availableDiscoveryTargets, expandDiscoveryTargets } from '../lib/discoveryTargets.js';
+import { locationBranchEntries, locationDiscoveryRows } from '../lib/locationDiscovery.js';
+import { baseDiscoveryTargets, discoveryTargetKey, npcDiscoveryTargets, questDiscoveryTargets, categorizedDiscoveryTypes, categorizedDiscoveryTargets, availableDiscoveryTargets, expandDiscoveryTargets, groupDiscoveryTargetsForDisplay } from '../lib/discoveryTargets.js';
 
 
 const autoIdTypes = new Set(entityTypes);
@@ -106,7 +107,7 @@ function starter(type) {
 
     source: { kind: 'local', modifiedLocally: true },
 
-    baseVisibility: 'gm',
+    baseVisibility: 'discoverable',
 
     sectionVisibility: {
 
@@ -780,19 +781,86 @@ export function ReferenceCombobox({ references = [], campaignId, label = 'Refer�
 
 
 
-function QuestAssign({ campaignId, questId }) {
+function QuestAssign({ campaignId, questId, questName }) {
+
+  const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
 
-  const [ownerId, setOwnerId] = useState('');
+  const [selectedOwners, setSelectedOwners] = useState(() => new Set());
+  const [search, setSearch] = useState('');
+  const dialogRef = useRef(null);
+  useEffect(() => {
+    if (open) dialogRef.current?.showModal();
+    else dialogRef.current?.close();
+  }, [open]);
 
   const memberships = useQuery({ queryKey: ['memberships', campaignId], queryFn: () => api(`/api/v1/campaigns/${campaignId}/memberships`) });
 
-  const assign = useMutation({ mutationFn: () => api(`/api/v1/campaigns/${campaignId}/progress`, { method: 'POST', body: { questId, ownerType: 'player', ownerId } }) });
+  const progress = useQuery({
+    queryKey: ['progress', campaignId, 'quest', questId, 'assignment'],
+    queryFn: () => api(`/api/v1/campaigns/${campaignId}/progress`),
+    enabled: open
+  });
 
   const players = (memberships.data ?? []).filter((entry) => !['owner', 'gm', 'assistant_gm'].includes(entry.role));
+  const assignedIds = new Set((progress.data ?? [])
+    .filter((entry) => entry.questId === questId && entry.ownerType === 'player')
+    .map((entry) => entry.ownerId));
+  const availablePlayers = players.filter((entry) => !assignedIds.has(entry.user.login) && !assignedIds.has(entry.user.id));
+  const assignedPlayers = players.filter((entry) => assignedIds.has(entry.user.login) || assignedIds.has(entry.user.id));
+  const matchesSearch = ({ user }) => `${user.name} ${user.login}`.toLocaleLowerCase('pt-BR').includes(search.trim().toLocaleLowerCase('pt-BR'));
+  const filteredAvailable = availablePlayers.filter(matchesSearch);
+  const loading = memberships.isLoading || progress.isLoading;
+  const loadError = memberships.isError || progress.isError;
+  const toggleOwner = (ownerId) => setSelectedOwners((current) => {
+    const next = new Set(current);
+    next.has(ownerId) ? next.delete(ownerId) : next.add(ownerId);
+    return next;
+  });
+  const toggleAll = () => setSelectedOwners((current) =>
+    filteredAvailable.every((entry) => current.has(entry.user.login))
+      ? new Set([...current].filter((id) => !filteredAvailable.some((entry) => entry.user.login === id)))
+      : new Set([...current, ...filteredAvailable.map((entry) => entry.user.login)])
+  );
+  const assign = useMutation({
+    mutationFn: () => Promise.all([...selectedOwners].map((ownerId) => api(`/api/v1/campaigns/${campaignId}/progress`, {
+      method: 'POST',
+      body: { questId, ownerType: 'player', ownerId }
+    }))),
+    onSettled: async () => {
+      setSelectedOwners(new Set());
+      await queryClient.invalidateQueries({ queryKey: ['progress', campaignId] });
+    }
+  });
 
-  return <div className="quest-assign"><button type="button" onClick={() => setOpen((value) => !value)}>{open ? 'Fechar atribuição' : 'Atribuir missão'}</button>{open && <div className="quest-assign-form"><label>Jogador ou personagem<select value={ownerId} onChange={(event) => setOwnerId(event.target.value)}><option value="">Selecione</option>{players.map((entry) => <option key={entry.user.id} value={entry.user.login}>{entry.user.name} (personagem)</option>)}</select></label><button className="primary" disabled={!ownerId || assign.isPending} onClick={() => assign.mutate()}>{assign.isSuccess ? 'Missão atribuída' : 'Iniciar missão em progresso'}</button>{assign.error && <small className="error">{assign.error.message}</small>}</div>}</div>;
+  const avatar = (user) => <span className="quest-assignment-avatar" aria-hidden="true">{user.characterImageUrl ? <img src={user.characterImageUrl} alt="" /> : (user.name ?? 'J').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('')}</span>;
+
+  return <div className="quest-assign"><button type="button" onClick={() => { setSelectedOwners(new Set()); setSearch(''); assign.reset(); setOpen(true); }}>Atribuir missão</button>
+    <dialog ref={dialogRef} className="modal quest-assign-modal" aria-labelledby="quest-assign-title" onCancel={() => setOpen(false)} onClose={() => setOpen(false)}>
+    <div className="modal-head"><div><small>MISSÕES · JOGADORES</small><h2 id="quest-assign-title">Atribuir missão</h2><p>{questName}</p></div><button type="button" aria-label="Fechar atribuição" onClick={() => setOpen(false)}>×</button></div>
+    <div className="modal-content quest-assign-form">
+    <label className="quest-assignment-search">Buscar jogador<input type="search" value={search} placeholder="Nome ou login…" onChange={(event) => setSearch(event.target.value)} /></label>
+    {loading ? <p className="quest-assignment-empty">Carregando jogadores…</p> : loadError ? <div role="alert">Não foi possível carregar os jogadores. <button onClick={() => { memberships.refetch(); progress.refetch(); }}>Tentar novamente</button></div> : <div className="quest-assignment-columns">
+    <section aria-label="Jogadores disponíveis"><div className="quest-assignment-section-head"><h3>Disponíveis <span>{availablePlayers.length}</span></h3><button type="button" onClick={toggleAll} disabled={!filteredAvailable.length || assign.isPending}>{filteredAvailable.length > 0 && filteredAvailable.every((entry) => selectedOwners.has(entry.user.login)) ? 'Limpar seleção' : 'Selecionar todos'}</button></div>
+    <p className="quest-assignment-hint">Marque quem vai iniciar esta missão.</p>
+    <div className="quest-assignment-list">
+      {filteredAvailable.map((entry) => {
+        const ownerId = entry.user.login;
+        return <label key={entry.user.id} className={`quest-assignment-row ${selectedOwners.has(ownerId) ? 'selected' : ''}`}>
+          <input type="checkbox" checked={selectedOwners.has(ownerId)} disabled={assign.isPending} onChange={() => toggleOwner(ownerId)} />
+          {avatar(entry.user)}<span className="quest-assignment-name"><strong>{entry.user.name}</strong><small>@{entry.user.login}</small></span>
+        </label>;
+      })}
+      {!filteredAvailable.length && <p className="quest-assignment-empty">{search ? 'Nenhum jogador encontrado.' : 'Nenhum jogador disponível para atribuição.'}</p>}
+    </div></section>
+    <section className="quest-assignment-existing" aria-label="Jogadores com a missão"><div className="quest-assignment-section-head"><h3>Já possuem <span>{assignedPlayers.length}</span></h3></div><p className="quest-assignment-hint">Jogadores que receberam esta missão.</p><div className="quest-assignment-list">{assignedPlayers.filter(matchesSearch).map(({ user }) => <div className="quest-assignment-row" key={user.id}>{avatar(user)}<span className="quest-assignment-name"><strong>{user.name}</strong><small>@{user.login}</small></span><span className="quest-assignment-badge" aria-label="Missão atribuída">✓</span></div>)}{!assignedPlayers.filter(matchesSearch).length && <p className="quest-assignment-empty">{search ? 'Nenhum jogador encontrado.' : 'Ninguém recebeu esta missão ainda.'}</p>}</div></section>
+    </div>}
+    {assign.isSuccess && <small className="success" role="status">Missão atribuída aos jogadores selecionados.</small>}
+    {assign.error && <small className="error">{assign.error.message}</small>}
+    </div>
+    <div className="modal-actions"><span className="quest-assignment-count" role="status"><strong>{selectedOwners.size}</strong> selecionado{selectedOwners.size === 1 ? '' : 's'}</span><button type="button" onClick={() => setOpen(false)}>Fechar</button><button className="primary" disabled={loading || loadError || !selectedOwners.size || assign.isPending} onClick={() => assign.mutate()}>{assign.isPending ? 'Atribuindo…' : 'Confirmar atribuição'}</button></div>
+  </dialog></div>;
 
 }
 
@@ -832,6 +900,10 @@ function DataGrid({ data, omit = [] }) {
 
               <pre>{JSON.stringify(value, null, 2)}</pre>
 
+            ) : key === 'rarity' ? (
+
+              <span className={rarityClass(value)}>{String(dataValueLabel(key, value))}</span>
+
             ) : (
 
               String(dataValueLabel(key, value))
@@ -853,7 +925,38 @@ function DataGrid({ data, omit = [] }) {
 
 
 const optionLabel = (options, value) => options.find((option) => option.value === value)?.label ?? value;
+const rarityClass = (value) => {
+  const normalized = String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return ({
+    incomum: 'rarity-uncommon',
+    uncommon: 'rarity-uncommon',
+    raro: 'rarity-rare',
+    rare: 'rarity-rare',
+    epico: 'rarity-mythic',
+    mitico: 'rarity-mythic',
+    epic: 'rarity-mythic',
+    lendario: 'rarity-legendary',
+    legendary: 'rarity-legendary',
+    imortal: 'rarity-immortal',
+    unico: 'rarity-immortal',
+    unique: 'rarity-immortal'
+  })[normalized] ?? '';
+};
 
+const itemCategoryFilters = [
+  { value: 'all', label: 'Todos', emoji: '✦' },
+  { value: 'weapon', label: 'Armas', emoji: '⚔️' },
+  { value: 'armor', label: 'Armaduras', emoji: '🛡️' },
+  { value: 'shield', label: 'Escudos', emoji: '🔰' },
+  { value: 'ammunition', label: 'Munições', emoji: '🎯' },
+  { value: 'consumable', label: 'Consumíveis', emoji: '🧪' },
+  { value: 'equipment', label: 'Equipamentos', emoji: '🎒' },
+  { value: 'tool', label: 'Ferramentas', emoji: '🔧' },
+  { value: 'material', label: 'Materiais', emoji: '🪵' },
+  { value: 'treasure', label: 'Tesouros', emoji: '💎' },
+  { value: 'quest', label: 'Missões', emoji: '📜' },
+  { value: 'misc', label: 'Diversos', emoji: '📦' }
+];
 
 
 function dataValueLabel(key, value) {
@@ -867,8 +970,6 @@ function dataValueLabel(key, value) {
   return value;
 
 }
-
-
 
 function formatItemValue(value) {
 
@@ -1806,7 +1907,7 @@ function TypeDetails({ entity, type, campaignId, isGm, onGrant }) {
 
 
 
-function QuestPlayers({ campaignId, questId }) {
+function QuestPlayers({ campaignId, questId, questObjectives = [] }) {
 
   const viewers = useQuery({
 
@@ -1841,6 +1942,7 @@ function QuestPlayers({ campaignId, questId }) {
   );
 
   const players = discoveredPlayers.filter((player) => progressFor(player));
+  const currentObjectiveIds = new Set(questObjectives.map((objective) => objective.objectiveId));
 
 
 
@@ -1876,7 +1978,7 @@ function QuestPlayers({ campaignId, questId }) {
 
                 <strong>{progressFor(player).percentage ?? 0}% concluído</strong>
 
-                {progressFor(player).objectives?.filter((objective) => !objective.secret).map((objective) => (
+                {progressFor(player).objectives?.filter((objective) => currentObjectiveIds.has(objective.objectiveId) && objective.text !== 'Objetivo removido' && !objective.secret).map((objective) => (
 
                   <small key={objective.objectiveId}>{objective.text || 'Objetivo'}: {objective.value ?? 0}/{objective.requiredQuantity ?? 1}</small>
 
@@ -2016,11 +2118,11 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
       </div>
 
-      {(type === 'location' || type === 'npc' || hasBasicData || entityImage(entity)) && (
+      {(type === 'location' || type === 'npc' || type === 'item' || hasBasicData || entityImage(entity)) && (
 
-        <div className={`entity-overview ${type === 'location' || type === 'npc' || entityImage(entity) ? 'has-image' : ''}`}>
+        <div className={`entity-overview ${type === 'location' || type === 'npc' || type === 'item' || entityImage(entity) ? 'has-image' : ''}`}>
 
-          {(type === 'location' || type === 'npc')
+          {(type === 'location' || type === 'npc' || type === 'item')
             ? <LocationImage variant={type} key={`${entity.id}:${entityImage(entity)}`} src={entityImage(entity)} name={formatEntityName(entity)} onEdit={isGm ? onEdit : undefined} />
             : entityImage(entity) && <img className="entity-portrait" src={entityImage(entity)} alt={formatEntityName(entity)} />}
 
@@ -2038,9 +2140,9 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
       )}
 
-      {type === 'quest' && isGm && <QuestAssign campaignId={campaignId} questId={entity.id} />}
+      {type === 'quest' && isGm && <QuestAssign key={entity.id} campaignId={campaignId} questId={entity.id} questName={formatEntityName(entity)} />}
 
-      {type === 'quest' && isGm && <QuestPlayers campaignId={campaignId} questId={entity.id} />}
+      {type === 'quest' && isGm && <QuestPlayers campaignId={campaignId} questId={entity.id} questObjectives={entity.objectives ?? []} />}
 
       <div className="field-grid">
 
@@ -2136,6 +2238,10 @@ export function monsterComponentTargets(entity, kind) {
 
 function bulkTargets(entity, type) {
 
+  if (categorizedDiscoveryTypes.includes(type)) return categorizedDiscoveryTargets(type, [entity]);
+
+  if (type === 'quest') return questDiscoveryTargets(entity);
+
   const targets = [];
 
   for (const field of entity.fields ?? []) targets.push({ kind: 'field', key: field.key, label: fieldLabels[field.key] ?? field.key });
@@ -2151,8 +2257,6 @@ function bulkTargets(entity, type) {
       targets.push(...monsterComponentTargets(entity, kind));
 
   }
-
-  if (type === 'quest') for (const objective of entity.objectives ?? []) targets.push({ kind: 'objective', key: objective.objectiveId, label: objective.text || 'Objetivo sem nome' });
 
   if (type === 'location') for (const connection of entity.connections ?? []) targets.push({ kind: 'location_connection', key: connection.connectionId, label: formatEntityName(connection.target, 'Local indisponível') });
 
@@ -3110,7 +3214,7 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
         {activeTab === 'general' && <div className="form-grid">
 
-          {(type === 'npc' || type === 'monster') && <CharacterImagePicker campaignId={campaignId} value={data} onChange={setData} label={type === 'monster' ? 'Imagem do monstro' : 'Foto do personagem'} />}
+          {(type === 'npc' || type === 'monster' || type === 'item') && <CharacterImagePicker campaignId={campaignId} value={data} onChange={setData} label={type === 'monster' ? 'Imagem do monstro' : type === 'item' ? 'Imagem do item' : 'Foto do personagem'} />}
 
           <FormField label="Nome" value={data.name} onChange={(value) => setData({ ...data, name: value, ...(autoIdTypes.has(type) && isNew ? { id: idFromName(type, value) } : {}) })} />
 
@@ -3202,7 +3306,10 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
 function EntityEditor({ type, initial, version, onClose, onSaved, campaignId }) {
 
-  const [draft, setDraft] = useState(() => createEntityDraft(type, initial));
+  const [draft, setDraft] = useState(() => {
+    const data = createEntityDraft(type, initial);
+    return version ? data : discoverableCreation(type, data);
+  });
   const [locationImage, setLocationImage] = useState(() => ({ file: null, url: draft.media?.image ?? '' }));
   const uploadedImage = useRef(null);
   const savingRef = useRef(false);
@@ -3258,7 +3365,7 @@ function EntityEditor({ type, initial, version, onClose, onSaved, campaignId }) 
 
         headers: version ? { 'if-match': String(version) } : {},
 
-        body: payload
+        body: version ? payload : discoverableCreation(type, payload)
 
       });
 
@@ -3522,7 +3629,7 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
 
   const targets = request.entities?.length
     ? [
-      ...(request.targets ?? baseDiscoveryTargets),
+      ...(request.categories ?? request.targets ?? baseDiscoveryTargets),
       ...(entityType === 'npc' ? npcDiscoveryTargets(request.entities).filter((target) => !(request.targets ?? []).some((item) => discoveryTargetKey(item) === discoveryTargetKey(target))) : []),
       ...request.entities.flatMap((entry) => (entry.objectives ?? []).map((objective) => ({
         kind: 'objective',
@@ -3535,7 +3642,7 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
 
     ]
 
-    : (request.targets?.length ? request.targets : [{ kind: 'entity', key: 'existence', label: 'Existência do registro' }]);
+    : (request.categories?.length ? request.categories : (request.targets?.length ? request.targets : [{ kind: 'entity', key: 'existence', label: 'Existência do registro' }]));
 
   const entities = request.entities?.length
 
@@ -3548,6 +3655,7 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
   const [selectedEntities, setSelectedEntities] = useState(() => new Set(request.initialSelectedEntities ?? []));
   const requiredTargetKeys = new Set(['entity:existence', 'field:section.basic', 'field:imageURL']);
   const optionalTargets = availableDiscoveryTargets(targets.filter((target) => !requiredTargetKeys.has(discoveryTargetKey(target))), entities, selectedEntities, entityType, entityId);
+  const displayTargets = groupDiscoveryTargetsForDisplay(optionalTargets);
   const [selectedTargets, setSelectedTargets] = useState(() => new Set(
 
     request.bulk
@@ -3597,6 +3705,7 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
   });
 
   const exceedsBatchLimit = grantsToSend.length > 500;
+  const grantBatches = chunkDiscoveryGrants(grantsToSend);
 
   const canConfirm = canConfirmDiscoveryGrant({
 
@@ -3612,15 +3721,14 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
 
   const save = useMutation({
 
-    mutationFn: () =>
-
-      api(`/api/v1/campaigns/${campaignId}/discoveries/batch`, {
-
-        method: 'POST',
-
-          body: { grants: grantsToSend }
-
-      }),
+    mutationFn: async () => {
+      for (const grants of grantBatches) {
+        await api(`/api/v1/campaigns/${campaignId}/discoveries/batch`, {
+          method: 'POST',
+          body: { grants }
+        });
+      }
+    },
 
     onSuccess: async () => {
 
@@ -3679,8 +3787,21 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
     });
 
   const toggleTarget = (target) => setSelectedTargets((current) => {
+    const targetsToToggle = target.kind === 'group' ? [target, ...(target.children ?? target.targets ?? [])] : [target];
+    const keys = targetsToToggle.map((item) => discoveryTargetKey(item));
+    const next = new Set(current);
+    const allSelected = keys.every((key) => next.has(key));
+    for (const key of keys) allSelected ? next.delete(key) : next.add(key);
 
-    const key = `${target.kind}:${target.key}`;
+    return next;
+
+  });
+
+  const discoveryEntityKey = (entry) => `${entry.entityType ?? entityType}:${entry.entityId ?? entry.id ?? entityId}`;
+
+  const toggleEntity = (entry) => setSelectedEntities((current) => {
+
+    const key = discoveryEntityKey(entry);
 
     const next = new Set(current);
 
@@ -3690,16 +3811,13 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
 
   });
 
-  const toggleEntity = (entry) => setSelectedEntities((current) => {
-
-    const key = `${entry.entityType ?? entityType}:${entry.entityId ?? entityId}`;
-
+  const toggleLocationBranch = (entry) => setSelectedEntities((current) => {
+    const branchEntries = locationBranchEntries(entities, entry);
+    const keys = branchEntries.map(discoveryEntityKey);
     const next = new Set(current);
-
-    next.has(key) ? next.delete(key) : next.add(key);
-
+    const allSelected = keys.length > 0 && keys.every((key) => next.has(key));
+    for (const key of keys) allSelected ? next.delete(key) : next.add(key);
     return next;
-
   });
 
   const selectAll = () => {
@@ -3795,18 +3913,21 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
               <small className="muted">Ao trocar a região, selecione novamente os monstros.</small>
             </div>}
             {hasRegionFilter && !entities.length && <div className="empty-list">Nenhum monstro nesta região.</div>}
-            {entities.map((entry) => {
-              const entityName = formatEntityName(entry, entry.entityId ?? 'Registro sem nome');
+            {(entityType === 'location' ? locationDiscoveryRows(entities) : entities.map((entry) => ({ entry }))).map((row) => {
+              const { entry } = row;
+              if (!entry) return <div key={row.key} className={`discovery-location-heading ${row.kind}`} style={{ paddingLeft: `${row.depth * 16 + 4}px` }}>{row.label}</div>;
+              const entityName = row.label ?? formatEntityName(entry, entry.entityId ?? 'Registro sem nome');
               return (
-                <label key={`${entry.entityType ?? entityType}:${entry.entityId ?? entityId}`} className={selectedEntities.has(`${entry.entityType ?? entityType}:${entry.entityId ?? entityId}`) ? 'selected' : ''}>
+                <label key={discoveryEntityKey(entry)} style={row.depth != null ? { marginLeft: `${row.depth * 16}px` } : undefined} className={`discovery-location-row ${row.kind ?? ''} ${selectedEntities.has(discoveryEntityKey(entry)) ? 'selected' : ''}`}>
                   <input
                     type="checkbox"
-                    checked={selectedEntities.has(`${entry.entityType ?? entityType}:${entry.entityId ?? entityId}`)}
-                    onChange={() => toggleEntity(entry)}
+                    checked={selectedEntities.has(discoveryEntityKey(entry))}
+                    onChange={() => row.kind === 'region' ? toggleLocationBranch(entry) : toggleEntity(entry)}
                   />
-                  <span className="bulk-picker-avatar" aria-hidden="true">
+                  <span className="tree-marker" aria-hidden="true">{row.kind === 'region' ? '⌖' : '•'}</span>
+                  {entityType !== 'location' && <span className="bulk-picker-avatar" aria-hidden="true">
                     {entry.imageURL ? <img src={entry.imageURL} alt="" /> : entityName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
-                  </span>
+                  </span>}
                   <span title={entityName}>{entityName}</span>
                 </label>
               );
@@ -3817,13 +3938,39 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
           <div className="bulk-target-picker">
             <div className="bulk-picker-head"><strong>Campos para liberar</strong><button onClick={toggleAllTargets}>{optionalTargets.length && optionalTargets.every((target) => selectedTargets.has(discoveryTargetKey(target))) ? 'Desselecionar todos' : 'Selecionar todos'}</button></div>
             <small className="bulk-required-note">✓ Existência do registro · ✓ Informações básicas · ✓ Foto de perfil (incluídos automaticamente)</small>
-            {entityType === 'npc' && <small className="bulk-required-note">Campos vazios também serão liberados e aparecerão quando forem preenchidos</small>}
-            {targets.filter((target) => !requiredTargetKeys.has(discoveryTargetKey(target))).map((target) => {
-              const available = !target.availableEntityIds || optionalTargets.some((item) => discoveryTargetKey(item) === discoveryTargetKey(target));
+            {(entityType === 'npc' || categorizedDiscoveryTypes.includes(entityType)) && <small className="bulk-required-note">Campos vazios também serão liberados e aparecerão quando forem preenchidos</small>}
+            {displayTargets.map((target) => {
+              if (target.kind === 'group') {
+                const groupKey = discoveryTargetKey(target);
+                const groupSelected = target.children.every((child) => selectedTargets.has(discoveryTargetKey(child)));
+                const groupAvailable = categorizedDiscoveryTypes.includes(entityType) || !target.availableEntityIds;
+                return (
+                  <div key={groupKey} className="discovery-field-group">
+                    <label className={`${groupSelected || selectedTargets.has(groupKey) ? 'selected' : ''} ${!groupAvailable ? 'disabled' : ''}`}>
+                      <input type="checkbox" disabled={!groupAvailable} checked={groupSelected || selectedTargets.has(groupKey)} onChange={() => toggleTarget(target)} />
+                      <span>{target.label ?? target.key}{target.description && <small className="bulk-group-description">{target.description}</small>}</span>
+                    </label>
+                    <div className="discovery-field-group-items">
+                      {target.children.map((child) => {
+                        const childKey = discoveryTargetKey(child);
+                        const available = categorizedDiscoveryTypes.includes(entityType) || !child.availableEntityIds || optionalTargets.some((item) => discoveryTargetKey(item) === childKey);
+                        return (
+                          <label key={childKey} className={`${selectedTargets.has(childKey) ? 'selected' : ''} ${!available ? 'disabled' : ''}`}>
+                            <input type="checkbox" disabled={!available} checked={selectedTargets.has(childKey)} onChange={() => toggleTarget(child)} />
+                            <span>{child.label ?? child.key}{child.description && <small className="bulk-group-description">{child.description}</small>}{!available && <small> · vazio</small>}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              const available = categorizedDiscoveryTypes.includes(entityType) || !target.availableEntityIds || optionalTargets.some((item) => discoveryTargetKey(item) === discoveryTargetKey(target));
               return (
                 <label key={discoveryTargetKey(target)} className={`${selectedTargets.has(discoveryTargetKey(target)) ? 'selected' : ''} ${!available ? 'disabled' : ''}`}><input type="checkbox" disabled={!available} checked={selectedTargets.has(discoveryTargetKey(target))} onChange={() => toggleTarget(target)} /><span>{target.label ?? target.key}{target.description && <small className="bulk-group-description">{target.description}</small>}{!available && <small> · vazio</small>}</span></label>
               );
-              })}
+            })}
           </div>
           <div className="bulk-target-picker">
             <div className="bulk-picker-head"><strong>Jogadores</strong><button onClick={toggleAllPlayers}>{selected.size === players.length ? 'Desselecionar todos' : 'Selecionar todos'}</button></div>
@@ -3913,7 +4060,7 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
 
         </div>}
 
-        {exceedsBatchLimit && <div className="alert error" role="alert">A seleção gera {grantsToSend.length} permissões; o limite por envio é 500. Reduza a quantidade de personagens, campos ou jogadores selecionados.</div>}
+        {exceedsBatchLimit && <div className="alert" role="status">A seleção gera {grantsToSend.length} permissões e será enviada em {grantBatches.length} lotes.</div>}
         {save.error && <div className="alert error">{save.error.message}</div>}
 
         </div>
@@ -3960,7 +4107,7 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
 
             className="primary"
 
-            disabled={!canConfirm || !grantsToSend.length || exceedsBatchLimit || save.isPending}
+            disabled={!canConfirm || !grantsToSend.length || save.isPending}
 
             onClick={() => save.mutate()}
 
@@ -4006,6 +4153,12 @@ export function canConfirmDiscoveryGrant({
 
 }
 
+export function chunkDiscoveryGrants(grants = [], size = 500) {
+  const batches = [];
+  for (let index = 0; index < grants.length; index += size) batches.push(grants.slice(index, index + size));
+  return batches;
+}
+
 
 
 export function buildBulkEntityDiscoveryRequest({ type, items = [] }) {
@@ -4020,16 +4173,38 @@ export function buildBulkEntityDiscoveryRequest({ type, items = [] }) {
 
     : items;
 
-  return {
+  const questItemsHaveDetails = type === 'quest' && orderedItems.some((item) =>
+    item.objectives?.length || item.fields?.length || Object.keys(item.sectionVisibility ?? {}).length
+  );
+  const questTargets = questItemsHaveDetails
+    ? questDiscoveryTargets({
+      fields: orderedItems.flatMap((item) => item.fields ?? []),
+      sectionVisibility: Object.assign({}, ...orderedItems.map((item) => item.sectionVisibility ?? {})),
+      objectives: orderedItems.flatMap((item) => item.objectives ?? [])
+    })
+    : [{ kind: 'entity', key: 'existence', label: 'Existência do registro' }];
+
+  const result = {
 
     label: bulkEntityLabels[type] ?? 'Liberar registros',
 
-    targets: [{ kind: 'entity', key: 'existence', label: 'Existência do registro' }],
+    targets: categorizedDiscoveryTypes.includes(type)
+      ? categorizedDiscoveryTargets(type, orderedItems)
+      : questTargets,
     bulk: true,
 
-    entities: orderedItems.map((item) => ({
+    entities: orderedItems.map((item) => {
+      const entity = {
       ...(item.fields?.length ? { fields: item.fields, identity: item.identity, locations: item.locations, relations: item.relations, services: item.services, t20: item.t20, references: item.references } : {}),
       ...(type === 'monster' && item.references ? { references: item.references } : {}),
+      ...(type === 'location' && item.connections?.length ? { connections: item.connections } : {}),
+      ...(type === 'monster' ? {
+        ...(item.movements?.length ? { movements: item.movements } : {}),
+        ...(item.attacks?.length ? { attacks: item.attacks } : {}),
+        ...(item.abilities?.length ? { abilities: item.abilities } : {}),
+        ...(item.skills?.length ? { skills: item.skills } : {}),
+        ...(item.traits?.length ? { traits: item.traits } : {})
+      } : {}),
       entityType: type,
 
       entityId: item.id,
@@ -4042,9 +4217,22 @@ export function buildBulkEntityDiscoveryRequest({ type, items = [] }) {
 
       ...(type === 'quest' && item.objectives?.length ? { objectives: item.objectives.map((objective) => ({ objectiveId: objective.objectiveId, text: objective.text })) } : {})
 
-    }))
-
+      };
+      if (type === 'location') {
+        Object.defineProperties(entity, {
+          treeName: { value: item.name, enumerable: false },
+          type: { value: item.type, enumerable: false },
+          parentId: { value: item.parentId, enumerable: false },
+          placement: { value: { ...item.placement, floor: locationFloor(item, items) }, enumerable: false }
+        });
+      }
+      return entity;
+    }),
   };
+  if (categorizedDiscoveryTypes.includes(type)) Object.defineProperty(result, 'categories', {
+    value: categorizedDiscoveryTargets(type, orderedItems), enumerable: true, configurable: true
+  });
+  return result;
 
 }
 
@@ -4213,7 +4401,7 @@ function LocationMenuImage({ entity }) {
   return src ? <img key={src} className="location-menu-image" src={src} alt="" aria-hidden="true" loading="lazy" onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }} /> : null;
 }
 
-function LocationMenu({ items, selectedId, onSelect, campaignId }) {
+function LocationMenu({ items, selectedId, onSelect, campaignId, canBulkGrant, onBulkGrant }) {
 
   const resolvedDefaultState = useMemo(() => resolveLocationMenuState({ items, selectedId }), [items, selectedId]);
 
@@ -4258,6 +4446,11 @@ function LocationMenu({ items, selectedId, onSelect, campaignId }) {
   const menuLocations = resolveLocationMenuEntries({ items: floorItems, selectedRegion: activeRegionId });
 
   const shouldShowLocations = shouldShowLocationList({ regions, selectedRegion });
+  const bulkGrantButton = canBulkGrant ? (
+    <button className="location-menu-bulk-action" onClick={() => onBulkGrant(items)}>
+      ◇ Liberar locais
+    </button>
+  ) : null;
 
 
 
@@ -4266,6 +4459,8 @@ function LocationMenu({ items, selectedId, onSelect, campaignId }) {
     return (
 
       <div className="location-menu">
+
+        {bulkGrantButton}
 
         <div className="location-menu-head"><small>1 de 3</small><strong>Selecione o Andar</strong></div>
 
@@ -4294,6 +4489,8 @@ function LocationMenu({ items, selectedId, onSelect, campaignId }) {
     return (
 
       <div className="location-menu">
+
+        {bulkGrantButton}
 
         <button className="location-menu-back" onClick={() => { setSelectedFloor(null); setSelectedRegion(null); setRegionPreviewId(null); }}>← Andares</button>
 
@@ -4381,6 +4578,8 @@ function LocationMenu({ items, selectedId, onSelect, campaignId }) {
 
       <div className="location-menu">
 
+        {bulkGrantButton}
+
         <button className="location-menu-back" onClick={() => { setSelectedFloor(null); setSelectedRegion(null); }}>← Andares</button>
 
         <div className="empty-list">Nenhum local neste andar.</div>
@@ -4394,6 +4593,8 @@ function LocationMenu({ items, selectedId, onSelect, campaignId }) {
   return (
 
     <div className="location-menu">
+
+      {bulkGrantButton}
 
       <button className="location-menu-back" onClick={() => { setSelectedFloor(null); setSelectedRegion(null); setRegionPreviewId(null); }}>← Andares</button>
 
@@ -4455,6 +4656,8 @@ function LocationMenu({ items, selectedId, onSelect, campaignId }) {
 
             <span className="location-label-wrap">
 
+              <strong>{formatEntityName(item)}</strong>
+                    <strong>{formatEntityName(item)}</strong>
               <strong>{formatEntityName(item)}</strong>
 
               {item.type === 'city' && <small>Cidade inicial</small>}
@@ -4554,6 +4757,8 @@ export function EntityPage({ type }) {
   const [monsterRegionId, setMonsterRegionId] = useState('');
 
   const [monsterLocationId, setMonsterLocationId] = useState('');
+
+  const [itemCategoryFilter, setItemCategoryFilter] = useState('all');
 
   const queryClient = useQueryClient();
 
@@ -4671,21 +4876,28 @@ export function EntityPage({ type }) {
 
   );
 
+  const displayItems = useMemo(
+    () => type === 'item' && itemCategoryFilter !== 'all'
+      ? visibleItems.filter((item) => item.category === itemCategoryFilter)
+      : visibleItems,
+    [itemCategoryFilter, type, visibleItems]
+  );
+
 
 
   useEffect(() => {
 
     if (!list.data) return;
 
-    if (!selectedId || !list.data.items.some((item) => item.id === selectedId)) {
+    if (!selectedId || !displayItems.some((item) => item.id === selectedId)) {
 
-      const nextId = list.data.items[0]?.id;
+      const nextId = displayItems[0]?.id;
 
       setParams(nextId ? { selected: nextId } : {}, { replace: true });
 
     }
 
-  }, [selectedId, list.data, setParams]);
+  }, [selectedId, displayItems, setParams]);
 
 
 
@@ -4829,7 +5041,7 @@ export function EntityPage({ type }) {
 
           <h1>{labels[type]}</h1>
 
-          <p>{visibleItems.length} registros visíveis</p>
+          <p>{displayItems.length} registros visíveis</p>
 
         </div>
 
@@ -4867,14 +5079,14 @@ export function EntityPage({ type }) {
 
           )}
 
-          {effectiveIsGm && (type === 'monster' ? list.data?.items?.length > 0 : visibleItems.length > 0) && (
+          {effectiveIsGm && (type === 'monster' ? list.data?.items?.length > 0 : displayItems.length > 0) && (
 
             <button
 
               className="primary"
 
               onClick={() => setGrantRequest({
-                ...buildBulkEntityDiscoveryRequest({ type, items: type === 'monster' ? list.data?.items ?? [] : visibleItems }),
+                ...buildBulkEntityDiscoveryRequest({ type, items: type === 'monster' ? list.data?.items ?? [] : displayItems }),
                 ...(type === 'monster' ? { initialRegionId: monsterRegionId } : {})
               })}
 
@@ -4926,6 +5138,22 @@ export function EntityPage({ type }) {
 
         <aside className="entity-list">
 
+          {type === 'item' && <div className="item-category-filters" role="toolbar" aria-label="Filtrar itens por categoria">
+
+            {itemCategoryFilters.map((filter) => <button
+              key={filter.value}
+              type="button"
+              className={`item-category-filter item-category-filter-${filter.value} ${itemCategoryFilter === filter.value ? 'active' : ''}`}
+              aria-pressed={itemCategoryFilter === filter.value}
+              title={filter.label}
+              onClick={() => setItemCategoryFilter(filter.value)}
+            >
+              <span aria-hidden="true">{filter.emoji}</span>
+              <small>{filter.label}</small>
+            </button>)}
+
+          </div>}
+
           {type === 'location' ? (
 
             <LocationMenu
@@ -4962,7 +5190,7 @@ export function EntityPage({ type }) {
 
               />
 
-              {visibleItems.map((item) => {
+              {displayItems.map((item) => {
 
                 const monsterNd = monsterNdLabel(item);
 
@@ -4980,7 +5208,7 @@ export function EntityPage({ type }) {
 
                   >
 
-                    {entityImage(item) ? <img className="list-thumbnail" src={entityImage(item)} alt="" /> : <span className="list-diamond">◇</span>}
+                    {entityImage(item) ? <img className="list-thumbnail" src={entityImage(item)} alt="" /> : type === 'item' ? <span className="list-thumbnail list-image-placeholder" aria-label="Imagem não cadastrada">+</span> : <span className="list-diamond">◇</span>}
 
                     <span className="list-label-wrap">
 
@@ -5002,7 +5230,7 @@ export function EntityPage({ type }) {
 
           ) : (
 
-            visibleItems.map((item) => {
+            displayItems.map((item) => {
 
               const monsterNd = type === 'monster' ? monsterNdLabel(item) : '';
 
@@ -5020,11 +5248,11 @@ export function EntityPage({ type }) {
 
                 >
 
-                  {entityImage(item) ? <img className="list-thumbnail" src={entityImage(item)} alt="" /> : <span className="list-diamond">◇</span>}
+                  {entityImage(item) ? <img className="list-thumbnail" src={entityImage(item)} alt="" /> : type === 'item' ? <span className="list-thumbnail list-image-placeholder" aria-label="Imagem não cadastrada">+</span> : <span className="list-diamond">◇</span>}
 
                   <span className="list-label-wrap">
 
-                    <strong>{formatEntityName(item)}</strong>
+                    <strong className={type === 'item' ? rarityClass(item.rarity) : undefined}>{formatEntityName(item)}</strong>
 
                     {monsterNd && <small className="list-meta">{monsterNd}</small>}
 
@@ -5042,7 +5270,7 @@ export function EntityPage({ type }) {
 
           )}
 
-          {!visibleItems.length && <div className="empty-list">Nenhum registro visível para este filtro.</div>}
+          {!displayItems.length && <div className="empty-list">Nenhum registro visível para este filtro.</div>}
 
         </aside>
 

@@ -72,6 +72,19 @@ describe('domain invariants', () => {
     expect(state.readyToComplete).toBe(false);
   });
 
+  it('reports partial progress from objective quantities', () => {
+    const quest = {
+      objectiveMode: 'free',
+      objectives: [
+        { objectiveId: 'boars', order: 1, requiredQuantity: 5, optional: false },
+        { objectiveId: 'talk', order: 2, requiredQuantity: 1, optional: false }
+      ]
+    };
+
+    expect(evaluateQuestProgress(quest, { boars: 2, talk: 0 }).percentage).toBe(33);
+    expect(evaluateQuestProgress(quest, { boars: 5, talk: 1 }).percentage).toBe(100);
+  });
+
   it('normalizes legacy T20 alias', () => {
     expect(normalizeT20ProviderId('Ambesek.Tormenta20')).toBe('Ambesek.T20');
   });

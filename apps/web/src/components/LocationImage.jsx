@@ -58,7 +58,7 @@ export function LocationImage({ src, name, onEdit, variant = 'location' }) {
   const hasImage = Boolean(src) && !failed;
   const placeholder = <span className="location-image-placeholder">
     <span aria-hidden="true">▧</span>
-    <strong>{variant === 'npc' ? (failed ? 'Foto indisponível' : 'Sem foto do personagem') : (failed ? 'Imagem do local indisponível.' : 'Sem imagem do local')}</strong>
+    <strong>{variant === 'npc' ? (failed ? 'Foto indisponível' : 'Sem foto do personagem') : variant === 'item' ? (failed ? 'Imagem do item indisponível' : 'Sem imagem do item') : (failed ? 'Imagem do local indisponível.' : 'Sem imagem do local')}</strong>
     {onEdit && <small>Clique para {src ? 'editar' : 'adicionar'} a imagem</small>}
   </span>;
   const content = hasImage ? <img src={src} alt={name} onError={() => setFailed(true)} /> : placeholder;

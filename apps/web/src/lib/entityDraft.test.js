@@ -7,6 +7,20 @@ import {
   prepareCanonicalPayload,
   updateEntityDraft
 } from './entityDraft.js';
+import { discoverableCreation } from './entityDraft.js';
+
+it.each(['npc', 'location', 'item', 'monster', 'quest'])('creates %s with discoverable permissions without changing the source', (type) => {
+  const source = { visibility: { entity: 'public', sections: { basic: 'public' } }, fields: [
+    { key: 'description', value: 'Text', visibility: 'public' }, { key: 'gmNotes', value: 'Secret', visibility: 'gm' }
+  ], objectives: [{ visibility: 'public' }], connections: [{ visibility: 'public' }], components: [{ visibility: 'public' }], statBlocks: { 'Ambesek.T20': { statsVisibility: { combat: 'public' } } } };
+  const result = discoverableCreation(type, source);
+  expect(result.visibility.entity).toBe('discoverable');
+  expect(Object.values(result.visibility.sections)).not.toContain('public');
+  expect(result.fields.map((field) => field.visibility)).toEqual(['discoverable', 'gm']);
+  for (const key of ['objectives', 'connections', 'components']) expect(result[key][0].visibility).toBe('discoverable');
+  if (type === 'monster') expect(result.statBlocks['Ambesek.T20'].statsVisibility.combat).toBe('discoverable');
+  expect(source.visibility.entity).toBe('public');
+});
 
 describe('edição canônica', () => {
   it.each(JSON_IMPORT_TEMPLATE.entities.map((e) => [e.type, e.data]))(

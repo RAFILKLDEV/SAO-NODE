@@ -61,4 +61,65 @@ describe('saoData JSON', () => {
     expect(parsed.pack.operations).toHaveLength(1);
     expect(() => buildDiff([], parsed.pack)).not.toThrow();
   });
+
+  it('extracts URLs from Markdown links in compact operations', () => {
+    const { pack } = parseSaoDataJson({
+      schemaVersion: '2.0',
+      packId: 'test.images-markdown',
+      name: 'Atualizar imagens',
+      operations: [
+        {
+          type: 'monster',
+          id: 'monster.test.boar',
+          set: {
+            '/media/image': '[Imagem](https://example.test/boar.gif)'
+          }
+        }
+      ]
+    });
+
+    expect(pack.operations[0].set['/media/image']).toBe('https://example.test/boar.gif');
+  });
+
+  it('repairs Markdown links split before a colon path segment', () => {
+    const { pack } = parseSaoDataJson({
+      schemaVersion: '2.0',
+      packId: 'test.images-markdown-split',
+      name: 'Atualizar imagens',
+      operations: [
+        {
+          type: 'monster',
+          id: 'monster.test.boar',
+          set: {
+            '/media/image': '[Imagem](https://example.test/wiki/Special):Redirect/file/Boar.gif'
+          }
+        }
+      ]
+    });
+
+    expect(pack.operations[0].set['/media/image']).toBe(
+      'https://example.test/wiki/Special:Redirect/file/Boar.gif'
+    );
+  });
+
+  it('repairs Markdown links split around emphasis in a URL filename', () => {
+    const { pack } = parseSaoDataJson({
+      schemaVersion: '2.0',
+      packId: 'test.images-markdown-emphasis',
+      name: 'Atualizar imagens',
+      operations: [
+        {
+          type: 'location',
+          id: 'loc.test.field',
+          set: {
+            '/media/image': '[Imagem](https://example.test/3rd_Floor_-)*Dark_Elf_Base*-*Progressive.png'
+          }
+        }
+      ]
+    });
+
+    expect(pack.operations[0].set['/media/image']).toBe(
+      'https://example.test/3rd_Floor_-Dark_Elf_Base-Progressive.png'
+    );
+  });
 });

@@ -22,6 +22,7 @@ import { auditRoutes } from './routes/audit.js';
 import { jsonRoutes } from './routes/json.js';
 import { characterRoutes } from './routes/characters.js';
 import { mediaRoutes } from './routes/media.js';
+import { associationRoutes } from './routes/associations.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -121,6 +122,7 @@ export async function buildApp() {
   await app.register(jsonRoutes);
   await app.register(characterRoutes);
   await app.register(mediaRoutes);
+  await app.register(associationRoutes);
 
   return app;
 }

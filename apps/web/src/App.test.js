@@ -1,3 +1,4 @@
+import { categorizedDiscoveryTargets, categorizedDiscoveryTypes } from './lib/discoveryTargets.js';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -11,6 +12,7 @@ import {
   buildDiscoveryGrantBatch,
   canOpenReference,
   canConfirmDiscoveryGrant,
+  chunkDiscoveryGrants,
   isDropReference,
   monsterComponentTargets,
   monsterNdLabel
@@ -29,6 +31,7 @@ import {
   resolveLocationMenuState,
   shouldShowLocationList
 } from './lib/locationMenu.js';
+import { locationBranchEntries, locationDiscoveryRows } from './lib/locationDiscovery.js';
 
 describe('reference list rendering', () => {
   const renderCombobox = (props) => {
@@ -343,6 +346,38 @@ describe('resolveCampaignLinks', () => {
     ]);
   });
 
+  it('organiza locais no modal por andar, região e local sem repetir o caminho no nome', () => {
+    const rows = locationDiscoveryRows([
+      { id: 'floor.1', type: 'floor', name: 'Andar 1', placement: { floor: '1' } },
+      { id: 'region.a', type: 'region', name: 'Costa', placement: { floor: '1' } },
+      { id: 'location.a', type: 'city', name: 'Vila', parentId: 'region.a' }
+    ]);
+
+    expect(rows.map(({ kind, label }) => [kind, label])).toEqual([
+      ['floor', 'Andar 1'],
+      ['region', 'Costa'],
+      ['location', 'Vila']
+    ]);
+  });
+
+  it('usa o nome próprio quando a entidade também carrega um breadcrumb', () => {
+    const region = { id: 'region.a', type: 'region', name: 'Andar 1 - Costa', treeName: 'Costa', placement: { floor: '1' } };
+    const location = { id: 'location.a', type: 'city', name: 'Andar 1 - Costa - Vila', treeName: 'Vila', parentId: 'region.a' };
+
+    expect(locationDiscoveryRows([region, location]).map(({ label }) => label)).toEqual(['Andar 1', 'Costa', 'Vila']);
+  });
+
+  it('seleciona a região e todos os locais descendentes', () => {
+    const items = [
+      { entityId: 'region.a', type: 'region' },
+      { entityId: 'location.a', type: 'city', parentId: 'region.a' },
+      { entityId: 'location.b', type: 'building', parentId: 'location.a' },
+      { entityId: 'region.b', type: 'region' }
+    ];
+
+    expect(locationBranchEntries(items, items[0]).map((entry) => entry.entityId)).toEqual(['region.a', 'location.a', 'location.b']);
+  });
+
   it('mantém a região ativa e ainda seleciona a cidade do início quando ela é aberta', () => {
     const result = resolveLocationMenuClick({ id: 'loc.andar-1.cidade-do-inicio', type: 'city', parentId: 'loc.andar-1' });
 
@@ -380,6 +415,13 @@ describe('resolveCampaignLinks', () => {
     ]);
   });
 
+  it('preserva os blocos de categoria quando o request é espalhado', () => {
+    const request = { ...buildBulkEntityDiscoveryRequest({ type: 'location', items: [{ id: 'location.regiao', name: 'Região', type: 'region', placement: { floor: '1' } }] }) };
+
+    expect(request.categories).toBeTruthy();
+    expect(request.categories.map((group) => group.label)).toContain('Identidade');
+  });
+
   it.each([
     ['npc', 'Liberar personagens'],
     ['location', 'Liberar locais'],
@@ -402,8 +444,9 @@ describe('resolveCampaignLinks', () => {
       items
     })).toEqual({
       label,
-      targets: [{ kind: 'entity', key: 'existence', label: 'Existência do registro' }],
+      targets: categorizedDiscoveryTypes.includes(type) ? categorizedDiscoveryTargets(type, items) : [{ kind: 'entity', key: 'existence', label: 'Existência do registro' }],
       bulk: true,
+      categories: categorizedDiscoveryTypes.includes(type) ? categorizedDiscoveryTargets(type, items) : undefined,
       entities: type === 'location'
         ? [
           { entityType: type, entityId: 'location.regiao', name: 'Andar 1 - Região', imageURL: '' },
@@ -476,6 +519,11 @@ describe('resolveCampaignLinks', () => {
         allowance: 'deny'
       }
     ]);
+  });
+
+  it('divide confirmações grandes em lotes aceitos pela API', () => {
+    const batches = chunkDiscoveryGrants(Array.from({ length: 1001 }, (_, index) => index));
+    expect(batches.map((batch) => batch.length)).toEqual([500, 500, 1]);
   });
 
   it('permite confirmar a liberação individual de itens e locais', () => {

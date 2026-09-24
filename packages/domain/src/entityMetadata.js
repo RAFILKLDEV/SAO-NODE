@@ -137,9 +137,9 @@ export const itemRarityOptions = [
   { value: 'common', label: 'Comum' },
   { value: 'uncommon', label: 'Incomum' },
   { value: 'rare', label: 'Raro' },
-  { value: 'epic', label: 'Épico' },
+  { value: 'epic', label: 'Mítico' },
   { value: 'legendary', label: 'Lendário' },
-  { value: 'unique', label: 'Único' }
+  { value: 'unique', label: 'Imortal' }
 ];
 export const monsterSizeOptions = [
   { value: 'tiny', label: 'Minúsculo' },
@@ -197,6 +197,20 @@ export const fieldLabels = {
   type: 'Tipo',
   state: 'Estado',
   andar: 'Andar',
+  baseMecanica: 'Base mecânica',
+  descanso: 'Descanso',
+  dificuldade: 'Dificuldade',
+  encontrosEsperados: 'Encontros esperados',
+  funcaoPrincipal: 'Função principal',
+  notasDeAdaptacao: 'Notas de adaptação',
+  organizacao: 'Organização',
+  viasUrbanas: 'Vias urbanas',
+  numeroNoMapa: 'Número no mapa',
+  posicaoNoMapa: 'Posição no mapa',
+  organizacaoUrbana: 'Organização urbana',
+  catalogoEsperado: 'Catálogo esperado',
+  deslocamentoPadrao: 'Deslocamento padrão',
+  estruturaDaZona: 'Estrutura da zona',
   parentId: 'Local superior',
   environment: 'Ambiente',
   levelRecommended: 'Nível recomendado',
