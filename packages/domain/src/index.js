@@ -74,6 +74,7 @@ const npcT20Schema = z.object({
 });
 
 export const npcSchema = baseEntitySchema.extend({
+  characterType: z.enum(['npc', 'entity']).default('npc'),
   title: z.string().optional(),
   identity: z
     .object({

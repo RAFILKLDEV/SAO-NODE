@@ -1715,7 +1715,7 @@ function TypeDetails({ entity, type, campaignId, isGm, onGrant }) {
 
         )}
 
-        {hasT20Data && (
+        {hasT20Data && type !== 'npc' && (
 
           <ModuleCard title="Ficha T20" targetKey="section.t20" isGm={isGm} onGrant={onGrant}>
 
@@ -3174,7 +3174,7 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
   const tabsByType = {
 
-    npc: [...commonTabs, { id: 'description', label: 'Descrição' }, { id: 't20', label: 'T20' }, { id: 'services', label: 'Serviços' }, { id: 'locations', label: 'Locais' }, { id: 'relations', label: 'Relações' }, { id: 'references', label: 'Referências' }],
+    npc: [...commonTabs, { id: 'description', label: 'Descrição' }, { id: 'identity', label: 'Identidade' }, { id: 'services', label: 'Serviços' }, { id: 'locations', label: 'Locais' }, { id: 'relations', label: 'Relações' }, { id: 'references', label: 'Referências' }],
 
     location: [...commonTabs, { id: 'description', label: 'Descrição' }, { id: 'environment', label: 'Ambiente' }, { id: 'history', label: 'História' }, { id: 'services', label: 'Serviços' }, { id: 'connections', label: 'Conexões' }, { id: 'references', label: 'Referências' }],
 
@@ -3230,7 +3230,7 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
         {activeTab === 'history' && <NarrativeEditor data={data} setData={setData} fieldKey="history" label="História" />}
 
-        {activeTab === 't20' && <div className="form-grid"><FormField label="Modo" value={data.t20?.mode ?? 'none'} options={[{ value: 'none', label: 'Nenhum' }, { value: 'embedded', label: 'Incorporado' }, { value: 'linked', label: 'Vinculado' }]} onChange={(mode) => set('t20', { ...(data.t20 ?? {}), mode })} /></div>}
+        {activeTab === 'identity' && type === 'npc' && <div className="form-grid">{Object.entries({ race: 'Raça', gender: 'Gênero', age: 'Idade', profession: 'Profissão' }).map(([key, label]) => <FormField key={key} label={label} value={identity[key]} onChange={(value) => set('identity', { ...identity, [key]: value })} />)}</div>}
 
         {activeTab === 'services' && <ServiceEditor values={data.services} onChange={(value) => set('services', value)} />}
 
@@ -4427,8 +4427,7 @@ export function isBossMonster(monster) {
 }
 
 export function isCharacterEntity(item) {
-  const values = [item?.category, item?.kind, item?.role, item?.identity?.type, item?.identity?.kind, ...(item?.tags ?? [])];
-  return values.some((value) => /^(entity|entidade|entidades)$/i.test(String(value ?? '').trim()));
+  return item?.characterType === 'entity';
 }
 
 
@@ -4582,7 +4581,9 @@ export function EntityPage({ type }) {
     () => type === 'monster' && monsterBossFilter !== 'all'
       ? visibleItems.filter((item) => monsterBossFilter === 'boss' ? isBossMonster(item) : !isBossMonster(item))
       : type === 'npc'
-      ? visibleItems.filter((item) => characterFilter === 'entity' ? isCharacterEntity(item) : !isCharacterEntity(item))
+      ? characterFilter === 'player'
+        ? players.map((entry) => ({ id: `player:${entry.user.id}`, userId: entry.user.id, name: entry.user.name, characterImageUrl: entry.user.characterImageUrl }))
+        : visibleItems.filter((item) => characterFilter === 'entity' ? isCharacterEntity(item) : !isCharacterEntity(item))
       : type === 'item' && itemCategoryFilter !== 'all'
       ? visibleItems.filter((item) => item.category === itemCategoryFilter)
       : visibleItems,
@@ -4592,8 +4593,9 @@ export function EntityPage({ type }) {
   const characterFilters = type === 'npc' ? (
     <div className="character-filters" role="toolbar" aria-label="Filtrar personagens">
       <button type="button" className={`character-filter ${characterFilter === 'npc' ? 'active' : ''}`} title="NPCs" aria-label="NPCs" onClick={() => setCharacterFilter('npc')}><span aria-hidden="true">♟</span><small>NPCs</small></button>
-      <button type="button" className="character-filter" title="Jogadores" aria-label="Jogadores" onClick={() => navigate(`/campaigns/${campaignId}/players`)}><span aria-hidden="true">♙</span><small>Jogadores</small></button>
+      <button type="button" className={`character-filter ${characterFilter === 'player' ? 'active' : ''}`} title="Jogadores" aria-label="Jogadores" onClick={() => setCharacterFilter('player')}><span aria-hidden="true">♙</span><small>Jogadores</small></button>
       <button type="button" className={`character-filter ${characterFilter === 'entity' ? 'active' : ''}`} title="Entidades" aria-label="Entidades" onClick={() => setCharacterFilter('entity')}><span aria-hidden="true">⇄</span><small>Entidades</small></button>
+      <button type="button" className={`character-filter ${characterFilter === 'favorites' ? 'active' : ''}`} title="Favoritos" aria-label="Favoritos" onClick={() => setCharacterFilter('favorites')}><span aria-hidden="true">★</span><small>Favoritos</small></button>
     </div>
   ) : null;
 
@@ -5071,7 +5073,3 @@ export function EntityPage({ type }) {
   );
 
 }
-
-
-
-

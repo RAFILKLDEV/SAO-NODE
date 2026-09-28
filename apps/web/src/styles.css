@@ -2118,3 +2118,6 @@ th {
 .discovery-field-group-items { display:flex; flex-direction:column; gap:2px; margin-left: 14px; }
 .discovery-field-group-items label { padding-left: 4px; }
 
+
+.location-menu-thumbnail { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; }
+.t20-stat-block { white-space: pre-wrap; font: inherit; line-height: 1.6; }

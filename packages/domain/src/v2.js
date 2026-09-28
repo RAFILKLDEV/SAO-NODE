@@ -161,6 +161,7 @@ export const baseV2Schema = z.strictObject({
 });
 const shapes = {
   npc: baseV2Schema.extend({
+    characterType: z.enum(['npc', 'entity']).default('npc'),
     identity: z
       .strictObject({
         race: z.string().optional(),
@@ -590,7 +591,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
   }
   result.links = [...unique.values()];
   const typeKeys = {
-    npc: ['level', 'factions', 'services'],
+    npc: ['characterType', 'level', 'factions', 'services'],
     location: ['type', 'state', 'parentId', 'environment', 'services'],
     item: ['category', 'rarity', 'value', 'stats'],
     monster: ['group'],

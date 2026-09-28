@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { locationTypeOptions } from '@sao/domain';
+import { formatLocationType } from '@sao/domain';
 import { locationFloor, locationMenuRows } from '../lib/locationMenu.js';
 
 const floorLabel = (floor) => floor === 'sem-andar' ? 'Sem andar' : `Andar ${floor}`;
 
-export function LocationMenu({ items, selectedId, onSelect, canBulkGrant, onBulkGrant }) {
+export function LocationMenu({ items, selectedId, onSelect }) {
   const selected = items.find((item) => item.id === selectedId);
   const floors = [...new Set(items.map((item) => locationFloor(item, items)))].sort(
     (a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })
@@ -18,7 +18,6 @@ export function LocationMenu({ items, selectedId, onSelect, canBulkGrant, onBulk
   const rows = useMemo(() => locationMenuRows({ items, floor: activeFloor, search }), [items, activeFloor, search]);
 
   return <div className="location-menu">
-    {canBulkGrant && <button type="button" className="location-menu-bulk-action" onClick={() => onBulkGrant(items)}>◇ Liberar locais</button>}
     <div className="location-menu-controls">
       <label>Andar<select aria-label="Andar dos locais" value={activeFloor} onChange={(event) => setFloor(event.target.value)}>
         {floors.map((value) => <option key={value} value={value}>{floorLabel(value)}</option>)}
@@ -30,7 +29,8 @@ export function LocationMenu({ items, selectedId, onSelect, canBulkGrant, onBulk
       {rows.map(({ item, depth }) => <li key={item.id}>
         <button type="button" className={`location-menu-item ${item.id === selectedId ? 'selected' : ''}`} aria-current={item.id === selectedId ? 'true' : undefined} style={{ paddingLeft: `${14 + Math.min(depth, 5) * 16}px` }} onClick={() => onSelect(item.id)}>
           <span className="tree-marker" aria-hidden="true">{item.type === 'region' ? '⌖' : item.type === 'city' ? '⌂' : '•'}</span>
-          <span className="location-label-wrap"><strong>{item.name}</strong><small>{locationTypeOptions.find((option) => option.value === item.type)?.label ?? item.type}</small></span>
+          {(item.media?.image ?? item.imageURL ?? item.imageUrl) && <img className="location-menu-thumbnail" src={item.media?.image ?? item.imageURL ?? item.imageUrl} alt="" onError={(event) => { event.currentTarget.hidden = true; }} />}
+          <span className="location-label-wrap"><strong>{item.name}</strong><small>{formatLocationType(item.type)}</small></span>
         </button>
       </li>)}
     </ul>

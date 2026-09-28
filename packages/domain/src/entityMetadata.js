@@ -95,6 +95,13 @@ export const objectiveModeOptions = [
   { value: 'ordered', label: 'Em ordem' }
 ];
 export const locationTypeOptions = [
+  { value: 'forest', label: 'Floresta' },
+  { value: 'lake', label: 'Lago' },
+  { value: 'village', label: 'Vila' },
+  { value: 'cave', label: 'Caverna' },
+  { value: 'field', label: 'Campo' },
+  { value: 'mountain', label: 'Montanha' },
+  { value: 'river', label: 'Rio' },
   { value: 'region', label: 'Região' },
   { value: 'city', label: 'Cidade' },
   { value: 'district', label: 'Distrito' },
@@ -114,6 +121,11 @@ export const locationTypeOptions = [
   { value: 'room', label: 'Sala' },
   { value: 'landmark', label: 'Ponto de interesse' }
 ];
+// Custom persisted vocabulary remains valid; never expose technical codes as labels.
+export function formatLocationType(value) {
+  return locationTypeOptions.find((option) => option.value === value)?.label ?? 'Outro local';
+}
+
 export const locationStateOptions = [
   { value: 'safe', label: 'Seguro' },
   { value: 'dangerous', label: 'Perigoso' },

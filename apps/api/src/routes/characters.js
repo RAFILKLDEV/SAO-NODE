@@ -4,6 +4,9 @@ import { audit } from '../lib/audit.js';
 import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import { normalizeT20ProviderId } from '@sao/domain';
 import { apiError, T20_CURRENT } from '@sao/shared';
+import { getEntityForRequest } from '../services/content.js';
+
+const favoriteTarget = z.object({ targetType: z.enum(['npc', 'player']), targetId: z.string().min(1).max(256) });
 
 const bindingSchema = z.object({
   userId: z.string().min(1),
@@ -36,6 +39,41 @@ const associationSchema = z.object({
 });
 
 export async function characterRoutes(app) {
+  // Public campaign roster, deliberately excluding login, bindings and snapshots.
+  app.get('/api/v1/campaigns/:campaignId/characters/players', { preHandler: [authenticate, requireCampaign] }, async (request) => {
+    const rows = await prisma.membership.findMany({
+      where: { campaignId: request.campaign.id, role: 'player' },
+      select: { userId: true, characterImageUrl: true, user: { select: { name: true } } },
+      orderBy: { user: { name: 'asc' } }
+    });
+    return rows.map(({ userId, characterImageUrl, user }) => ({ userId, name: user.name, characterImageUrl }));
+  });
+
+  const favoriteBase = '/api/v1/campaigns/:campaignId/character-favorites';
+  const owner = (request) => ({ campaignId: request.campaign.id, userId: request.auth.user.id });
+  app.get(favoriteBase, { preHandler: [authenticate, requireCampaign] }, async (request) =>
+    prisma.characterFavorite.findMany({ where: owner(request), select: { targetType: true, targetId: true } }));
+
+  app.put(`${favoriteBase}/:targetType/:targetId`, { preHandler: [authenticate, requireCampaign, requireCsrf] }, async (request, reply) => {
+    const parsed = favoriteTarget.safeParse(request.params);
+    if (!parsed.success) return reply.code(400).send(apiError('INVALID_INPUT', 'Alvo inválido'));
+    const { targetType, targetId } = parsed.data;
+    const target = targetType === 'npc'
+      ? await getEntityForRequest({ request, type: 'npc', domainId: targetId })
+      : await prisma.membership.findFirst({ where: { campaignId: request.campaign.id, userId: targetId, role: 'player' } });
+    if (!target) return reply.code(404).send(apiError('NOT_FOUND', 'Personagem não encontrado'));
+    const key = { ...owner(request), targetType, targetId };
+    await prisma.characterFavorite.upsert({ where: { campaignId_userId_targetType_targetId: key }, create: key, update: {} });
+    return { targetType, targetId };
+  });
+
+  app.delete(`${favoriteBase}/:targetType/:targetId`, { preHandler: [authenticate, requireCampaign, requireCsrf] }, async (request, reply) => {
+    const parsed = favoriteTarget.safeParse(request.params);
+    if (!parsed.success) return reply.code(400).send(apiError('INVALID_INPUT', 'Alvo inválido'));
+    await prisma.characterFavorite.deleteMany({ where: { ...owner(request), ...parsed.data } });
+    return { ok: true };
+  });
+
   app.get('/api/v1/campaigns/:campaignId/bindings', { preHandler: [authenticate, requireCampaign] }, async (request) => {
     const where = request.membership.role === 'player'
       ? { campaignId: request.campaign.id, userId: request.auth.user.id }

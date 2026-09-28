@@ -18,6 +18,7 @@ model User {
   memberships  Membership[]
   groupMembers GroupMember[]
   bindings     CharacterBinding[]
+  characterFavorites CharacterFavorite[]
   notifications Notification[]
 }
 
@@ -49,8 +50,21 @@ model Campaign {
   audits      AuditLog[]
   imports     ImportHistory[]
   bindings    CharacterBinding[]
+  characterFavorites CharacterFavorite[]
   npcAssociations NpcAssociation[]
   notifications Notification[]
+}
+
+model CharacterFavorite {
+  campaignId String
+  userId     String
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, userId, targetType, targetId])
 }
 
 model Notification {
