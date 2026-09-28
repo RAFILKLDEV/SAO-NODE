@@ -58,6 +58,11 @@ describe('domain invariants', () => {
     expect(rolled[0].quantity).toBeLessThanOrEqual(60);
   });
 
+  it('rolls a cash value formula for loot drops', () => {
+    const rolled = rollDrops([{ type: 'item', id: 'item.gem', role: 'drops', chance: 100, valueFormula: '2d4+2' }], () => 0);
+    expect(rolled[0].cashValue).toBe(4);
+  });
+
   it('supports ordered quest blocking and optional objectives', () => {
     const quest = {
       objectiveMode: 'ordered',

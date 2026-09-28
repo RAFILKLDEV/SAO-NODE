@@ -134,3 +134,36 @@ export function resolveLocationBulkEntities({ items = [], selectedRegion = null 
 
   return [region, ...resolveLocationMenuEntries({ items, selectedRegion })];
 }
+
+export function locationMenuRows({ items = [], floor, search = '' }) {
+  const floorItems = visibleItems(items).filter((item) => locationFloor(item, items) === floor);
+  const byId = new Map(floorItems.map((item) => [item.id, item]));
+  const children = new Map();
+  for (const item of byId.values()) {
+    const parent = byId.has(item.parentId) ? item.parentId : null;
+    children.set(parent, [...(children.get(parent) ?? []), item]);
+  }
+  const normalize = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+  const query = normalize(search.trim());
+  const included = new Set();
+  for (const item of byId.values()) {
+    if (query && !normalize(item.name).includes(query)) continue;
+    let current = item;
+    while (current && !included.has(current.id)) {
+      included.add(current.id);
+      current = byId.get(current.parentId);
+    }
+  }
+  const rows = [];
+  const visited = new Set();
+  const visit = (item, depth) => {
+    if (visited.has(item.id)) return;
+    visited.add(item.id);
+    if (included.has(item.id)) rows.push({ item, depth });
+    for (const child of [...(children.get(item.id) ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))) visit(child, depth + 1);
+  };
+  for (const root of resolveLocationMenuRegions({ items: floorItems })) visit(root, 0);
+  // Keep malformed cycles reachable without rendering any record twice.
+  for (const item of byId.values()) if (!visited.has(item.id)) visit(item, 0);
+  return rows;
+}

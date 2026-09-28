@@ -6,7 +6,8 @@ export function associationPayload(link) {
     type: link.type, id: link.id, role: link.role ?? 'related', slot: link.slot ?? 'references',
     ...(link.chance != null ? { chance: link.chance } : {}),
     ...(link.quantityMin != null ? { quantityMin: link.quantityMin } : {}),
-    ...(link.quantityMax != null ? { quantityMax: link.quantityMax } : {})
+    ...(link.quantityMax != null ? { quantityMax: link.quantityMax } : {}),
+    ...(link.valueFormula ? { valueFormula: link.valueFormula } : {})
   };
 }
 export function associationDiff(before, after) {

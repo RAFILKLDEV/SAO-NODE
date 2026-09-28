@@ -53,6 +53,12 @@ export const referenceSchema = z.object({
     .min(1)
     .nullable()
     .optional()
+    .transform((value) => value ?? undefined),
+  valueFormula: z
+    .string()
+    .regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i, 'Use uma fórmula como 2d4+2')
+    .nullable()
+    .optional()
     .transform((value) => value ?? undefined)
 });
 

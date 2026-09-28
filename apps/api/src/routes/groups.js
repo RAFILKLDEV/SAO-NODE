@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { audit } from '../lib/audit.js';
 import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import { apiError } from '@sao/shared';
-import { emitPermissionNotification } from '../lib/realtime.js';
+import { createNotifications } from '../services/notifications.js';
 
 const groupSchema = z.object({ domainId: z.string().min(2), name: z.string().min(1) });
 const memberSchema = z.object({ userId: z.string().min(1) });
@@ -61,10 +61,15 @@ export async function groupRoutes(app) {
       ).values()
     ];
     if (entities.length) {
-      emitPermissionNotification({
+      await createNotifications({
+        db: prisma,
         realtime: request.server.realtime,
         campaignId: request.campaign.id,
         userIds: [parsed.data.userId],
+        eventType: 'permissions.notification',
+        kind: 'new',
+        title: 'Novo conteúdo disponível',
+        message: 'Um novo conteúdo foi liberado para você.',
         payload: { reason: 'group-membership', entities }
       });
     }

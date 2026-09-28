@@ -8,6 +8,7 @@ export const referenceLink = (reference) => ({
   ...(reference.chance != null ? { chance: reference.chance } : {}),
   ...(reference.quantityMin != null ? { quantityMin: reference.quantityMin } : {}),
   ...(reference.quantityMax != null ? { quantityMax: reference.quantityMax } : {})
+  ,...(reference.valueFormula ? { valueFormula: reference.valueFormula } : {})
 });
 const conflict = () => { throw Object.assign(new Error('As associações foram alteradas. Recarregue e revise as alterações.'), { code: 'VERSION_CONFLICT' }); };
 const notFound = () => { throw Object.assign(new Error('Origem ou destino não encontrado nesta campanha.'), { statusCode: 404, code: 'NOT_FOUND' }); };
@@ -38,7 +39,7 @@ export async function applyAssociations({ campaignId, actorUserId, changes }) {
         const exists = remaining.find((item) => associationKey({ ...item, role: item.role === 'drop' ? 'drops' : item.role }) === associationKey(link));
         if (exists) {
           // Adding a duplicate is a no-op; changing details requires explicit removal.
-          if (['chance', 'quantityMin', 'quantityMax'].some((key) => (exists[key] ?? (key === 'chance' ? 100 : 1)) !== (link[key] ?? (key === 'chance' ? 100 : 1)))) conflict();
+          if (['chance', 'quantityMin', 'quantityMax', 'valueFormula'].some((key) => (exists[key] ?? (key === 'chance' ? 100 : 1)) !== (link[key] ?? (key === 'chance' ? 100 : 1)))) conflict();
           continue;
         }
         actualAdditions.push(link);
@@ -75,7 +76,7 @@ export async function applyAssociations({ campaignId, actorUserId, changes }) {
       if (removeIds.length) await tx.reference.deleteMany({ where: { sourceEntityId: source.id, id: { in: removeIds } } });
       if (additions.length) await tx.reference.createMany({ data: additions.map((link) => ({
         sourceEntityId: source.id, targetType: link.type, targetDomainId: link.id,
-        role: link.role, slot: link.slot, chance: link.chance, quantityMin: link.quantityMin, quantityMax: link.quantityMax
+        role: link.role, slot: link.slot, chance: link.chance, quantityMin: link.quantityMin, quantityMax: link.quantityMax, valueFormula: link.valueFormula
       })) });
       await audit(tx, { campaignId, actorUserId, action: 'association.update', entityType: source.type, entityDomainId: source.domainId, before: { links: before }, after: { links: after } });
       changed.push({ type: source.type, id: source.domainId, version: source.version + 1 });

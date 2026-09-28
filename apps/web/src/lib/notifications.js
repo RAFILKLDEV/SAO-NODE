@@ -123,3 +123,26 @@ export function markEntitySeen({ campaignId, type, entityId }) {
     window.localStorage.setItem(key, String(timestamp));
   }
 }
+
+export function markAllEntitiesSeen({ campaignId, entitiesByType }) {
+  if (typeof window === 'undefined' || !campaignId || !entitiesByType) return false;
+  const baselineKey = `sao-entity-seen-baseline:${campaignId}`;
+  if (window.localStorage.getItem(baselineKey)) return false;
+
+  for (const [type, entities] of Object.entries(entitiesByType)) {
+    for (const entity of entities ?? []) {
+      if (!entity?.id) continue;
+      const activityAt = Math.max(
+        normalizeDate(entity.updatedAt ?? 0),
+        normalizeDate(entity.createdAt ?? 0),
+        readEntityActivityAt({ campaignId, type, entityId: entity.id })
+      );
+      if (activityAt > 0) {
+        const key = getEntitySeenStorageKey({ campaignId, type, entityId: entity.id });
+        window.localStorage.setItem(key, String(activityAt));
+      }
+    }
+  }
+  window.localStorage.setItem(baselineKey, String(Date.now()));
+  return true;
+}

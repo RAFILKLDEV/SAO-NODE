@@ -9,7 +9,7 @@ const campaignLinks = [
 ];
 
 export function resolveCampaignLinks({ isGm, visibleEntityTypes = new Set() }) {
-  if (isGm) return campaignLinks;
+  if (isGm) return [...campaignLinks.slice(0, 5), ['associations', 'Associações', '⇄'], ...campaignLinks.slice(5)];
   const visibleTypes = new Set(visibleEntityTypes);
   return campaignLinks.filter(([path]) => {
     if (path === 'progress' || path === 'groups') return true;

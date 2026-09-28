@@ -168,7 +168,8 @@ export const monsterSchema = baseEntitySchema.extend({
       resources: z.record(z.string(), z.unknown()).default({}),
       resistances: z.record(z.string(), z.unknown()).default({}),
       attributes: z.record(z.string(), z.unknown()).default({}),
-      statsVisibility: z.record(z.string(), visibilitySchema).default({})
+      statsVisibility: z.record(z.string(), visibilitySchema).default({}),
+      boss: z.boolean().default(false)
     })
     .default({}),
   t20: z
@@ -369,6 +370,18 @@ export function buildBacklinks(entities) {
   return backlinks;
 }
 
+export function rollDiceFormula(formula, random = Math.random) {
+  if (!formula) return null;
+  const match = String(formula).trim().match(/^(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?$/i);
+  if (!match) throw new Error(`Invalid value formula: ${formula}`);
+  const dice = Number(match[1]);
+  const sides = Number(match[2]);
+  const modifier = Number(match[4] ?? 0) * (match[3] === '-' ? -1 : 1);
+  if (!Number.isInteger(dice) || dice < 1 || dice > 100 || !Number.isInteger(sides) || sides < 1 || sides > 10000)
+    throw new Error(`Invalid value formula: ${formula}`);
+  return Array.from({ length: dice }, () => 1 + Math.floor(random() * sides)).reduce((sum, value) => sum + value, modifier);
+}
+
 export function rollDrops(references, random = Math.random) {
   return references
     .filter((ref) => ref.type === 'item' && ref.role === 'drops')
@@ -387,10 +400,12 @@ export function rollDrops(references, random = Math.random) {
         }
         if (Math.floor(random() * 100) + 1 > chance) return null;
         const quantity = quantityMin + Math.floor(random() * (quantityMax - quantityMin + 1));
-        return { ...ref, quantity };
+        return { ...ref, quantity, ...(ref.valueFormula ? { cashValue: rollDiceFormula(ref.valueFormula, random) } : {}) };
       }
 
-      return Math.floor(random() * 100) + 1 <= chance ? { ...ref } : null;
+      return Math.floor(random() * 100) + 1 <= chance
+        ? { ...ref, ...(ref.valueFormula ? { cashValue: rollDiceFormula(ref.valueFormula, random) } : {}) }
+        : null;
     })
     .filter(Boolean);
 }

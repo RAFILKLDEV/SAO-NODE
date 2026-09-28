@@ -7,6 +7,8 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router';
 
 import { api } from '../lib/api.js';
+import { LocationMenu } from '../components/LocationMenu.jsx';
+import { formatDropResult } from '../lib/dropDisplay.js';
 import { LocationImage, LocationImagePicker } from '../components/LocationImage.jsx';
 import { locationImageUrlError } from '../lib/locationImage.js';
 
@@ -18,29 +20,11 @@ import { formatEntityName } from '../lib/entityDisplay.js';
 
 import {
 
-  getEntityChangeState,
-
-  getEntitySeenStorageKey,
-
-  readEntityActivityAt,
-
-  readEntitySeenAt
-
-} from '../lib/notifications.js';
-
-import {
-
   locationFloor,
-
-  resolveLocationMenuClick,
 
   resolveLocationMenuEntries,
 
-  resolveLocationMenuRegions,
-
-  resolveLocationMenuState,
-
-  shouldShowLocationList
+  resolveLocationMenuRegions
 
 } from '../lib/locationMenu.js';
 
@@ -1119,7 +1103,7 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
     const text = dropRoll
 
-      .map((entry) => `${entry.name ?? entry.id}${entry.chance ? ` (${entry.chance}%)` : ''}${entry.quantity != null ? ` x${entry.quantity}` : ''}`)
+      .map(formatDropResult)
 
       .join('\n');
 
@@ -1361,7 +1345,7 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
             <div className="modal-content">
 
-              <pre>{dropRoll.length ? dropRoll.map((entry) => `${entry.name ?? entry.id}${entry.chance ? ` (${entry.chance}%)` : ''}${entry.quantity != null ? ` x${entry.quantity}` : ''}`).join('\n') : 'Nenhum item foi sorteado.'}</pre>
+              <pre>{dropRoll.length ? dropRoll.map(formatDropResult).join('\n') : 'Nenhum item foi sorteado.'}</pre>
 
               {copyState && <p className="muted">{copyState}</p>}
 
@@ -2752,9 +2736,9 @@ function ReferencePicker({ value, onChange, allowedTypes = entityTypes, label = 
 
     <div className="reference-picker">
 
-      <label>{label}<select value={currentType} onChange={(event) => onChange({ type: event.target.value, id: '', role: value?.role ?? 'related', chance: value?.chance })}>{allowedTypes.map((type) => <option key={type} value={type}>{singular[type]}</option>)}</select></label>
+      <label>{label}<select value={currentType} onChange={(event) => onChange({ type: event.target.value, id: '', role: value?.role ?? 'related', chance: value?.chance, valueFormula: value?.valueFormula })}>{allowedTypes.map((type) => <option key={type} value={type}>{singular[type]}</option>)}</select></label>
 
-      <label>Registro<select disabled={query.isLoading || query.isError} value={value?.id ?? ''} onChange={(event) => onChange({ type: currentType, id: event.target.value, role: value?.role ?? 'related', chance: value?.chance })}>
+      <label>Registro<select disabled={query.isLoading || query.isError} value={value?.id ?? ''} onChange={(event) => onChange({ type: currentType, id: event.target.value, role: value?.role ?? 'related', chance: value?.chance, valueFormula: value?.valueFormula })}>
 
         <option value="">{query.isLoading ? 'Carregando…' : query.isError ? 'Não foi possível carregar' : 'Selecione…'}</option>
 
@@ -2852,7 +2836,7 @@ function ReferenceListEditor({ values = [], onChange, title = 'Referências', al
 
           <div className="editor-row reference-edit-row" key={`${reference.type}:${reference.id}:${index}`}>
 
-            <ReferencePicker value={reference} allowedTypes={allowedTypes} onChange={(next) => updateReference(index, { ...next, role: reference.role ?? role, chance: reference.chance ?? next.chance, quantityMin: reference.quantityMin ?? next.quantityMin, quantityMax: reference.quantityMax ?? next.quantityMax })} />
+            <ReferencePicker value={reference} allowedTypes={allowedTypes} onChange={(next) => updateReference(index, { ...next, role: reference.role ?? role, chance: reference.chance ?? next.chance, quantityMin: reference.quantityMin ?? next.quantityMin, quantityMax: reference.quantityMax ?? next.quantityMax, valueFormula: reference.valueFormula ?? next.valueFormula })} />
 
             <label className="reference-role-field">Relação<select aria-label="Tipo de relação" value={effectiveRole} onChange={(event) => updateReference(index, { role: event.target.value, chance: reference.chance })}>{roleOptions.some((option) => option.value === effectiveRole) ? null : <option value={effectiveRole}>{referenceRoleLabel(effectiveRole)}</option>}{roleOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
 
@@ -2890,6 +2874,10 @@ function ReferenceListEditor({ values = [], onChange, title = 'Referências', al
 
               </>
 
+            )}
+
+            {showChance && reference.type === 'item' && (
+              <label className="reference-role-field">Valor em cash<input type="text" placeholder="2d4+2" aria-label="Valor aleatorio em cash" title="Formula do valor em cash do drop, por exemplo 2d4+2" value={reference.valueFormula ?? ''} onChange={(event) => updateReference(index, { valueFormula: event.target.value || undefined })} /></label>
             )}
 
             <button className="danger" onClick={() => onChange(clean.filter((_, itemIndex) => itemIndex !== index))}>Remover</button>
@@ -3230,7 +3218,7 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
           {type === 'item' && <><FormField label="Categoria" value={data.category} options={itemCategoryOptions} onChange={(value) => set('category', value)} /><FormField label="Raridade" value={data.rarity} options={itemRarityOptions} onChange={(value) => set('rarity', value)} /><FormField label="Valor (T$)" type="number" step="10" value={data.value?.amount ?? 0} onChange={(amount) => set('value', { ...(data.value ?? {}), amount, currency: 'T$' })} /></>}
 
-          {type === 'monster' && <FormField label="Grupo" value={data.group} onChange={(value) => set('group', value)} />}
+          {type === 'monster' && <><FormField label="Grupo" value={data.group} onChange={(value) => set('group', value)} /><label className="checkbox-field"><input type="checkbox" checked={Boolean(data.sheet?.boss)} onChange={(event) => set('sheet', { ...(data.sheet ?? {}), boss: event.target.checked })} /> Boss</label></>}
 
           {type === 'quest' && <><FormField label="Subtítulo" value={data.subtitle} onChange={(value) => set('subtitle', value)} /><FormField label="Tipo" value={data.type} options={questTypeOptions} onChange={(value) => set('type', value)} /><FormField label="Estado" value={data.state} options={questStateOptions} onChange={(value) => set('state', value)} /><FormField label="Nível recomendado" value={data.recommendedLevel} onChange={(value) => set('recommendedLevel', value)} /><FormField label="Critério dos requisitos" value={data.requirementLogic ?? 'all'} options={requirementLogicOptions} onChange={(value) => set('requirementLogic', value)} /><FormField label="Ordem dos objetivos" value={data.objectiveMode ?? 'free'} options={objectiveModeOptions} onChange={(value) => set('objectiveMode', value)} /></>}
 
@@ -3276,7 +3264,7 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
               const otherReferences = (data.references ?? []).filter((reference) => !(reference.type === 'item' && (reference.role === 'drops' || reference.role === 'drop')));
 
-              set('references', [...otherReferences, ...values.map((reference) => ({ ...reference, type: 'item', role: 'drops', chance: reference.chance ?? 100, quantityMin: reference.quantityMin, quantityMax: reference.quantityMax }))]);
+              set('references', [...otherReferences, ...values.map((reference) => ({ ...reference, type: 'item', role: 'drops', chance: reference.chance ?? 100, quantityMin: reference.quantityMin, quantityMax: reference.quantityMax, valueFormula: reference.valueFormula }))]);
 
             }}
 
@@ -3753,18 +3741,6 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
           queryKey: ['entity', campaignId, entry.entityType ?? entityType, entry.entityId ?? entityId]
 
         });
-
-        if (typeof window !== 'undefined') {
-
-          window.localStorage.setItem(
-
-            `sao-entity-granted:${campaignId}:${entry.entityType ?? entityType}:${entry.entityId ?? entityId}`,
-
-            String(Date.now())
-
-          );
-
-        }
 
       }
 
@@ -4396,294 +4372,6 @@ export function monsterNdLabel(entity) {
 
 
 
-function LocationMenuImage({ entity }) {
-  const src = entityImage(entity);
-  return src ? <img key={src} className="location-menu-image" src={src} alt="" aria-hidden="true" loading="lazy" onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }} /> : null;
-}
-
-function LocationMenu({ items, selectedId, onSelect, campaignId, canBulkGrant, onBulkGrant }) {
-
-  const resolvedDefaultState = useMemo(() => resolveLocationMenuState({ items, selectedId }), [items, selectedId]);
-
-  const [selectedFloor, setSelectedFloor] = useState(resolvedDefaultState.floor);
-
-  const [selectedRegion, setSelectedRegion] = useState(resolvedDefaultState.region);
-
-  const [_regionPreviewId, setRegionPreviewId] = useState(null);
-
-
-
-  useEffect(() => {
-
-    if (!selectedId) return;
-
-    const next = resolveLocationMenuState({ items, selectedId });
-
-    setSelectedFloor(next.floor ?? null);
-
-
-
-    setSelectedRegion(next.region ?? null);
-
-  }, [items, selectedId]);
-
-
-
-  const byId = new Map(items.map((item) => [item.id, item]));
-
-  const floors = [...new Set(items.map(item => locationFloor(item, items)))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-  const floorItems = selectedFloor ? items.filter((item) => locationFloor(item, items) === selectedFloor) : [];
-
-  const regions = resolveLocationMenuRegions({ items: floorItems });
-
-  const region = byId.get(selectedRegion) ?? regions[0] ?? null;
-
-  const activeRegionId = selectedRegion ?? region?.id ?? null;
-
-  const regionStartCity = floorItems.find((item) => item.type === 'city' && item.parentId === activeRegionId);
-
-  const menuLocations = resolveLocationMenuEntries({ items: floorItems, selectedRegion: activeRegionId });
-
-  const shouldShowLocations = shouldShowLocationList({ regions, selectedRegion });
-  const bulkGrantButton = canBulkGrant ? (
-    <button className="location-menu-bulk-action" onClick={() => onBulkGrant(items)}>
-      ◇ Liberar locais
-    </button>
-  ) : null;
-
-
-
-  if (!selectedFloor)
-
-    return (
-
-      <div className="location-menu">
-
-        {bulkGrantButton}
-
-        <div className="location-menu-head"><small>1 de 3</small><strong>Selecione o Andar</strong></div>
-
-        {floors.map((floor) => (
-
-          <button key={floor} className="location-menu-item" onClick={() => setSelectedFloor(floor)}>
-
-            <span className="tree-marker" aria-hidden="true">▣</span>
-
-            <span><strong>{floorLabel(floor)}</strong><small>{items.filter((item) => locationFloor(item, items) === floor).length} locais</small></span>
-
-          </button>
-
-        ))}
-
-        {!floors.length && <div className="empty-list">Nenhum local disponível.</div>}
-
-      </div>
-
-    );
-
-
-
-  if (regions.length && !shouldShowLocations)
-
-    return (
-
-      <div className="location-menu">
-
-        {bulkGrantButton}
-
-        <button className="location-menu-back" onClick={() => { setSelectedFloor(null); setSelectedRegion(null); setRegionPreviewId(null); }}>← Andares</button>
-
-        <div className="location-menu-head"><small>2 de 3 · {floorLabel(selectedFloor)}</small><strong>Selecione a Região</strong></div>
-
-        {(() => {
-
-          const currentRegion = selectedRegion ? byId.get(selectedRegion) : region;
-
-          const orderedRegions = currentRegion
-
-            ? [currentRegion, ...regions.filter((item) => item.id !== currentRegion.id)]
-
-            : regions;
-
-
-
-          return orderedRegions.map((item) => {
-
-            const regionCity = floorItems.find((entry) => entry.type === 'city' && entry.parentId === item.id);
-
-            const isSelected = item.id === (selectedRegion ?? region?.id);
-
-            const isStartCity = regionCity && regionCity.name.toLowerCase().includes('início');
-
-            const displayName = isStartCity ? 'Cidade do Início' : formatEntityName(item);
-
-
-
-            return (
-
-              <div key={item.id} className="location-menu-region-wrap">
-
-                <button className={`location-menu-item ${isSelected ? 'selected' : ''}`} onClick={() => setSelectedRegion(item.id)} title={formatEntityName(item)}>
-
-                  <LocationMenuImage entity={item} />
-
-                  <span className="tree-marker" aria-hidden="true">⌖</span>
-
-                  <span><strong>{displayName}</strong><small>{isSelected ? 'Região selecionada' : 'Região'}</small></span>
-
-                </button>
-
-                {isStartCity && (
-
-                  <button
-
-                    className="location-menu-mini-action"
-
-                    onClick={() => {
-
-                      setSelectedRegion(item.id);
-
-                      setRegionPreviewId(null);
-
-                      onSelect(regionCity.id);
-
-                    }}
-
-                  >
-
-                    Cidade do início: {formatEntityName(regionCity)}
-
-                  </button>
-
-                )}
-
-              </div>
-
-            );
-
-          });
-
-        })()}
-
-      </div>
-
-    );
-
-
-
-  if (!regions.length && !menuLocations.length)
-
-    return (
-
-      <div className="location-menu">
-
-        {bulkGrantButton}
-
-        <button className="location-menu-back" onClick={() => { setSelectedFloor(null); setSelectedRegion(null); }}>← Andares</button>
-
-        <div className="empty-list">Nenhum local neste andar.</div>
-
-      </div>
-
-    );
-
-
-
-  return (
-
-    <div className="location-menu">
-
-      {bulkGrantButton}
-
-      <button className="location-menu-back" onClick={() => { setSelectedFloor(null); setSelectedRegion(null); setRegionPreviewId(null); }}>← Andares</button>
-
-      <button className="location-menu-back secondary" onClick={() => { setSelectedRegion(null); setRegionPreviewId(null); }}>← Regiões</button>
-
-      <div className="location-menu-head"><small>3 de 3 · {floorLabel(selectedFloor)}</small><strong>Regiões</strong></div>
-
-      {region && <button className={`location-menu-item ${selectedRegion === region.id ? 'selected' : ''}`} onClick={() => { setSelectedRegion(region.id); onSelect(region.id); }} title={formatEntityName(region)}><LocationMenuImage entity={region} /><span className="tree-marker" aria-hidden="true">⌖</span><span className="location-label-wrap"><strong>{formatEntityName(region)}</strong><small>Região selecionada</small></span><small>Região</small></button>}
-
-      <div className="location-menu-head"><small>{region?.name ?? floorLabel(selectedFloor)}</small><strong>Locais</strong></div>
-
-      {regionStartCity && !menuLocations.some((item) => item.id === regionStartCity.id) && (
-
-        <button key={regionStartCity.id} className={`location-menu-item ${regionStartCity.id === selectedId ? 'selected' : ''}`} onClick={() => onSelect(regionStartCity.id)} title={formatEntityName(regionStartCity)}>
-
-          <LocationMenuImage entity={regionStartCity} />
-
-          <span className="tree-marker" aria-hidden="true">•</span>
-
-          <span className="location-label-wrap"><strong>{formatEntityName(regionStartCity)}</strong><small>Cidade do início</small></span>
-
-          <small>Cidade</small>
-
-        </button>
-
-      )}
-
-      {menuLocations.map((item) => {
-
-        const lastSeenAt = readEntitySeenAt({ campaignId, type: 'location', entityId: item.id });
-
-        const changeState = getEntityChangeState(item, lastSeenAt);
-
-        const handleClick = () => {
-
-          const { selectedRegion: nextRegion, itemId } = resolveLocationMenuClick(item);
-
-          if (nextRegion) {
-
-            setSelectedRegion(nextRegion);
-
-            setRegionPreviewId(null);
-
-          }
-
-          onSelect(itemId);
-
-        };
-
-
-
-        return (
-
-          <button key={item.id} className={`location-menu-item ${item.id === selectedId ? 'selected' : ''}`} onClick={handleClick} title={formatEntityName(item)}>
-
-            <LocationMenuImage entity={item} />
-
-            <span className="tree-marker" aria-hidden="true">{item.type === 'city' ? '⌂' : '•'}</span>
-
-            <span className="location-label-wrap">
-
-              <strong>{formatEntityName(item)}</strong>
-                    <strong>{formatEntityName(item)}</strong>
-              <strong>{formatEntityName(item)}</strong>
-
-              {item.type === 'city' && <small>Cidade inicial</small>}
-
-              {changeState && <span className={`change-badge ${changeState.kind}`}>{changeState.label}</span>}
-
-            </span>
-
-            <small>{item.type === 'city' ? 'Cidade' : 'Local'}</small>
-
-          </button>
-
-        );
-
-      })}
-
-      {!menuLocations.length && <div className="empty-list">Nenhum local nesta região.</div>}
-
-    </div>
-
-  );
-
-}
-
-
-
 function MonsterLocationFilter({ locations, selectedRegion, selectedLocation, onRegionChange, onLocationChange }) {
 
   const regions = resolveLocationMenuRegions({ items: locations });
@@ -4734,11 +4422,21 @@ function MonsterLocationFilter({ locations, selectedRegion, selectedLocation, on
 
 }
 
+export function isBossMonster(monster) {
+  return monster?.sheet?.boss === true || monster?.boss === true || String(monster?.sheet?.type ?? '').toLowerCase() === 'boss' || String(monster?.group ?? '').toLowerCase() === 'boss';
+}
+
+export function isCharacterEntity(item) {
+  const values = [item?.category, item?.kind, item?.role, item?.identity?.type, item?.identity?.kind, ...(item?.tags ?? [])];
+  return values.some((value) => /^(entity|entidade|entidades)$/i.test(String(value ?? '').trim()));
+}
+
 
 
 export function EntityPage({ type }) {
 
   const { campaignId } = useParams();
+  const navigate = useNavigate();
 
   const { isGm } = useOutletContext();
 
@@ -4757,6 +4455,10 @@ export function EntityPage({ type }) {
   const [monsterRegionId, setMonsterRegionId] = useState('');
 
   const [monsterLocationId, setMonsterLocationId] = useState('');
+
+  const [monsterBossFilter, setMonsterBossFilter] = useState('all');
+
+  const [characterFilter, setCharacterFilter] = useState('npc');
 
   const [itemCategoryFilter, setItemCategoryFilter] = useState('all');
 
@@ -4877,11 +4579,23 @@ export function EntityPage({ type }) {
   );
 
   const displayItems = useMemo(
-    () => type === 'item' && itemCategoryFilter !== 'all'
+    () => type === 'monster' && monsterBossFilter !== 'all'
+      ? visibleItems.filter((item) => monsterBossFilter === 'boss' ? isBossMonster(item) : !isBossMonster(item))
+      : type === 'npc'
+      ? visibleItems.filter((item) => characterFilter === 'entity' ? isCharacterEntity(item) : !isCharacterEntity(item))
+      : type === 'item' && itemCategoryFilter !== 'all'
       ? visibleItems.filter((item) => item.category === itemCategoryFilter)
       : visibleItems,
-    [itemCategoryFilter, type, visibleItems]
+    [characterFilter, itemCategoryFilter, monsterBossFilter, type, visibleItems]
   );
+
+  const characterFilters = type === 'npc' ? (
+    <div className="character-filters" role="toolbar" aria-label="Filtrar personagens">
+      <button type="button" className={`character-filter ${characterFilter === 'npc' ? 'active' : ''}`} title="NPCs" aria-label="NPCs" onClick={() => setCharacterFilter('npc')}><span aria-hidden="true">♟</span><small>NPCs</small></button>
+      <button type="button" className="character-filter" title="Jogadores" aria-label="Jogadores" onClick={() => navigate(`/campaigns/${campaignId}/players`)}><span aria-hidden="true">♙</span><small>Jogadores</small></button>
+      <button type="button" className={`character-filter ${characterFilter === 'entity' ? 'active' : ''}`} title="Entidades" aria-label="Entidades" onClick={() => setCharacterFilter('entity')}><span aria-hidden="true">⇄</span><small>Entidades</small></button>
+    </div>
+  ) : null;
 
 
 
@@ -4900,42 +4614,6 @@ export function EntityPage({ type }) {
   }, [selectedId, displayItems, setParams]);
 
 
-
-  useEffect(() => {
-
-    if (!selectedId || !detail.data || viewAsUserId) return;
-
-    const lastSeenAt = readEntitySeenAt({ campaignId, type, entityId: selectedId });
-
-    const activityAt = readEntityActivityAt({ campaignId, type, entityId: selectedId });
-
-    const state = getEntityChangeState(detail.data, lastSeenAt, activityAt);
-
-    console.log('[sao:entityBadge]', { campaignId, type, selectedId, lastSeenAt, activityAt, state });
-
-    if (state && state.kind) {
-
-      const timestamp = Date.now();
-
-      window.localStorage.setItem(
-
-        getEntitySeenStorageKey({ campaignId, type, entityId: selectedId }),
-
-        String(timestamp)
-
-      );
-
-      const { title, message } = state.kind === 'new'
-
-        ? { title: 'Novo conteúdo', message: `${formatEntityName(detail.data)} foi adicionado recentemente.` }
-
-        : { title: 'Conteúdo atualizado', message: `${formatEntityName(detail.data)} foi editado e precisa de revisão.` };
-
-      window.dispatchEvent(new CustomEvent('sao:toast', { detail: { kind: state.kind, title, message } }));
-
-    }
-
-  }, [campaignId, detail.data, selectedId, type, viewAsUserId]);
 
 
 
@@ -5003,21 +4681,7 @@ export function EntityPage({ type }) {
 
   );
 
-  const badgeFor = (item) => {
-
-    if (!item || viewAsUserId) return null;
-
-    const lastSeenAt = readEntitySeenAt({ campaignId, type, entityId: item.id });
-
-    const activityAt = readEntityActivityAt({ campaignId, type, entityId: item.id });
-
-    const state = getEntityChangeState(item, lastSeenAt, activityAt);
-
-    if (!state) return null;
-
-    return <span className={`change-badge ${state.kind}`}>{state.label}</span>;
-
-  };
+  const badgeFor = () => null;
 
   if (list.isLoading)
 
@@ -5138,6 +4802,8 @@ export function EntityPage({ type }) {
 
         <aside className="entity-list">
 
+          {characterFilters}
+
           {type === 'item' && <div className="item-category-filters" role="toolbar" aria-label="Filtrar itens por categoria">
 
             {itemCategoryFilters.map((filter) => <button
@@ -5156,7 +4822,7 @@ export function EntityPage({ type }) {
 
           {type === 'location' ? (
 
-            <LocationMenu
+          <LocationMenu
 
               items={list.data.items}
 
@@ -5164,7 +4830,6 @@ export function EntityPage({ type }) {
 
               onSelect={(id) => setParams({ selected: id })}
 
-              campaignId={campaignId}
 
               canBulkGrant={effectiveIsGm}
 
@@ -5189,6 +4854,7 @@ export function EntityPage({ type }) {
                 onLocationChange={setMonsterLocationId}
 
               />
+              <label className="monster-boss-filter">Tipo de monstro<select value={monsterBossFilter} onChange={(event) => setMonsterBossFilter(event.target.value)}><option value="all">Todos</option><option value="boss">Apenas Boss</option><option value="normal">Sem Boss</option></select></label>
 
               {displayItems.map((item) => {
 

@@ -1,6 +1,7 @@
 import { getEntityForRequest } from '../services/content.js';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
+import { notifyProgress } from '../services/notifications.js';
 import { audit } from '../lib/audit.js';
 import { authenticate, isGm, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import { evaluateQuestProgress } from '@sao/domain';
@@ -55,6 +56,7 @@ async function serializeProgress(progress, request) {
     return {
       id: progress.id,
       questId: progress.questEntity.domainId,
+      questName: progress.questEntity.name,
       ownerType: progress.ownerType,
       ownerId: progress.ownerId,
       state: progress.state,
@@ -85,6 +87,7 @@ async function serializeProgress(progress, request) {
   return {
     id: progress.id,
     questId: progress.questEntity.domainId,
+    questName: visibleQuest.name,
     ownerType: progress.ownerType,
     ownerId: progress.ownerId,
     state: progress.state,
@@ -115,6 +118,14 @@ const progressInclude = {
 };
 
 export async function progressRoutes(app) {
+  app.get('/api/v1/campaigns/:campaignId/progress/players', { preHandler: [authenticate, requireCampaign] }, async (request) => {
+    const rows = await prisma.membership.findMany({
+      where: { campaignId: request.campaign.id, ...(isGm(request) ? { role: 'player' } : { userId: request.auth.user.id }) },
+      select: { characterImageUrl: true, user: { select: { id: true, login: true, name: true } } },
+      orderBy: { user: { name: 'asc' } }
+    });
+    return rows.map(({ user, characterImageUrl }) => ({ ...user, characterImageUrl }));
+  });
   app.get('/api/v1/campaigns/:campaignId/progress', { preHandler: [authenticate, requireCampaign] }, async (request) => {
     const rows = await prisma.questProgress.findMany({
       where: { campaignId: request.campaign.id },
@@ -160,6 +171,7 @@ export async function progressRoutes(app) {
       await audit(tx, { campaignId: request.campaign.id, actorUserId: request.auth.user.id, action: 'quest.progress.start', entityType: 'quest', entityDomainId: quest.domainId, subjectType: parsed.data.ownerType, subjectId: parsed.data.ownerId, after: parsed.data });
       return tx.questProgress.findUnique({ where: { id: saved.id }, include: progressInclude });
     });
+    await notifyProgress({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, progressId: progress.id, eventType: 'progress.changed', kind: 'info', title: 'Progresso atualizado', message: 'O progresso de uma missão foi atualizado.', payload: { id: progress.id, questId: quest.domainId } });
     request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('progress.changed', { id: progress.id, questId: quest.domainId });
     return reply.code(201).send(await serializeProgress(progress, request));
   });
@@ -171,6 +183,8 @@ export async function progressRoutes(app) {
     if (!progress || !(await canAccessProgress(request, progress))) return reply.code(404).send(apiError('NOT_FOUND', 'Progress not found'));
     const objective = progress.questEntity.questObjectives.find((item) => item.objectiveId === request.params.objectiveId);
     if (!objective) return reply.code(404).send(apiError('NOT_FOUND', 'Objective not found'));
+    if (progress.state !== 'active') return reply.code(409).send(apiError('PROGRESS_CLOSED', 'Esta missão não está em andamento.'));
+    if (parsed.data.value > objective.requiredQuantity) return reply.code(400).send(apiError('INVALID_INPUT', 'O progresso não pode exceder a quantidade do objetivo.'));
 
     const gm = isGm(request);
     const visibleQuest = gm ? null : await getEntityForRequest({ request, type: 'quest', domainId: progress.questEntity.domainId });
@@ -203,6 +217,7 @@ export async function progressRoutes(app) {
       await audit(tx, { campaignId: request.campaign.id, actorUserId: request.auth.user.id, action: 'quest.progress.objective.update', entityType: 'quest', entityDomainId: progress.questEntity.domainId, targetKind: 'objective', targetKey: objective.objectiveId, subjectType: progress.ownerType, subjectId: progress.ownerId, before: { value: before }, after: { value: parsed.data.value } });
       return refreshed;
     });
+    await notifyProgress({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, progressId: updated.id, eventType: 'progress.changed', kind: 'info', title: 'Progresso atualizado', message: 'O progresso de uma missão foi atualizado.', payload: { id: updated.id, questId: updated.questEntity.domainId } });
     request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('progress.changed', { id: updated.id, questId: updated.questEntity.domainId });
     return serializeProgress(updated, request);
   });
@@ -213,6 +228,7 @@ export async function progressRoutes(app) {
     const state = evaluationFor(progress).evaluation;
     if (!state.readyToComplete) return reply.code(409).send(apiError('NOT_READY', 'Required objectives are incomplete'));
     const updated = await prisma.questProgress.update({ where: { id: progress.id }, data: { state: 'completed', completedAt: new Date(), version: { increment: 1 } }, include: progressInclude });
+    await notifyProgress({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, progressId: updated.id, eventType: 'progress.changed', kind: 'info', title: 'Progresso atualizado', message: 'O progresso de uma missão foi atualizado.', payload: { id: updated.id, questId: updated.questEntity.domainId } });
     request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('progress.changed', { id: updated.id, questId: updated.questEntity.domainId });
     return serializeProgress(updated, request);
   });

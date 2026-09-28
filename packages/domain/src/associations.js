@@ -36,7 +36,7 @@ export function normalizeAssociation(source, input) {
     link.chance ??= 100;
     link.quantityMin ??= link.quantityMax ?? 1;
     link.quantityMax ??= link.quantityMin;
-  } else if (link.chance != null || link.quantityMin != null || link.quantityMax != null) {
+  } else if (link.chance != null || link.quantityMin != null || link.quantityMax != null || link.valueFormula != null) {
     fail('Chance e quantidade pertencem a associações de Drop.');
   }
   return link;

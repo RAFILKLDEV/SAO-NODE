@@ -67,7 +67,8 @@ export const linkSchema = targetSchema
     slot: z.enum(['references', 'locations', 'relations']).default('references'),
     chance: z.number().int().min(1).max(100).optional(),
     quantityMin: z.number().int().positive().optional(),
-    quantityMax: z.number().int().positive().optional()
+    quantityMax: z.number().int().positive().optional(),
+    valueFormula: z.string().regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i, 'Use uma fórmula como 2d4+2').optional()
   })
   .superRefine((link, ctx) => {
     if ((link.quantityMin ?? link.quantityMax ?? 1) > (link.quantityMax ?? link.quantityMin ?? 1))
@@ -99,7 +100,8 @@ const sheet = z.strictObject({
   resources: map.default({}),
   resistances: map.default({}),
   attributes: map.default({}),
-  statsVisibility: z.record(z.string(), visibility).default({})
+  statsVisibility: z.record(z.string(), visibility).default({}),
+  boss: z.boolean().default(false)
 });
 const binding = z.strictObject({
   mode: z.enum(['none', 'embedded', 'linked']).default('none'),
@@ -431,6 +433,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'chance',
       'quantityMin',
       'quantityMax',
+      'valueFormula',
       'name',
       'subtitle',
       'available',
@@ -443,6 +446,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'chance',
       'quantityMin',
       'quantityMax',
+      'valueFormula',
       'name',
       'subtitle',
       'available',
@@ -455,6 +459,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'chance',
       'quantityMin',
       'quantityMax',
+      'valueFormula',
       'name',
       'subtitle',
       'available',
@@ -522,6 +527,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'type',
       'subtype',
       'size',
+      'boss',
       'combat',
       'resources',
       'resistances',
@@ -540,6 +546,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
         'creatureType',
         'subtype',
         'size',
+        'boss',
         'initiative',
         'perception',
         'senses',
@@ -571,11 +578,11 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
   const unique = new Map();
   for (const link of links) {
     const normalized = {
-      ...pick(link, ['type', 'id', 'role', 'slot', 'chance', 'quantityMin', 'quantityMax']),
+      ...pick(link, ['type', 'id', 'role', 'slot', 'chance', 'quantityMin', 'quantityMax', 'valueFormula']),
       role: link.role === 'drop' ? 'drops' : (link.role ?? 'related'),
       slot: link.slot ?? 'references'
     };
-    for (const key of ['chance', 'quantityMin', 'quantityMax'])
+    for (const key of ['chance', 'quantityMin', 'quantityMax', 'valueFormula'])
       if (normalized[key] == null) delete normalized[key];
     const key = `${normalized.type}:${normalized.id}:${normalized.role}:${normalized.slot}`;
     if (unique.has(key)) take(`links.${key}`, unique.get(key), normalized);
@@ -683,6 +690,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
         'type',
         'subtype',
         'size',
+        'boss',
         'combat',
         'resources',
         'resistances',

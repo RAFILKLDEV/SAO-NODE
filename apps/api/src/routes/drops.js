@@ -17,6 +17,7 @@ export async function dropRoutes(app) {
       chance: reference.chance ?? undefined,
       quantityMin: reference.quantityMin ?? undefined,
       quantityMax: reference.quantityMax ?? undefined
+      ,valueFormula: reference.valueFormula ?? undefined
     }));
     const rolled = rollDrops(refs);
     const results = [];
@@ -29,6 +30,7 @@ export async function dropRoutes(app) {
         name: item?.deletedAt ? undefined : item?.name,
         chance: ref.chance ?? 100,
         quantity: ref.quantity,
+        cashValue: ref.cashValue,
         broken: !item || Boolean(item.deletedAt)
       });
     }

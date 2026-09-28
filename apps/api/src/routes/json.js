@@ -1,6 +1,8 @@
 import { normalizeEntity, validateEntityCatalog } from '@sao/domain';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
+import { notifyCampaign } from '../services/notifications.js';
+import { discoverableImport } from '../services/importVisibility.js';
 import { config } from '../lib/config.js';
 import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import { randomToken } from '../lib/security.js';
@@ -101,6 +103,9 @@ export async function jsonRoutes(app) {
           return reply.code(400).send(apiError('INVALID_CONTENT', error.message));
         }
       }
+      pack = { ...pack, entities: pack.entities.map((entry) => ({
+        ...entry, data: discoverableImport(entry.type, entry.data)
+      })) };
       let warnings;
       try { warnings = validateEntityCatalog(pack.entities, existingRows.filter(e => !e.deletedAt).map(e => ({ type: e.type, data: entityRecordToCanonical(e) }))); }
       catch (error) { return reply.code(400).send(apiError('INVALID_CONTENT', error.message)); }
@@ -257,6 +262,7 @@ export async function jsonRoutes(app) {
       }, { isolationLevel: 'Serializable', timeout: 60000 });
 
       app.importPreviews.delete(parsed.data.previewId);
+      await notifyCampaign({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, eventType: 'import.applied', kind: 'info', title: 'Importação concluída', message: 'Novos dados foram importados para a campanha.', payload: summary });
       request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('import.applied', summary);
       return summary;
     }

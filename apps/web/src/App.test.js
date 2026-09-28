@@ -16,6 +16,7 @@ import {
   isDropReference,
   monsterComponentTargets,
   monsterNdLabel
+  ,isCharacterEntity
 } from './pages/EntityPage.jsx';
 import {
   collectPermissionChangeEntities,
@@ -28,9 +29,11 @@ import {
   resolveLocationMenuClick,
   resolveLocationMenuEntries,
   resolveLocationMenuRegions,
+  locationMenuRows,
   resolveLocationMenuState,
   shouldShowLocationList
 } from './lib/locationMenu.js';
+import { formatDropResult } from './lib/dropDisplay.js';
 import { locationBranchEntries, locationDiscoveryRows } from './lib/locationDiscovery.js';
 
 describe('reference list rendering', () => {
@@ -110,6 +113,18 @@ describe('reference list rendering', () => {
 });
 
 describe('location menu hierarchy', () => {
+  it('renders each location once with its hierarchy depth and supports search', () => {
+    const items = [
+      { id: 'loc.region', type: 'region', placement: { floor: '1' }, name: 'Planície' },
+      { id: 'loc.city', type: 'city', parentId: 'loc.region', name: 'Cidade' },
+      { id: 'loc.bank', type: 'building', parentId: 'loc.city', name: 'Banco' }
+    ];
+    expect(locationMenuRows({ items, floor: '1' }).map(({ item, depth }) => [item.id, depth])).toEqual([
+      ['loc.region', 0], ['loc.city', 1], ['loc.bank', 2]
+    ]);
+    expect(locationMenuRows({ items, floor: '1', search: 'banco' }).map(({ item }) => item.id)).toEqual(['loc.region', 'loc.city', 'loc.bank']);
+  });
+
   it('includes root cities among the possible regions of a floor', () => {
     const items = [
       { id: 'loc.andar-1.cidade-do-inicio', type: 'city', placement: { floor: '1' }, name: 'Cidade do Inicio' },
@@ -150,6 +165,19 @@ describe('location menu hierarchy', () => {
   });
 });
 
+describe('drop result display', () => {
+  it('shows the rolled cash value alongside quantity', () => {
+    expect(formatDropResult({ name: 'Pedra preciosa', chance: 50, quantity: 2, cashValue: 9 })).toBe('Pedra preciosa (50%) x2 · 9 cash');
+  });
+});
+
+describe('character filters', () => {
+  it('recognizes special entities without changing regular NPCs', () => {
+    expect(isCharacterEntity({ tags: ['entidade'] })).toBe(true);
+    expect(isCharacterEntity({ identity: { kind: 'npc' } })).toBe(false);
+  });
+});
+
 describe('resolveCampaignLinks', () => {
   it('allows a player to open a reference when its target is known', () => {
     expect(
@@ -170,7 +198,7 @@ describe('resolveCampaignLinks', () => {
   it('mantém todas as categorias para mestre', () => {
     const result = resolveCampaignLinks({ isGm: true, visibleEntityTypes: new Set() });
 
-    expect(result.map(([path]) => path)).toEqual(['npcs', 'locations', 'items', 'monsters', 'quests', 'progress', 'groups']);
+    expect(result.map(([path]) => path)).toEqual(['npcs', 'locations', 'items', 'monsters', 'quests', 'associations', 'progress', 'groups']);
   });
 
   it('oculta seções sem conteúdo visível no detalhe da entidade', () => {

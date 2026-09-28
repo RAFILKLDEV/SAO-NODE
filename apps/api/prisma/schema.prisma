@@ -18,6 +18,7 @@ model User {
   memberships  Membership[]
   groupMembers GroupMember[]
   bindings     CharacterBinding[]
+  notifications Notification[]
 }
 
 model Session {
@@ -49,6 +50,25 @@ model Campaign {
   imports     ImportHistory[]
   bindings    CharacterBinding[]
   npcAssociations NpcAssociation[]
+  notifications Notification[]
+}
+
+model Notification {
+  id         String    @id @default(cuid())
+  campaignId String
+  userId     String
+  eventType  String
+  kind       String    @default("info")
+  title      String
+  message    String
+  payload    Json?
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, campaignId, createdAt])
+  @@index([userId, campaignId, readAt])
 }
 
 model Membership {
@@ -144,6 +164,7 @@ model Reference {
   chance         Int?
   quantityMin    Int?
   quantityMax    Int?
+  valueFormula   String?
   createdAt      DateTime @default(now())
   sourceEntity   Entity   @relation(fields: [sourceEntityId], references: [id], onDelete: Cascade)
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { prisma } from '../lib/prisma.js';
 import { ENTITY_TYPES, apiError } from '@sao/shared';
 import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import {
@@ -9,6 +10,7 @@ import {
   listEntitiesForRequest,
   updateEntity
 } from '../services/content.js';
+import { notifyEntityChanged } from '../services/notifications.js';
 
 const querySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -57,6 +59,7 @@ export async function entityRoutes(app) {
           input: request.body,
           actorUserId: request.auth.user.id
         });
+        await notifyEntityChanged({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, type, entityId: entity.domainId, action: 'created' });
         request.server.realtime
           ?.to(`campaign:${request.campaign.id}`)
           .emit('entity.changed', { type, id: entity.domainId, action: 'created' });
@@ -82,6 +85,7 @@ export async function entityRoutes(app) {
           actorUserId: request.auth.user.id
         });
         if (!entity) return reply.code(404).send(apiError('NOT_FOUND', 'Entity not found'));
+        await notifyEntityChanged({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, type, entityId: entity.domainId, action: 'updated' });
         request.server.realtime
           ?.to(`campaign:${request.campaign.id}`)
           .emit('entity.changed', { type, id: entity.domainId, action: 'updated' });
@@ -102,6 +106,7 @@ export async function entityRoutes(app) {
           actorUserId: request.auth.user.id
         });
         if (!entity) return reply.code(404).send(apiError('NOT_FOUND', 'Entity not found'));
+        await notifyEntityChanged({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, type, entityId: entity.domainId, action: 'updated' });
         request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('entity.changed', { type, id: entity.domainId, action: 'updated' });
         return { id: entity.domainId, version: entity.version };
       }
@@ -124,6 +129,7 @@ export async function entityRoutes(app) {
             .send(apiError('ENTITY_REFERENCED', 'Entity is referenced by other entities', {
               references: deleted.references
             }));
+        await notifyEntityChanged({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, type, entityId: request.params.domainId, action: 'deleted' });
         request.server.realtime
           ?.to(`campaign:${request.campaign.id}`)
           .emit('entity.changed', { type, id: request.params.domainId, action: 'deleted' });

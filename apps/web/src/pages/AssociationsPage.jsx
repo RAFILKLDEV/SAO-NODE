@@ -4,6 +4,7 @@ import { useNavigate, useOutletContext, useParams } from 'react-router';
 import { associationRoles, associationRoleAllowed, entityTypeLabels, entityTypes, isAssociationDrop, normalizeAssociation } from '@sao/domain';
 import { api } from '../lib/api.js';
 import { associationDiff, associationKey, entityIdentity, filterAssociations, hasAssociation } from '../lib/associations.js';
+import '../associations.css';
 
 const roleLabel = (role) => associationRoles.find((entry) => entry.value === role)?.label ?? (role === 'drop' ? 'Drop' : role);
 const entityPath = (campaignId, entity) => `/campaigns/${campaignId}/${entity.type === 'location' ? 'locations' : `${entity.type}s`}?selected=${encodeURIComponent(entity.id)}`;
@@ -23,6 +24,7 @@ function RoleFields({ value, onChange, sourceType, targetType }) {
       <label>Chance (%)<input type="number" min="1" max="100" value={value.chance ?? 100} onChange={(event) => onChange({ ...value, chance: Number(event.target.value) })} /></label>
       <label>Quantidade mínima<input type="number" min="1" value={value.quantityMin ?? 1} onChange={(event) => onChange({ ...value, quantityMin: Number(event.target.value) })} /></label>
       <label>Quantidade máxima<input type="number" min="1" value={value.quantityMax ?? 1} onChange={(event) => onChange({ ...value, quantityMax: Number(event.target.value) })} /></label>
+      <label>Valor em cash<input type="text" placeholder="2d4+2" value={value.valueFormula ?? ''} onChange={(event) => onChange({ ...value, valueFormula: event.target.value || undefined })} /></label>
     </>}
   </div>;
 }

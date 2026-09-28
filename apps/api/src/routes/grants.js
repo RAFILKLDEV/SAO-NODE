@@ -5,9 +5,9 @@ import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/au
 import { ALLOWANCES, TARGET_KINDS, apiError } from '@sao/shared';
 import { evaluateGrant, summarizeGroupVisibility } from '@sao/domain';
 import {
-  emitPermissionNotification,
   resolveGrantRecipientUserIds
 } from '../lib/realtime.js';
+import { createNotifications } from '../services/notifications.js';
 
 const grantSchema = z.object({
   subjectType: z.enum(['user', 'group']),
@@ -231,10 +231,15 @@ async function notifyGrantRecipients(request, grants, extra = {}) {
     campaignId: request.campaign.id,
     grants: allowedGrants
   });
-  emitPermissionNotification({
+  await createNotifications({
+    db: prisma,
     realtime: request.server.realtime,
     campaignId: request.campaign.id,
     userIds,
+    eventType: 'permissions.notification',
+    kind: 'new',
+    title: 'Novo conteúdo disponível',
+    message: 'Um novo conteúdo foi liberado para você.',
     payload: { ...extra, entities: changedEntities(allowedGrants) }
   });
 }

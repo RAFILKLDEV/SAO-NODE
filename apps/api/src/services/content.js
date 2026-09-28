@@ -113,7 +113,8 @@ export async function replaceSimpleChildren(tx, entityId, type, split) {
         slot: reference.slot ?? 'references',
         chance: reference.chance,
         quantityMin: reference.quantityMin,
-        quantityMax: reference.quantityMax
+        quantityMax: reference.quantityMax,
+        valueFormula: reference.valueFormula
       }))
     });
   }
@@ -531,7 +532,7 @@ export function filterMonsterSheet({ sheet = {}, request, context, grants }) {
 }
 
 async function describeTargetForRequest(
-  { type, id, role, chance, quantityMin, quantityMax },
+  { type, id, role, chance, quantityMin, quantityMax, valueFormula },
   request,
   context
 ) {
@@ -552,6 +553,7 @@ async function describeTargetForRequest(
       ...(chance != null ? { chance } : {}),
       ...(quantityMin != null ? { quantityMin } : {}),
       ...(quantityMax != null ? { quantityMax } : {}),
+      ...(valueFormula ? { valueFormula } : {}),
       available: false,
       ...(context.gm ? { broken: true } : {})
     };
@@ -564,6 +566,7 @@ async function describeTargetForRequest(
     ...(chance != null ? { chance } : {}),
     ...(quantityMin != null ? { quantityMin } : {}),
     ...(quantityMax != null ? { quantityMax } : {}),
+    ...(valueFormula ? { valueFormula } : {}),
     available,
     ...(available || context.gm ? { name: target.name, subtitle: target.data?.subtitle ?? target.data?.title } : {})
   };
@@ -807,7 +810,8 @@ export async function serializeEntityForRequest(entity, request, options = {}) {
           role: reference.role,
           chance: reference.chance,
           quantityMin: reference.quantityMin,
-          quantityMax: reference.quantityMax
+          quantityMax: reference.quantityMax,
+          valueFormula: reference.valueFormula
         },
         request,
         context
@@ -1176,7 +1180,8 @@ export function entityRecordToCanonical(entity, options = {}) {
     type: r.targetType, id: r.targetDomainId, role: r.role, slot: r.slot ?? 'references',
     ...(r.chance != null ? { chance: r.chance } : {}),
     ...(r.quantityMin != null ? { quantityMin: r.quantityMin } : {}),
-    ...(r.quantityMax != null ? { quantityMax: r.quantityMax } : {})
+    ...(r.quantityMax != null ? { quantityMax: r.quantityMax } : {}),
+    ...(r.valueFormula ? { valueFormula: r.valueFormula } : {})
   }));
   const canonical = isV2Entity(entity.data);
   if (canonical) raw.links = links;

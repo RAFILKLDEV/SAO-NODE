@@ -130,6 +130,8 @@ export const itemCategoryOptions = [
   { value: 'tool', label: 'Ferramenta' },
   { value: 'material', label: 'Material' },
   { value: 'treasure', label: 'Tesouro' },
+  { value: 'art', label: 'Obra de arte' },
+  { value: 'precious-stone', label: 'Pedra preciosa' },
   { value: 'quest', label: 'Missão' },
   { value: 'misc', label: 'Diversos' }
 ];

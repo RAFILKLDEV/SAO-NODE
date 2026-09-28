@@ -1,0 +1,46 @@
+.association-workspace { border: 0; padding: 0; margin: 0; min-width: 0; }
+.associations-layout { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.associations-page h2, .associations-page h3, .associations-page h4 { margin: 0 0 12px; }
+.association-picker, .association-main { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); min-width: 0; }
+.association-picker > label { display: grid; gap: 6px; margin-bottom: 12px; font-size: .8rem; }
+.association-entity-list { display: grid; gap: 6px; max-height: 440px; overflow-y: auto; margin: 12px 0; }
+.association-entity-list > button, .association-entity-list > label { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; cursor: pointer; }
+.association-entity-list > .selected { border-color: var(--sao); background: #58d6ed12; }
+.association-entity-list span, .association-row-name { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.association-entity-list small, .association-row-name small { color: var(--muted); font-size: .72rem; }
+.association-entity-list input[type=checkbox], .association-row > input { flex: 0 0 18px; width: 18px; height: 18px; padding: 0; accent-color: var(--sao); }
+.association-source-head { display: flex; gap: 12px; justify-content: space-between; align-items: center; }
+.association-hint { color: var(--muted); font-size: .8rem; line-height: 1.6; margin: 18px 0; }
+.association-pagination, .association-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.association-pagination { justify-content: space-between; }
+.association-pagination button, .association-toolbar button, .association-row button { font-size: .75rem; }
+.association-pagination small { color: var(--muted); font-size: .7rem; }
+.association-add-panel { padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #ffffff03; margin-bottom: 24px; }
+.association-add-panel .association-picker { border: 0; padding: 0; background: transparent; margin: 16px 0; }
+.association-add-panel .association-entity-list { max-height: 280px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.association-role-fields, .association-filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.association-role-fields label, .association-filters label { display: grid; flex: 1 1 135px; gap: 6px; font-size: .8rem; min-width: 0; }
+.association-filters label:first-child { flex: 2 1 180px; }
+.association-list { display: grid; gap: 8px; margin: 12px 0 20px; }
+.association-row { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.association-row-name { flex: 1; }
+.association-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.association-edit-panel { padding: 16px; border: 1px solid var(--sao); border-radius: 8px; margin-bottom: 20px; }
+.association-edit-panel > button + button { margin-left: 8px; }
+.association-review { position: sticky; bottom: 10px; z-index: 2; padding: 18px; margin-top: 20px; border: 1px solid var(--sao); border-radius: 12px; background: var(--panel); box-shadow: 0 10px 30px #0006; }
+.association-review ul { max-height: 240px; overflow: auto; line-height: 1.7; }
+.association-review .association-toolbar strong { margin-right: auto; }
+.association-warning { color: #efc67a; font-size: .8rem; }
+.association-success { color: #8bd5a5; }
+@media (max-width: 1000px) {
+  .associations-layout { grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); gap: 12px; }
+  .association-row { flex-wrap: wrap; }
+  .association-row-actions { flex-basis: 100%; }
+}
+@media (max-width: 720px) {
+  .associations-layout { grid-template-columns: 1fr; }
+  .association-entity-list { max-height: 250px; }
+  .association-main, .association-picker { padding: 12px; }
+  .association-source-head { align-items: flex-start; }
+  .association-review { position: static; }
+}

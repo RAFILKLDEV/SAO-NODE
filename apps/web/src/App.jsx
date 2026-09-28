@@ -3,18 +3,13 @@ import { Navigate, NavLink, Outlet, Route, Routes, useNavigate, useParams } from
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { api } from './lib/api.js';
+import { NotificationMenu } from './components/NotificationMenu.jsx';
 import { formatEntityName } from './lib/entityDisplay.js';
-import {
-  collectPermissionChangeEntities,
-  getEntityChangeState,
-  readEntityActivityAt,
-  readEntitySeenAt,
-  setEntityActivityAt
-} from './lib/notifications.js';
 import { resolveCampaignLinks } from './lib/campaignLinks.js';
 import { getCampaignSelectionDecision } from './lib/campaignSelection.js';
 import { LoginPage } from './pages/LoginPage.jsx';
 import { EntityPage } from './pages/EntityPage.jsx';
+import { AssociationsPage } from './pages/AssociationsPage.jsx';
 import { ProgressPage } from './pages/ProgressPage.jsx';
 import { GroupsPage } from './pages/GroupsPage.jsx';
 import { DiscoveriesPage } from './pages/DiscoveriesPage.jsx';
@@ -114,7 +109,20 @@ function CampaignLayout() {
   const queryClient = useQueryClient();
   const [toast, setToast] = useState(null);
   const campaign = useQuery({ queryKey: ['campaign', campaignId], queryFn: () => api(`/api/v1/campaigns/${campaignId}`) });
+  const notificationsQuery = useQuery({
+    queryKey: ['notifications', campaignId],
+    queryFn: () => api(`/api/v1/campaigns/${campaignId}/notifications?limit=100`),
+    enabled: !!campaignId
+  });
   const isGm = campaign.data ? ['owner', 'gm', 'assistant_gm'].includes(campaign.data.role) : false;
+  const readNotification = useMutation({
+    mutationFn: (id) => api(`/api/v1/campaigns/${campaignId}/notifications/${encodeURIComponent(id)}/read`, { method: 'PATCH' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications', campaignId] })
+  });
+  const readAllNotifications = useMutation({
+    mutationFn: () => api(`/api/v1/campaigns/${campaignId}/notifications/read-all`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications', campaignId] })
+  });
   const entityNavQueries = useQueries({
     queries: ['npcs', 'locations', 'items', 'monsters', 'quests'].map((path) => ({
       queryKey: ['entity-nav', campaignId, path],
@@ -129,24 +137,13 @@ function CampaignLayout() {
     monsters: 'monster',
     quests: 'quest'
   };
+  const unreadNotifications = (notificationsQuery.data?.items ?? []).filter((notification) => !notification.readAt);
   const menuNotifications = Object.fromEntries(
     ['npcs', 'locations', 'items', 'monsters', 'quests'].map((path) => {
-      const items = entityNavQueries?.[Object.keys(entityTypeByPath).indexOf(path)]?.data?.items ?? [];
-      const hasNotification = items.some((item) => {
-        const type = entityTypeByPath[path];
-        const lastSeenAt = readEntitySeenAt({ campaignId, type, entityId: item.id });
-        const activityAt = readEntityActivityAt({ campaignId, type, entityId: item.id });
-        const state = getEntityChangeState(item, lastSeenAt, activityAt);
-        console.log('[sao:menuNotification]', {
-          path,
-          itemId: item.id,
-          lastSeenAt,
-          activityAt,
-          state
-        });
-        if (!state) return false;
-        return state.kind === 'new' || state.kind === 'edited';
-      });
+      const type = entityTypeByPath[path];
+      const hasNotification = unreadNotifications.some((notification) =>
+        notification.payload?.type === type || notification.payload?.entities?.some((entity) => entity.entityType === type)
+      );
       return [path, hasNotification];
     })
   );
@@ -162,21 +159,8 @@ function CampaignLayout() {
     const pollTimer = window.setInterval(() => {
       invalidate();
     }, 5000);
-    const handleCustomToast = (event) => {
-      const details = event?.detail ?? {};
-      const kind = details.kind ?? 'info';
-      const title = details.title ?? 'Atualização';
-      const message = details.message ?? 'Houve uma atualização no conteúdo da campanha.';
-      setToast({ id: `toast-${Date.now()}-${Math.random()}`, kind, title, message });
-    };
-    const announce = (eventName, eventData = {}) => {
-      const details = eventData?.details ?? eventData ?? {};
-      const kind = details.kind ?? 'info';
-      const title = details.title ?? 'Atualização';
-      const message = details.message ?? 'Houve uma atualização no conteúdo da campanha.';
-      setToast({ id: `${eventName}-${Date.now()}-${Math.random()}`, kind, title, message });
-    };
     socket.on('connect', () => {
+      invalidate();
       console.info('[sao:socket] conectado à campanha', { campaignId, id: socket.id });
     });
     socket.on('connect_error', (error) => {
@@ -185,85 +169,31 @@ function CampaignLayout() {
     socket.on('disconnect', (reason) => {
       console.warn('[sao:socket] desconectado', reason);
     });
-    const entityResource = (type) => (type === 'location' ? 'locations' : `${type}s`);
-    const maybeAnnounceEntityChanged = async (payload) => {
-      if (isGm) {
-        announce('entity.changed', payload);
-        return;
-      }
-      const entityType = payload?.type;
-      const entityId = payload?.id;
-      if (!entityType || !entityId) return;
-      try {
-        const entity = await api(`/api/v1/campaigns/${campaignId}/${entityResource(entityType)}/${encodeURIComponent(entityId)}`);
-        if (entity) announce('entity.changed', payload);
-      } catch {
-        // Ignore hidden or inaccessible content for players.
-      }
-    };
-    window.addEventListener('sao:toast', handleCustomToast);
-    socket.on('entity.changed', (payload) => {
+    socket.on('entity.changed', (_payload) => {
       invalidate();
-      maybeAnnounceEntityChanged(payload);
     });
-    socket.on('permissions.changed', (payload) => {
+    socket.on('permissions.changed', (_payload) => {
       invalidate();
-      if (isGm) announce('permissions.changed', payload);
     });
-    socket.on('permissions.notification', async (payload) => {
-      if (isGm) return;
-      const changed = collectPermissionChangeEntities(payload);
-      const visibleEntities = (
-        await Promise.all(
-          changed.map(async (item) => {
-            try {
-              const entity = await api(
-                `/api/v1/campaigns/${campaignId}/${entityResource(item.entityType)}/${encodeURIComponent(item.entityId)}`
-              );
-              return { ...item, entity };
-            } catch {
-              return null;
-            }
-          })
-        )
-      ).filter(Boolean);
-
-      for (const item of visibleEntities) {
-        setEntityActivityAt({
-          campaignId,
-          type: item.entityType,
-          entityId: item.entityId,
-          at: Date.now(),
-          reason: payload?.reason ?? 'permission'
-        });
-      }
+    socket.on('progress.changed', (_payload) => {
       invalidate();
-      const first = visibleEntities[0]?.entity;
-      if (first) {
-        announce('permissions.notification', {
-          kind: 'new',
-          title: 'Novo conteúdo disponível',
-          message:
-            visibleEntities.length === 1
-              ? `${formatEntityName(first, 'Um registro')} foi liberado para você.`
-              : `${visibleEntities.length} registros foram liberados para você.`
-        });
-      }
     });
-    socket.on('progress.changed', (payload) => {
+    socket.on('import.applied', (_payload) => {
       invalidate();
-      announce('progress.changed', payload);
     });
-    socket.on('import.applied', (payload) => {
-      invalidate();
-      announce('import.applied', payload);
+    socket.on('notification.created', (notification) => {
+      queryClient.setQueryData(['notifications', campaignId], (current) => ({
+        items: [notification, ...(current?.items ?? []).filter((item) => item.id !== notification.id)],
+        nextCursor: current?.nextCursor ?? null
+      }));
+      setToast(notification);
     });
+    socket.on('notifications.read', () => queryClient.invalidateQueries({ queryKey: ['notifications', campaignId] }));
     return () => {
       window.clearInterval(pollTimer);
-      window.removeEventListener('sao:toast', handleCustomToast);
       socket.close();
     };
-  }, [campaignId, isGm, queryClient]);
+  }, [campaignId, queryClient]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -305,12 +235,22 @@ function CampaignLayout() {
         <header className="topbar">
           <SearchBox campaignId={campaignId} />
           <span className="role-pill">{campaign.data.role}</span>
+          <NotificationMenu key={campaignId} campaignId={campaignId} query={notificationsQuery}
+            onRead={readNotification.mutateAsync} onReadAll={() => readAllNotifications.mutate()}
+            pending={readNotification.isPending || readAllNotifications.isPending}
+            error={readNotification.error || readAllNotifications.error} />
         </header>
         <div className="content-area">
           <Outlet context={{ campaign: campaign.data, isGm }} />
         </div>
       </main>
-      <NotificationToast toast={toast} onDismiss={() => setToast(null)} />
+      <NotificationToast
+        toast={toast}
+        onDismiss={(id) => {
+          setToast(null);
+          if (id) readNotification.mutate(id);
+        }}
+      />
     </div>
   );
 }
@@ -344,6 +284,7 @@ export function App() {
           <Route path="locations" element={<EntityPage type="location" />} />
           <Route path="items" element={<EntityPage type="item" />} />
           <Route path="monsters" element={<EntityPage type="monster" />} />
+          <Route path="associations" element={<AssociationsPage />} />
           <Route path="quests" element={<EntityPage type="quest" />} />
           <Route path="progress" element={<ProgressPage />} />
           <Route path="groups" element={<GroupsPage />} />

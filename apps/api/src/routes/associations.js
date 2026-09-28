@@ -18,6 +18,7 @@ const changeSchema = z.object({
     chance: z.number().int().min(1).max(100).optional(),
     quantityMin: z.number().int().positive().optional(),
     quantityMax: z.number().int().positive().optional()
+    ,valueFormula: z.string().regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i).optional()
   }).strict()).max(100).default([]),
   remove: z.array(identitySchema.strict()).max(100).default([])
 }).strict();
