@@ -50,6 +50,7 @@
           }
         ],
         "extensions": {},
+        "characterType": "npc",
         "identity": {
           "profession": "Ferreiro"
         },
@@ -167,7 +168,8 @@
             "resources": {},
             "resistances": {},
             "attributes": {},
-            "statsVisibility": {}
+            "statsVisibility": {},
+            "boss": false
           }
         },
         "components": [

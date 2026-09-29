@@ -312,6 +312,10 @@
                               "type": "integer",
                               "exclusiveMinimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "valueFormula": {
+                              "type": "string",
+                              "pattern": "^\\s*\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?\\s*$"
                             }
                           },
                           "required": [
@@ -332,6 +336,14 @@
                         "additionalProperties": {
                           "$ref": "#/$defs/__schema0"
                         }
+                      },
+                      "characterType": {
+                        "default": "npc",
+                        "type": "string",
+                        "enum": [
+                          "npc",
+                          "entity"
+                        ]
                       },
                       "identity": {
                         "default": {},
@@ -454,6 +466,7 @@
                       "fields",
                       "links",
                       "extensions",
+                      "characterType",
                       "identity",
                       "factions",
                       "services"
@@ -742,6 +755,10 @@
                               "type": "integer",
                               "exclusiveMinimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "valueFormula": {
+                              "type": "string",
+                              "pattern": "^\\s*\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?\\s*$"
                             }
                           },
                           "required": [
@@ -767,8 +784,15 @@
                         "default": "region",
                         "type": "string",
                         "minLength": 1,
-                        "description": "Valores conhecidos: region (Região), city (Cidade), district (Distrito), bank (Banco), market (Mercado), workshop (Oficina), plaza (Praça), government (Centro administrativo), storage (Armazenamento), temple (Templo), inn (Hospedaria), shop (Loja), residence (Residência), building (Edifício), floor (Andar), dungeon (Masmorra), room (Sala), landmark (Ponto de interesse). Aceita valores personalizados.",
+                        "description": "Valores conhecidos: forest (Floresta), lake (Lago), village (Vila), cave (Caverna), field (Campo), mountain (Montanha), river (Rio), region (Região), city (Cidade), district (Distrito), bank (Banco), market (Mercado), workshop (Oficina), plaza (Praça), government (Centro administrativo), storage (Armazenamento), temple (Templo), inn (Hospedaria), shop (Loja), residence (Residência), building (Edifício), floor (Andar), dungeon (Masmorra), room (Sala), landmark (Ponto de interesse). Aceita valores personalizados.",
                         "examples": [
+                          "forest",
+                          "lake",
+                          "village",
+                          "cave",
+                          "field",
+                          "mountain",
+                          "river",
                           "region",
                           "city",
                           "district",
@@ -789,6 +813,34 @@
                           "landmark"
                         ],
                         "x-known-values": [
+                          {
+                            "value": "forest",
+                            "label": "Floresta"
+                          },
+                          {
+                            "value": "lake",
+                            "label": "Lago"
+                          },
+                          {
+                            "value": "village",
+                            "label": "Vila"
+                          },
+                          {
+                            "value": "cave",
+                            "label": "Caverna"
+                          },
+                          {
+                            "value": "field",
+                            "label": "Campo"
+                          },
+                          {
+                            "value": "mountain",
+                            "label": "Montanha"
+                          },
+                          {
+                            "value": "river",
+                            "label": "Rio"
+                          },
                           {
                             "value": "region",
                             "label": "Região"
@@ -1324,6 +1376,10 @@
                               "type": "integer",
                               "exclusiveMinimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "valueFormula": {
+                              "type": "string",
+                              "pattern": "^\\s*\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?\\s*$"
                             }
                           },
                           "required": [
@@ -1349,7 +1405,7 @@
                         "default": "misc",
                         "type": "string",
                         "minLength": 1,
-                        "description": "Valores conhecidos: weapon (Arma), armor (Armadura), shield (Escudo), ammunition (Munição), consumable (Consumível), equipment (Equipamento), tool (Ferramenta), material (Material), treasure (Tesouro), quest (Missão), misc (Diversos). Aceita valores personalizados.",
+                        "description": "Valores conhecidos: weapon (Arma), armor (Armadura), shield (Escudo), ammunition (Munição), consumable (Consumível), equipment (Equipamento), tool (Ferramenta), material (Material), treasure (Tesouro), art (Obra de arte), precious-stone (Pedra preciosa), quest (Missão), misc (Diversos). Aceita valores personalizados.",
                         "examples": [
                           "weapon",
                           "armor",
@@ -1360,6 +1416,8 @@
                           "tool",
                           "material",
                           "treasure",
+                          "art",
+                          "precious-stone",
                           "quest",
                           "misc"
                         ],
@@ -1401,6 +1459,14 @@
                             "label": "Tesouro"
                           },
                           {
+                            "value": "art",
+                            "label": "Obra de arte"
+                          },
+                          {
+                            "value": "precious-stone",
+                            "label": "Pedra preciosa"
+                          },
+                          {
                             "value": "quest",
                             "label": "Missão"
                           },
@@ -1414,7 +1480,7 @@
                         "default": "common",
                         "type": "string",
                         "minLength": 1,
-                        "description": "Valores conhecidos: common (Comum), uncommon (Incomum), rare (Raro), epic (Épico), legendary (Lendário), unique (Único). Aceita valores personalizados.",
+                        "description": "Valores conhecidos: common (Comum), uncommon (Incomum), rare (Raro), epic (Mítico), legendary (Lendário), unique (Imortal). Aceita valores personalizados.",
                         "examples": [
                           "common",
                           "uncommon",
@@ -1438,7 +1504,7 @@
                           },
                           {
                             "value": "epic",
-                            "label": "Épico"
+                            "label": "Mítico"
                           },
                           {
                             "value": "legendary",
@@ -1446,7 +1512,7 @@
                           },
                           {
                             "value": "unique",
-                            "label": "Único"
+                            "label": "Imortal"
                           }
                         ]
                       },
@@ -1834,6 +1900,10 @@
                               "type": "integer",
                               "exclusiveMinimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "valueFormula": {
+                              "type": "string",
+                              "pattern": "^\\s*\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?\\s*$"
                             }
                           },
                           "required": [
@@ -2041,6 +2111,10 @@
                                   "discoverable"
                                 ]
                               }
+                            },
+                            "boss": {
+                              "default": false,
+                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -2048,7 +2122,8 @@
                             "resources",
                             "resistances",
                             "attributes",
-                            "statsVisibility"
+                            "statsVisibility",
+                            "boss"
                           ],
                           "additionalProperties": false
                         }
@@ -2400,6 +2475,10 @@
                               "type": "integer",
                               "exclusiveMinimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "valueFormula": {
+                              "type": "string",
+                              "pattern": "^\\s*\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?\\s*$"
                             }
                           },
                           "required": [

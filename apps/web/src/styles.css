@@ -284,7 +284,7 @@ h2 {
 .progress-player-photo { width: 64px; height: 64px; object-fit: cover; border-radius: 50%; border: 2px solid var(--line); }
 .progress-player-placeholder { display: inline-grid; place-items: center; background: #152c40; color: var(--sao); font-size: 1.5rem; }
 .progress-character-card { justify-items: start; }
-.character-filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px; border-bottom: 1px solid var(--line); }
+.character-filters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; border-bottom: 1px solid var(--line); }
 .character-filter { display: grid; justify-items: center; gap: 3px; padding: 8px 4px; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 8px; }
 .character-filter span { font-size: 1.3rem; line-height: 1; }
 .character-filter small { font-size: .68rem; }
@@ -977,10 +977,10 @@ h2 {
 .entity-editor-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .location-image-picker {
   display: grid;
-  gap: 12px;
+  gap: 6px;
   grid-column: 1 / -1;
   min-width: 0;
-  padding: 16px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
 }
@@ -988,8 +988,9 @@ h2 {
 .location-image-filename { overflow-wrap: anywhere; }
 .location-image-preview {
   display: block;
-  width: 100%;
-  max-height: 260px;
+  width: 120px;
+  max-width: 100%;
+  height: 80px;
   object-fit: contain;
   background: #101214;
   border-radius: 8px;

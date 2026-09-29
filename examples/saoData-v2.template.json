@@ -33,6 +33,7 @@
         ],
         "links": [],
         "extensions": {},
+        "characterType": "npc",
         "identity": {},
         "factions": [],
         "services": []
@@ -124,7 +125,8 @@
             "resources": {},
             "resistances": {},
             "attributes": {},
-            "statsVisibility": {}
+            "statsVisibility": {},
+            "boss": false
           }
         },
         "components": [

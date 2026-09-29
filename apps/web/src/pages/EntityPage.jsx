@@ -1,4 +1,4 @@
-﻿import { labels, bulkEntityLabels, entityTypeLabels, singular, entityTypes, objectiveTypeLabels, referenceRoleLabels, referenceRoleOptions, operationOptions, questTypeOptions, questStateOptions, requirementLogicOptions, objectiveModeOptions, locationTypeOptions, locationStateOptions, itemCategoryOptions, itemRarityOptions, monsterSizeOptions, monsterTypeOptions, idPrefixes, visibilityLabels, fieldLabels, sectionLabels, monsterStatLabels } from '@sao/domain';
+﻿import { formatLocationType, labels, bulkEntityLabels, entityTypeLabels, singular, entityTypes, objectiveTypeLabels, referenceRoleLabels, referenceRoleOptions, operationOptions, questTypeOptions, questStateOptions, requirementLogicOptions, objectiveModeOptions, locationTypeOptions, locationStateOptions, itemCategoryOptions, itemRarityOptions, monsterSizeOptions, monsterTypeOptions, idPrefixes, visibilityLabels, fieldLabels, sectionLabels, monsterStatLabels } from '@sao/domain';
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -10,6 +10,7 @@ import { api } from '../lib/api.js';
 import { LocationMenu } from '../components/LocationMenu.jsx';
 import { formatDropResult } from '../lib/dropDisplay.js';
 import { LocationImage, LocationImagePicker } from '../components/LocationImage.jsx';
+import { formatT20StatBlock } from '../lib/t20StatBlock.js';
 import { locationImageUrlError } from '../lib/locationImage.js';
 
 import { createEntityDraft, draftControls, updateEntityDraft, prepareCanonicalPayload, discoverableCreation } from '../lib/entityDraft.js';
@@ -29,6 +30,7 @@ import {
 } from '../lib/locationMenu.js';
 
 import { filterMonstersByLocation } from '../lib/monsterLocationFilter.js';
+import { characterEntries, characterTarget, isCharacterFavorite } from '../lib/characters.js';
 import { locationBranchEntries, locationDiscoveryRows } from '../lib/locationDiscovery.js';
 import { baseDiscoveryTargets, discoveryTargetKey, npcDiscoveryTargets, questDiscoveryTargets, categorizedDiscoveryTypes, categorizedDiscoveryTargets, availableDiscoveryTargets, expandDiscoveryTargets, groupDiscoveryTargetsForDisplay } from '../lib/discoveryTargets.js';
 
@@ -1125,6 +1127,8 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
     <div className="module-stack">
 
+      <ModuleCard title="Ficha T20"><pre className="t20-stat-block">{formatT20StatBlock(entity)}</pre></ModuleCard>
+
       {hasBasicData && (
 
         <ModuleCard
@@ -1643,7 +1647,7 @@ function TypeDetails({ entity, type, campaignId, isGm, onGrant }) {
 
     const hasServicesData = hasRenderableContent(entity.services);
 
-    const hasT20Data = hasRenderableContent(entity.t20);
+
 
     return (
 
@@ -1710,16 +1714,6 @@ function TypeDetails({ entity, type, campaignId, isGm, onGrant }) {
           <ModuleCard title="Serviços" targetKey="section.services" isGm={isGm} onGrant={onGrant}>
 
             <NamedDescriptionCards values={entity.services} emptyMessage="Nenhum serviço cadastrado." />
-
-          </ModuleCard>
-
-        )}
-
-        {hasT20Data && type !== 'npc' && (
-
-          <ModuleCard title="Ficha T20" targetKey="section.t20" isGm={isGm} onGrant={onGrant}>
-
-            <DataGrid data={entity.t20} />
 
           </ModuleCard>
 
@@ -1994,7 +1988,7 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
     type === 'npc'
 
-      ? { title: entity.title, subtitle: entity.subtitle, level: entity.level }
+      ? { subtitle: entity.subtitle || entity.title, level: entity.level }
 
         : type === 'location'
 
@@ -2002,7 +1996,7 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
             subtitle: entity.subtitle,
 
-            type: optionLabel(locationTypeOptions, entity.type),
+            type: formatLocationType(entity.type),
 
             state: optionLabel(locationStateOptions, entity.state),
 
@@ -3210,9 +3204,9 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
           {type !== 'npc' && <FormField label="Subtítulo" value={data.subtitle ?? ''} onChange={(value) => set('subtitle', value)} />}
 
-          {type === 'npc' && <><FormField label="Título" value={data.title} onChange={(value) => set('title', value)} /><FormField label="Subtítulo" value={data.subtitle ?? ''} onChange={(value) => set('subtitle', value)} /><FormField label="Nível" value={data.level} onChange={(value) => set('level', value)} />{Object.entries({ race: 'Raça', gender: 'Gênero', age: 'Idade', profession: 'Profissão' }).map(([key, label]) => <FormField key={key} label={label} value={identity[key]} onChange={(value) => set('identity', { ...identity, [key]: value })} />)}</>}
+          {type === 'npc' && <><FormField label="Tipo de personagem" value={data.characterType ?? 'npc'} options={[{ value: 'npc', label: 'NPC' }, { value: 'entity', label: 'Entidade' }]} onChange={(value) => set('characterType', value)} /><FormField label="Subtítulo" value={data.subtitle ?? data.title ?? ''} onChange={(value) => set('subtitle', value)} /><FormField label="Nível" value={data.level} onChange={(value) => set('level', value)} /></>}
 
-          {type === 'location' && <><LocationRegionPicker campaignId={campaignId} data={data} onChange={setData} currentId={data.id} /><FormField label="Tipo" value={data.type} options={locationTypeOptions} onChange={(value) => set('type', value)} /><FormField label="Estado" value={data.state} options={locationStateOptions} onChange={(value) => set('state', value)} /><FormField label="Nível recomendado" value={data.recommendedLevel} onChange={(value) => set('recommendedLevel', value)} /></>}
+          {type === 'location' && <><LocationRegionPicker campaignId={campaignId} data={data} onChange={setData} currentId={data.id} /><FormField label="Tipo" value={data.type} options={locationTypeOptions.some((option) => option.value === data.type) ? locationTypeOptions : [...locationTypeOptions, { value: data.type, label: formatLocationType(data.type) }]} onChange={(value) => set('type', value)} /><FormField label="Estado" value={data.state} options={locationStateOptions} onChange={(value) => set('state', value)} /><FormField label="Nível recomendado" value={data.recommendedLevel} onChange={(value) => set('recommendedLevel', value)} /></>}
 
           {type === 'location' && <LocationImagePicker selection={locationImage} onChange={onLocationImageChange} />}
 
@@ -4426,16 +4420,13 @@ export function isBossMonster(monster) {
   return monster?.sheet?.boss === true || monster?.boss === true || String(monster?.sheet?.type ?? '').toLowerCase() === 'boss' || String(monster?.group ?? '').toLowerCase() === 'boss';
 }
 
-export function isCharacterEntity(item) {
-  return item?.characterType === 'entity';
-}
+export { isCharacterEntity } from '../lib/characters.js';
 
 
 
 export function EntityPage({ type }) {
 
   const { campaignId } = useParams();
-  const navigate = useNavigate();
 
   const { isGm } = useOutletContext();
 
@@ -4463,6 +4454,24 @@ export function EntityPage({ type }) {
 
   const queryClient = useQueryClient();
 
+  const characterPlayers = useQuery({
+    queryKey: ['character-players', campaignId],
+    queryFn: () => api(`/api/v1/campaigns/${campaignId}/characters/players`),
+    enabled: type === 'npc'
+  });
+  const characterFavorites = useQuery({
+    queryKey: ['character-favorites', campaignId],
+    queryFn: () => api(`/api/v1/campaigns/${campaignId}/character-favorites`),
+    enabled: type === 'npc'
+  });
+  const toggleCharacterFavorite = useMutation({
+    mutationFn: ({ item, favorite }) => {
+      const { targetType, targetId } = characterTarget(item);
+      return api(`/api/v1/campaigns/${campaignId}/character-favorites/${targetType}/${encodeURIComponent(targetId)}`, { method: favorite ? 'DELETE' : 'PUT' });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character-favorites', campaignId] })
+  });
+
   const memberships = useQuery({
 
     queryKey: ['memberships', campaignId],
@@ -4478,6 +4487,8 @@ export function EntityPage({ type }) {
     (entry) => !['owner', 'gm', 'assistant_gm'].includes(entry.role)
 
   );
+  const characterRoster = useMemo(() => characterEntries([], characterPlayers.data ?? [], 'player'), [characterPlayers.data]);
+  const playerSelected = type === 'npc' && Boolean(selectedId?.startsWith('player:'));
 
   const previewPlayer = players.find((entry) => entry.user.id === viewAsUserId);
 
@@ -4535,7 +4546,7 @@ export function EntityPage({ type }) {
 
       ),
 
-    enabled: Boolean(selectedId)
+    enabled: Boolean(selectedId) && !playerSelected
 
   });
 
@@ -4551,7 +4562,7 @@ export function EntityPage({ type }) {
 
       ),
 
-    enabled: effectiveIsGm && Boolean(selectedId)
+    enabled: effectiveIsGm && Boolean(selectedId) && !playerSelected
 
   });
 
@@ -4581,13 +4592,11 @@ export function EntityPage({ type }) {
     () => type === 'monster' && monsterBossFilter !== 'all'
       ? visibleItems.filter((item) => monsterBossFilter === 'boss' ? isBossMonster(item) : !isBossMonster(item))
       : type === 'npc'
-      ? characterFilter === 'player'
-        ? players.map((entry) => ({ id: `player:${entry.user.id}`, userId: entry.user.id, name: entry.user.name, characterImageUrl: entry.user.characterImageUrl }))
-        : visibleItems.filter((item) => characterFilter === 'entity' ? isCharacterEntity(item) : !isCharacterEntity(item))
+      ? characterEntries(visibleItems, characterRoster, characterFilter, characterFavorites.data ?? [])
       : type === 'item' && itemCategoryFilter !== 'all'
       ? visibleItems.filter((item) => item.category === itemCategoryFilter)
       : visibleItems,
-    [characterFilter, itemCategoryFilter, monsterBossFilter, type, visibleItems]
+    [characterFilter, characterFavorites.data, characterRoster, itemCategoryFilter, monsterBossFilter, type, visibleItems]
   );
 
   const characterFilters = type === 'npc' ? (
@@ -4603,7 +4612,7 @@ export function EntityPage({ type }) {
 
   useEffect(() => {
 
-    if (!list.data) return;
+    if (!list.data || (type === 'npc' && (characterPlayers.isPending || characterFavorites.isPending))) return;
 
     if (!selectedId || !displayItems.some((item) => item.id === selectedId)) {
 
@@ -4613,7 +4622,7 @@ export function EntityPage({ type }) {
 
     }
 
-  }, [selectedId, displayItems, setParams]);
+  }, [selectedId, displayItems, setParams, list.data, type, characterPlayers.isPending, characterFavorites.isPending]);
 
 
 
@@ -4691,7 +4700,11 @@ export function EntityPage({ type }) {
 
   if (list.isError) return <div className="state-card error">{list.error.message}</div>;
 
-  const current = detail.data ?? itemMap.get(selectedId);
+  const current = playerSelected ? null : detail.data ?? itemMap.get(selectedId);
+  const selectedPlayer = playerSelected
+    ? characterRoster.find((player) => player.id === selectedId)
+    : null;
+  const favoriteCurrent = current ? isCharacterFavorite(current, characterFavorites.data ?? []) : selectedPlayer ? isCharacterFavorite(selectedPlayer, characterFavorites.data ?? []) : false;
 
   return (
 
@@ -4745,14 +4758,14 @@ export function EntityPage({ type }) {
 
           )}
 
-          {effectiveIsGm && (type === 'monster' ? list.data?.items?.length > 0 : displayItems.length > 0) && (
+          {effectiveIsGm && (type === 'monster' ? list.data?.items?.length > 0 : displayItems.some((item) => !item.userId)) && (
 
             <button
 
               className="primary"
 
               onClick={() => setGrantRequest({
-                ...buildBulkEntityDiscoveryRequest({ type, items: type === 'monster' ? list.data?.items ?? [] : displayItems }),
+                ...buildBulkEntityDiscoveryRequest({ type, items: type === 'monster' ? list.data?.items ?? [] : displayItems.filter((item) => !item.userId) }),
                 ...(type === 'monster' ? { initialRegionId: monsterRegionId } : {})
               })}
 
@@ -4833,9 +4846,9 @@ export function EntityPage({ type }) {
               onSelect={(id) => setParams({ selected: id })}
 
 
-              canBulkGrant={effectiveIsGm}
 
-              onBulkGrant={(items) => setGrantRequest(buildBulkEntityDiscoveryRequest({ type: 'location', items }))}
+
+
 
             />
 
@@ -4944,7 +4957,13 @@ export function EntityPage({ type }) {
 
         <section className="detail-pane">
 
-          {detail.isLoading ? (
+          {(current || selectedPlayer) && type === 'npc' && <div className="detail-actions"><button type="button" onClick={() => toggleCharacterFavorite.mutate({ item: current ?? selectedPlayer, favorite: favoriteCurrent })} aria-pressed={favoriteCurrent} disabled={toggleCharacterFavorite.isPending || characterFavorites.isPending || characterFavorites.isError}>{favoriteCurrent ? '★ Desfavoritar' : '☆ Favoritar'}</button></div>}
+
+          {toggleCharacterFavorite.isError && <p role="alert">{toggleCharacterFavorite.error.message}</p>}
+          {type === 'npc' && (characterPlayers.isError || characterFavorites.isError) && <p role="alert">Não foi possível carregar jogadores ou favoritos.</p>}
+          {playerSelected && !selectedPlayer ? <p role="status">Carregando jogador…</p> : selectedPlayer ? (
+            <article className="state-card"><h2>{selectedPlayer.name}</h2><p>Jogador da campanha</p>{selectedPlayer.characterImageUrl && <img className="list-thumbnail" src={selectedPlayer.characterImageUrl} alt="" />}</article>
+          ) : detail.isLoading ? (
 
             <div className="state-card">Carregando detalhes…</div>
 

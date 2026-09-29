@@ -616,6 +616,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
         : { name: v.name?.trim() || v.type, description: v.description ?? '' }
     );
   if (type === 'npc') {
+    result.characterType = legacyCharacterType(raw);
     result.identity = pick(raw.identity ?? {}, ['race', 'gender', 'age', 'profession']);
     for (const key of ['race', 'gender', 'age', 'profession'])
       result.identity[key] = take(`identity.${key}`, raw.identity?.[key], raw[key]);
@@ -813,13 +814,24 @@ export const isV2Entity = (raw) =>
       'components' in raw ||
       'media' in raw)
   );
+// Only migrate records that predate the explicit discriminator. Once supplied,
+// characterType always wins, even if old tags or archived fields remain.
+function legacyCharacterType(raw) {
+  if (raw.characterType != null) return raw.characterType;
+  const legacy = raw.extensions?.legacy ?? {};
+  const identity = raw.extensions?.legacyNested?.identity ?? {};
+  const values = [raw.category, raw.kind, raw.role, raw.identity?.type, raw.identity?.kind,
+    legacy.category, legacy.kind, legacy.role, identity.type, identity.kind, ...(raw.tags ?? [])];
+  return values.some((value) => /^(entity|entidade|entidades)$/i.test(String(value ?? '').trim())) ? 'entity' : 'npc';
+}
+
 export function normalizeEntity(type, raw, options = {}) {
   if (!entitySchemas[type]) throw new Error(`Tipo de entidade desconhecido: ${type}`);
   const input =
     options.format === '1.0' || (options.format !== '2.0' && !isV2Entity(raw))
       ? migrateV1Entity(type, raw, options)
       : raw;
-  const parsed = entitySchemas[type].parse(input);
+  const parsed = entitySchemas[type].parse(type === 'npc' ? { ...input, characterType: legacyCharacterType(input) } : input);
   if (type === 'location')
     parsed.connections = parsed.connections.map((c) => ({
       ...c,

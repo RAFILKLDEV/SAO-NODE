@@ -173,8 +173,8 @@ describe('drop result display', () => {
 
 describe('character filters', () => {
   it('recognizes special entities without changing regular NPCs', () => {
-    expect(isCharacterEntity({ tags: ['entidade'] })).toBe(true);
-    expect(isCharacterEntity({ identity: { kind: 'npc' } })).toBe(false);
+    expect(isCharacterEntity({ characterType: 'entity', tags: ['npc'] })).toBe(true);
+    expect(isCharacterEntity({ tags: ['entidade'] })).toBe(false);
   });
 });
 

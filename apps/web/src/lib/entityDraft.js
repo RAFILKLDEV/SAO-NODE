@@ -18,7 +18,7 @@ export function createEntityDraft(type, input) {
   return migrateV1Entity(
     type,
     { ...data, baseVisibility: technical?.baseVisibility ?? data.baseVisibility },
-    { conflicts: 'prefer' }
+    { conflicts: type === 'npc' ? 'preserve' : 'prefer' }
   );
 }
 
@@ -27,7 +27,7 @@ export function draftControls(type, draft) {
 }
 
 export function updateEntityDraft(type, controls) {
-  return migrateV1Entity(type, controls, { conflicts: 'prefer' });
+  return migrateV1Entity(type, controls, { conflicts: type === 'npc' ? 'preserve' : 'prefer' });
 }
 
 export function prepareCanonicalPayload(type, draft) {

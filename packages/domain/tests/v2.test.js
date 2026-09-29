@@ -4,7 +4,8 @@ import {
   migrateV1Entity,
   normalizeEntity,
   toLegacyEntity,
-  validateEntityCatalog
+  validateEntityCatalog,
+  formatLocationType
 } from '../src/index.js';
 
 describe('contrato saoData v2', () => {
@@ -47,6 +48,32 @@ describe('contrato saoData v2', () => {
         connections: [{ connectionId: 'a', targetId: 'loc.a', to: 'loc.b' }]
       })
     ).toThrow(/aliases/);
+  });
+
+  it('migra uma entidade legada determinística para characterType', () => {
+    expect(normalizeEntity('npc', { id: 'npc.entity', name: 'Forma', tags: ['entidade'] }).characterType).toBe('entity');
+    expect(normalizeEntity('npc', { id: 'npc.npc', name: 'Pessoa', tags: ['entidade'], characterType: 'npc' }).characterType).toBe('npc');
+  });
+  it.each([{ kind: 'entity' }, { identity: { type: 'Entidade' } }, { role: 'entidades' },
+    { visibility: {}, extensions: { legacy: { category: 'entity' } } }])('migra campos legados sem perder IDs: %j', (legacy) => {
+    const data = normalizeEntity('npc', { id: 'npc.legado', name: 'Legado', ...legacy });
+    expect(data.characterType).toBe('entity');
+    expect(data.id).toBe('npc.legado');
+    expect(normalizeEntity('npc', { ...data, tags: [] }).characterType).toBe('entity');
+    expect(normalizeEntity('npc', toLegacyEntity('npc', data)).characterType).toBe('entity');
+  });
+
+  it('preserva CharacterBinding no saoData 2.0', () => {
+    const data = normalizeEntity('npc', {
+      id: 'npc.binding', name: 'Vínculo', characterType: 'npc',
+      character: { mode: 'linked', providerId: 'Ambesek.T20', externalId: 'firecast-1', uri: 'firecast://1' }
+    });
+    expect(data.character).toMatchObject({ mode: 'linked', providerId: 'Ambesek.T20', externalId: 'firecast-1' });
+  });
+
+  it('formata tipos de local em português', () => {
+    expect(formatLocationType('forest')).toBe('Floresta');
+    expect(formatLocationType('unknown-custom')).toBe('Outro local');
   });
 
   it('converte aliases de missão, mídia, identidade, serviços e conexão', () => {

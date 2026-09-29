@@ -23,6 +23,13 @@ it.each(['npc', 'location', 'item', 'monster', 'quest'])('creates %s with discov
 });
 
 describe('edição canônica', () => {
+  it('preserva títulos antigos distintos ao editar apenas o subtítulo', () => {
+    const draft = createEntityDraft('npc', { id: 'npc.a', name: 'A', title: 'Título antigo', subtitle: 'Subtítulo antigo' });
+    const edited = updateEntityDraft('npc', { ...draftControls('npc', draft), subtitle: 'Subtítulo novo' });
+    const saved = prepareCanonicalPayload('npc', edited);
+    expect(saved.subtitle).toBe('Subtítulo novo');
+    expect(saved.extensions.legacyConflicts).toContainEqual(expect.objectContaining({ path: 'subtitle', values: ['Subtítulo antigo', 'Título antigo'] }));
+  });
   it.each(JSON_IMPORT_TEMPLATE.entities.map((e) => [e.type, e.data]))(
     'abre e salva %s sem perder conteúdo',
     (type, data) => {
