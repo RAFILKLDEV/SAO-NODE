@@ -1,0 +1,67 @@
+[
+  {
+    "id": "npc.alpharecoil",
+    "name": "AlphaRecoil",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.alpharecoil.jpg"
+  },
+  {
+    "id": "npc.blg-viper",
+    "name": "BLG Viper",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.blg-viper.jpg"
+  },
+  {
+    "id": "npc.donatelador",
+    "name": "Donatelador",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.donatelador.jpg"
+  },
+  {
+    "id": "npc.eletricraccon",
+    "name": "EletricRaccon",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.eletricraccon.png"
+  },
+  {
+    "id": "npc.gruntligeiro",
+    "name": "GruntLigeiro",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.gruntligeiro.jpg"
+  },
+  {
+    "id": "npc.honrado-com-amor",
+    "name": "Honrado com Amor",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.honrado-com-amor.jpg"
+  },
+  {
+    "id": "npc.loud-sininistra",
+    "name": "LOUD Sininistra",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.loud-sininistra.jpg"
+  },
+  {
+    "id": "npc.noobtownmayor",
+    "name": "NoobTownMayor",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.noobtownmayor.jpg"
+  },
+  {
+    "id": "npc.o-tal-do-mula",
+    "name": "O Tal do Mula",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.o-tal-do-mula.jpg"
+  },
+  {
+    "id": "npc.pablo-marcal-do-mal",
+    "name": "Pablo Marçal Do Mal",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.pablo-marcal-do-mal.png"
+  },
+  {
+    "id": "npc.quebracraneo",
+    "name": "QuebraCraneo",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.quebracraneo.jpg"
+  },
+  {
+    "id": "npc.thermaltank",
+    "name": "ThermalTank",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.thermaltank.jpg"
+  },
+  {
+    "id": "npc.tigeruppercut",
+    "name": "TigerUpperCut",
+    "file": "C:\\Codigo\\SAO-NODE\\.tmp\\t20-player-allies\\npc.tigeruppercut.jpg"
+  }
+]

@@ -16,7 +16,7 @@ const locationFieldCategories = [
   { key: 'hierarchy', label: 'Hierarquia', keys: ['andar', 'parentId'] },
   { key: 'map', label: 'Mapa e posição', keys: ['numeroNoMapa', 'posicaoNoMapa'] },
   { key: 'organization', label: 'Organização da área', keys: ['organizacao', 'organizacaoUrbana', 'estruturaDaZona'] },
-  { key: 'movement', label: 'Movimentação e conexões', keys: ['viasUrbanas', 'deslocamentoPadrao', 'section.connections', 'section.references'] },
+  { key: 'connections', label: 'Movimentação e conexões', keys: ['viasUrbanas', 'deslocamentoPadrao', 'section.connections', 'section.references'] },
   { key: 'services', label: 'Serviços e economia', keys: ['section.services', 'catalogoEsperado', 'services', 'commercialServices', 'guildServices', 'propertyServices', 'economyRule', 'economyPurpose'] },
   { key: 'rest', label: 'Descanso e hospedagem', keys: ['descanso', 'restRequirement', 'pioneerLodging', 'commonLodging', 'comfortableLodging', 'luxuryLodging', 'availableRooms', 'roomManagement'] },
   { key: 'encounters', label: 'Encontros e desafios', keys: ['dificuldade', 'encontrosEsperados', 'levelRecommended', 'recommendedLevel', 'spawnPoint', 'duelArea', 'trainingDummies', 'missionBoard'] },
@@ -28,7 +28,7 @@ export const npcDiscoveryGroups = [
   { key: 'personality-history', label: 'Personalidade e história', description: 'Personalidade e história', keys: ['personality', 'history'] },
   { key: 'connections', label: 'Vínculos', description: 'Locais, relações e referências', keys: ['section.locations', 'section.relations', 'section.references'] },
   { key: 'services', label: 'Serviços', description: 'Seção de serviços', keys: ['section.services'] },
-  { key: 'sheets', label: 'Ficha T20 e fichas adicionais', description: 'Ficha T20 e fichas adicionais', keys: ['section.t20', 'section.extraStatBlocks'] }
+  { key: 'sheets', label: 'Fichas adicionais', description: 'Fichas adicionais', keys: ['section.extraStatBlocks'] }
 ];
 
 // Groups are UI-only: persist the existing field keys, including empty fields.
@@ -53,14 +53,15 @@ export function categorizedDiscoveryTargets(type, items = []) {
   } else if (type === 'item') {
     groups = [
       group('identity', 'Identidade do item', ['shortDescription', 'description', 'section.basic']),
-      group('economy', 'Uso e economia', ['section.stats']),
+      group('stats', 'Uso e economia', ['section.stats']),
       group('references', 'Referências', ['section.references'])
     ];
   } else {
     groups = [group('identity', 'Identidade da criatura', ['shortDescription', 'description', 'section.basic'])];
     groups.push(group('classification', 'Classificação e ND', ['basic', 'nd', 'type', 'subtype', 'size'], 'monster_stat'));
+    groups.push(group('abilities', 'Habilidades', ['section.abilities']));
     for (const [key, label] of [['combat', 'Combate'], ['resources', 'Recursos'], ['resistances', 'Resistências'], ['attributes', 'Atributos']]) groups.push(group(key, label, [key], 'monster_stat'));
-    groups.push(group('t20', 'Ficha T20', ['section.t20']), group('references', 'Referências e drops', ['section.references']));
+    groups.push(group('sheets', 'Fichas adicionais', ['section.extraStatBlocks']), group('references', 'Referências e drops', ['section.references']));
   }
   const fixed = [...baseDiscoveryTargets, ...groups];
   const known = new Set(expandDiscoveryTargets(fixed).map(discoveryTargetKey));

@@ -22,6 +22,19 @@ export function createEntityDraft(type, input) {
   );
 }
 
+export function createMonsterEliteDraft(monster, name, id) {
+  const draft = draftControls('monster', createEntityDraft('monster', monster));
+  return updateEntityDraft('monster', {
+    ...draft,
+    id,
+    name,
+    discoveryRevision: 0,
+    source: { kind: 'local', modifiedLocally: true },
+    rank: 'elite',
+    sheet: { ...(draft.sheet ?? {}), boss: false }
+  });
+}
+
 export function draftControls(type, draft) {
   return toLegacyEntity(type, draft);
 }

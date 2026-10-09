@@ -32,8 +32,7 @@ const isUntouchedObjective = (objective) =>
   Number(objective?.requiredQuantity ?? 1) === 1 &&
   !(objective?.dependsOn ?? []).length &&
   !objective?.optional &&
-  !objective?.secret &&
-  !objective?.playerEditable;
+  !objective?.secret;
 
 /**
  * Removes placeholder rows created by the structured editor before saving.

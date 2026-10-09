@@ -17,9 +17,18 @@ model User {
   sessions     Session[]
   memberships  Membership[]
   groupMembers GroupMember[]
-  bindings     CharacterBinding[]
   characterFavorites CharacterFavorite[]
   notifications Notification[]
+  mapSessionsCreated  MapSession[]         @relation("MapSessionCreator")
+  mapPositionsUpdated MapPosition[]        @relation("MapPositionUpdater")
+  mapHistoryChanges   MapPositionHistory[] @relation("MapHistoryActor")
+  mapBoardsCreated    MapBoard[]            @relation("MapBoardCreator")
+  mapBoardRegionsUpdated MapBoardRegion[]   @relation("MapBoardRegionUpdater")
+  mapPinsUpdated      MapLocationPin[]      @relation("MapLocationPinUpdater")
+  mapRoutesUpdated    MapRoute[]             @relation("MapRouteUpdater")
+  mapRoutePointsUpdated MapRoutePoint[]      @relation("MapRoutePointUpdater")
+  mapRegionBoundariesUpdated MapRegionBoundary[] @relation("MapRegionBoundaryUpdater")
+  mapTravelMarkersUpdated MapTravelMarker[] @relation("MapTravelMarkerUpdater")
 }
 
 model Session {
@@ -49,10 +58,253 @@ model Campaign {
   grants      Grant[]
   audits      AuditLog[]
   imports     ImportHistory[]
-  bindings    CharacterBinding[]
   characterFavorites CharacterFavorite[]
   npcAssociations NpcAssociation[]
   notifications Notification[]
+  mapSessions        MapSession[]
+  mapBoards          MapBoard[]
+}
+
+model MapBoard {
+  id              String   @id @default(cuid())
+  campaignId      String
+  boardKey        String   @default("general")
+  regionId        String?
+  name            String   @default("Mapa regional")
+  imageUrl        String?
+  roadNetwork     Json?
+  version         Int      @default(1)
+  scaleKm         Float?
+  scaleStartX     Float?
+  scaleStartY     Float?
+  scaleEndX       Float?
+  scaleEndY       Float?
+  scaleDistanceKm Float?
+  scaleImageWidth Int?
+  scaleImageHeight Int?
+  createdByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  campaign        Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  createdBy       User @relation("MapBoardCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  regions         MapBoardRegion[]
+  pins            MapLocationPin[]
+  routes          MapRoute[]
+  boundaries      MapRegionBoundary[]
+  travelMarkers   MapTravelMarker[]
+  drawings        MapDrawing[]
+  edits           MapEdit[]
+
+  @@unique([campaignId, boardKey])
+  @@unique([campaignId, regionId])
+}
+
+model MapDrawing {
+  id              String   @id @default(cuid())
+  boardId         String
+  authorUserId    String
+  data            Json
+  active          Boolean  @default(true)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  board           MapBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId, active, createdAt])
+}
+
+model MapEdit {
+  id              String   @id @default(cuid())
+  boardId         String
+  actorUserId     String
+  label           String
+  before          Json
+  after           Json
+  expected        Json
+  applied         Boolean  @default(true)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  board           MapBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId, actorUserId, createdAt])
+}
+
+model MapTravelMarker {
+  id              String   @id @default(cuid())
+  boardId         String
+  ownerType       String
+  ownerId         String?
+  name            String
+  x               Float
+  y               Float
+  version         Int      @default(1)
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  board           MapBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  updatedBy       User @relation("MapTravelMarkerUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([boardId, ownerType, ownerId])
+  @@index([boardId])
+}
+
+model MapRegionBoundary {
+  id              String   @id @default(cuid())
+  boardId         String
+  regionId        String
+  name            String?
+  points          Json
+  version         Int      @default(1)
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  board           MapBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  updatedBy       User @relation("MapRegionBoundaryUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([boardId, regionId])
+}
+
+model MapBoardRegion {
+  id              String   @id @default(cuid())
+  boardId         String
+  regionId        String
+  x               Float
+  y               Float
+  width           Float
+  height          Float
+  zIndex          Int      @default(0)
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  board           MapBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  updatedBy       User @relation("MapBoardRegionUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([boardId, regionId])
+  @@index([boardId, zIndex])
+}
+
+model MapLocationPin {
+  id              String   @id @default(cuid())
+  boardId         String
+  regionId        String?
+  entityType      String   @default("location")
+  entityId        String
+  locationId      String?
+  x               Float
+  y               Float
+  placementSource String   @default("auto")
+  version         Int      @default(1)
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  board           MapBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  updatedBy       User @relation("MapLocationPinUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([boardId, entityType, entityId])
+  @@index([boardId, entityType, entityId])
+  @@index([boardId, regionId])
+}
+
+model MapRoute {
+  id              String   @id @default(cuid())
+  boardId         String
+  fromPinId       String
+  toPinId         String
+  fromLocationId  String?
+  toLocationId    String?
+  label           String?
+  sourceConnectionId String?
+  distanceKm      Float?
+  version         Int      @default(1)
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  board           MapBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  updatedBy       User     @relation("MapRouteUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+  points          MapRoutePoint[]
+
+  @@unique([boardId, fromPinId, toPinId])
+  @@index([boardId, fromPinId])
+  @@index([boardId, toPinId])
+  @@index([boardId, createdAt])
+}
+
+model MapRoutePoint {
+  id              String   @id @default(cuid())
+  routeId         String
+  x               Float
+  y               Float
+  order           Int
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  route           MapRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  updatedBy       User     @relation("MapRoutePointUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([routeId, order])
+  @@index([routeId, order])
+}
+
+model MapSession {
+  id         String    @id @default(cuid())
+  campaignId String
+  label           String               @default("Sessão de jogo")
+  createdByUserId String
+  startedAt     DateTime @default(now())
+  endedAt         DateTime?
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  createdBy       User                 @relation("MapSessionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  positions       MapPosition[]
+  history         MapPositionHistory[]
+
+  @@index([campaignId, endedAt, startedAt])
+}
+
+model MapPosition {
+  id         String   @id @default(cuid())
+  sessionId       String
+  ownerType     String
+  ownerId       String
+  regionId        String?
+  locationId      String
+  x               Float
+  y               Float
+  updatedByUserId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime      @updatedAt
+  session         MapSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  updatedBy       User                 @relation("MapPositionUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+  history         MapPositionHistory[]
+
+  @@unique([sessionId, ownerType, ownerId])
+  @@index([sessionId, locationId])
+}
+
+model MapPositionHistory {
+  id         String        @id @default(cuid())
+  sessionId          String
+  positionId         String?
+  ownerType      String
+  ownerId        String
+  previousRegionId String?
+  previousLocationId String?
+  previousX          Float?
+  previousY          Float?
+  regionId           String?
+  locationId         String
+  x                  Float
+  y                  Float
+  changedByUserId    String
+  changedAt          DateTime     @default(now())
+  revertedAt         DateTime?
+  revertedByUserId   String?
+  revertsHistoryId   String?      @unique
+  session            MapSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  position           MapPosition? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  changedBy          User         @relation("MapHistoryActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([sessionId, changedAt])
+  @@index([sessionId, ownerType, ownerId, changedAt])
 }
 
 model CharacterFavorite {
@@ -178,7 +430,9 @@ model Reference {
   chance         Int?
   quantityMin    Int?
   quantityMax    Int?
+  quantityFormula String?
   valueFormula   String?
+  visibility      String   @default("public")
   createdAt      DateTime @default(now())
   sourceEntity   Entity   @relation(fields: [sourceEntityId], references: [id], onDelete: Cascade)
 
@@ -231,7 +485,7 @@ model QuestObjective {
   targetType       String?
   targetDomainId   String?
   dependsOn        Json
-  playerEditable   Boolean @default(false)
+  playerEditable   Boolean @default(true)
   data             Json?
   entity           Entity  @relation(fields: [entityId], references: [id], onDelete: Cascade)
   progress         QuestObjectiveProgress[]
@@ -318,27 +572,15 @@ model AuditLog {
   subjectId      String?
   before         Json?
   after          Json?
+  resultVersion    Int?
+  revertedAt       DateTime?
+  revertedByUserId String?
+  revertsAuditId   String?   @unique
   createdAt      DateTime @default(now())
   campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@index([campaignId, createdAt])
   @@index([entityType, entityDomainId])
-}
-
-model CharacterBinding {
-  id            String   @id @default(cuid())
-  campaignId    String
-  userId        String
-  mode          String
-  providerId    String
-  externalId    String
-  snapshot      Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  campaign      Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([campaignId, userId, externalId])
 }
 
 model NpcAssociation {
@@ -360,8 +602,12 @@ model ImportHistory {
   fileName   String
   sourceKind String
   summary    Json
-  importedByUserId String
+  changes          Json?
+  reversibleCount  Int       @default(0)
+  importedByUserId String?
   importedAt DateTime @default(now())
+  revertedAt       DateTime?
+  revertedByUserId String?
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@index([campaignId, packId, importedAt])

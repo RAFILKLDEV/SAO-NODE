@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-export const MODULE_ID = 'br.sao.rpg.firecast.database';
-export const DATA_TYPE = 'br.sao.rpg.database';
-export const T20_CURRENT = 'Ambesek.T20';
-export const T20_LEGACY = 'Ambesek.Tormenta20';
-
 export const ENTITY_TYPES = ['npc', 'location', 'item', 'monster', 'quest'];
 export const ROLE_TYPES = ['owner', 'gm', 'assistant_gm', 'player', 'spectator'];
 export const VISIBILITIES = ['public', 'gm', 'discoverable'];
@@ -20,6 +15,7 @@ export const TARGET_KINDS = [
   'monster_ability',
   'monster_skill',
   'monster_trait'
+  ,'reference'
 ];
 
 export const entityTypeSchema = z.enum(ENTITY_TYPES);
@@ -54,12 +50,19 @@ export const referenceSchema = z.object({
     .nullable()
     .optional()
     .transform((value) => value ?? undefined),
+  quantityFormula: z
+    .string()
+    .regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i, 'Use uma fórmula como 1d40')
+    .nullable()
+    .optional()
+    .transform((value) => value ?? undefined),
   valueFormula: z
     .string()
     .regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i, 'Use uma fórmula como 2d4+2')
     .nullable()
     .optional()
     .transform((value) => value ?? undefined)
+  ,visibility: visibilitySchema.optional()
 });
 
 export const narrativeFieldSchema = z.object({

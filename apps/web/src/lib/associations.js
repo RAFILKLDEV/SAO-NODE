@@ -7,7 +7,9 @@ export function associationPayload(link) {
     ...(link.chance != null ? { chance: link.chance } : {}),
     ...(link.quantityMin != null ? { quantityMin: link.quantityMin } : {}),
     ...(link.quantityMax != null ? { quantityMax: link.quantityMax } : {}),
+    ...(link.quantityFormula ? { quantityFormula: link.quantityFormula } : {}),
     ...(link.valueFormula ? { valueFormula: link.valueFormula } : {})
+    ,...(link.visibility ? { visibility: link.visibility } : {})
   };
 }
 export function associationDiff(before, after) {
@@ -30,5 +32,30 @@ export function filterAssociations(links, { type = '', role = '', search = '' } 
     return (!type || entity.type === type) && (!role || link.role === role) &&
       (!text || `${entity.name} ${entity.id}`.toLocaleLowerCase('pt-BR').includes(text));
   });
+}
+export function buildBulkAssociationChanges({ mode, source, targets, fields = {} }) {
+  if (!source || !targets?.length) return [];
+  if (mode === 'drops') return targets.map((monster) => ({
+    sourceType: 'monster', sourceId: monster.id, version: monster.version,
+    add: [{
+      type: 'item', id: source.id, role: 'drops', chance: fields.chance ?? 100,
+      quantityMin: fields.quantityMin ?? 1, quantityMax: fields.quantityMax ?? 1,
+      ...(fields.quantityFormula ? { quantityFormula: fields.quantityFormula } : {}),
+      ...(fields.valueFormula ? { valueFormula: fields.valueFormula } : {}),
+      visibility: fields.visibility ?? 'public'
+    }]
+  }));
+  if (mode === 'found-in') return targets.map((monster) => ({
+    sourceType: 'monster', sourceId: monster.id, version: monster.version,
+    add: [{ type: 'location', id: source.id, role: 'found-in' }]
+  }));
+  if (mode === 'rewards') return targets.map((quest) => ({
+    sourceType: 'quest', sourceId: quest.id, version: quest.version,
+    rewards: [{
+      rewardId: crypto.randomUUID(), type: source.type,
+      target: { type: source.type, id: source.id }, quantity: fields.quantity ?? 1
+    }]
+  }));
+  throw new Error(`Modo de associação em lote inválido: ${mode}`);
 }
 export { associationKey };

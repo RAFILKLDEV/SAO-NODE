@@ -55,10 +55,10 @@ Valores URL em `set`, `add` e `remove` aceitam tanto a URL pura quanto um link M
 
 | Entidade | Estrutura específica | Namespace |
 | --- | --- | --- |
-| NPC | `identity`, `services`, `factions`, `character` | `npc.` |
+| NPC | `identity`, `services`, `factions` | `npc.` |
 | Local | `parentId`, `placement.floor`, `connections` | `loc.` |
 | Item | `value: {amount, currency}`, `stats: [{key, value, operation?}]` | `item.` |
-| Monstro | `statBlocks` por sistema, `components: [{id, kind, visibility, data}]` | `monster.` |
+| Monstro | `rank`, fichas genéricas em `statBlocks`, `components: [{id, kind, visibility, data}]` | `monster.` |
 | Missão | objetivos, requisitos, fluxo e recompensas | `quest.` |
 
 Todos compartilham `id`, `name`, `subtitle?`, `active`, `tags`, `discoveryRevision`, `visibility`, `media`, `fields`, `links` e `extensions`. Mídia usa as chaves `image`, `portrait`, `token`, `map` e `source`.
@@ -67,7 +67,7 @@ Todos compartilham `id`, `name`, `subtitle?`, `active`, `tags`, `discoveryRevisi
 
 Conexões têm `id`, `target: {type: "location", id}`, `type?`, `direction?`, `distanceKm?`, `travelMinutes?`, `access`, `visibility` e `unlockCondition?`. Sem tempo explícito, a distância gera minutos usando 90 m/min. `parentId` aceita qualquer hierarquia sem ciclos. A navegação herda o andar do ancestral; somente o adaptador v1 interpreta convenções antigas de tags/IDs.
 
-Monstros usam `statBlocks["Ambesek.T20"]` para a ficha anterior, mantendo outros sistemas separados. NPCs usam `character: {mode, providerId, externalId, uri, snapshot}`; snapshots aceitam JSON para preservar propriedades de integrações externas.
+Monstros usam `rank` (`common`, `elite` ou `boss`) e fichas genéricas em `statBlocks`, sem vínculo com um sistema externo específico. `character`, `t20` e blocos legados T20 são removidos durante a normalização.
 
 Objetivos exigem `objectiveId` e `order`, com `dependsOn` referindo IDs existentes na mesma missão. Recompensas exigem `rewardId` e admitem `target`, `amount`, `quantity`, `currency`, `choiceGroup` e `data`. Mantenha esses IDs ao editar ou reordenar. Duplicações, namespaces incompatíveis e ciclos são erros. Destinos ausentes no catálogo geram avisos para permitir pacotes parciais.
 

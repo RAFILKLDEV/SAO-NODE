@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { locationImageAccept, locationImageFileError, locationImageUrlError } from '../lib/locationImage.js';
+import { useOutsideDismiss } from '../lib/useOutsideDismiss.js';
 
 function ImagePreview({ src }) {
   const [failed, setFailed] = useState(false);
@@ -52,6 +53,7 @@ export function LocationImagePicker({ selection, onChange }) {
 
 export function LocationImage({ src, name, onEdit, variant = 'location' }) {
   const dialogRef = useRef(null);
+  useOutsideDismiss(dialogRef, () => dialogRef.current?.close());
   const triggerRef = useRef(null);
   const closeRef = useRef(null);
   const [failed, setFailed] = useState(false);

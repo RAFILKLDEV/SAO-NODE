@@ -3,6 +3,7 @@ import { normalizeEntity, toLegacyEntity } from '@sao/domain';
 import { JSON_IMPORT_TEMPLATE } from '@sao/json';
 import {
   createEntityDraft,
+  createMonsterEliteDraft,
   draftControls,
   prepareCanonicalPayload,
   updateEntityDraft
@@ -12,17 +13,41 @@ import { discoverableCreation } from './entityDraft.js';
 it.each(['npc', 'location', 'item', 'monster', 'quest'])('creates %s with discoverable permissions without changing the source', (type) => {
   const source = { visibility: { entity: 'public', sections: { basic: 'public' } }, fields: [
     { key: 'description', value: 'Text', visibility: 'public' }, { key: 'gmNotes', value: 'Secret', visibility: 'gm' }
-  ], objectives: [{ visibility: 'public' }], connections: [{ visibility: 'public' }], components: [{ visibility: 'public' }], statBlocks: { 'Ambesek.T20': { statsVisibility: { combat: 'public' } } } };
+  ], objectives: [{ visibility: 'public' }], connections: [{ visibility: 'public' }], components: [{ visibility: 'public' }], statBlocks: { default: { statsVisibility: { combat: 'public' } } } };
   const result = discoverableCreation(type, source);
   expect(result.visibility.entity).toBe('discoverable');
   expect(Object.values(result.visibility.sections)).not.toContain('public');
   expect(result.fields.map((field) => field.visibility)).toEqual(['discoverable', 'gm']);
   for (const key of ['objectives', 'connections', 'components']) expect(result[key][0].visibility).toBe('discoverable');
-  if (type === 'monster') expect(result.statBlocks['Ambesek.T20'].statsVisibility.combat).toBe('discoverable');
+  if (type === 'monster') expect(result.statBlocks.default.statsVisibility.combat).toBe('discoverable');
   expect(source.visibility.entity).toBe('public');
 });
 
 describe('edição canônica', () => {
+  it('cria uma cópia Elite sem perder ficha nem loot do monstro', () => {
+    const monster = normalizeEntity('monster', {
+      id: 'monster.capivara',
+      name: 'Capivara',
+      visibility: {},
+      statBlocks: { default: { combat: { defesa: 14 } } },
+      links: [{ type: 'item', id: 'item.carne', role: 'drops', quantityFormula: '1d40' }]
+    });
+    const copy = createMonsterEliteDraft({ schemaVersion: '2.0', data: monster }, 'Capivara (Elite)', 'monster.capivara-elite');
+    expect(copy).toMatchObject({
+      id: 'monster.capivara-elite',
+      name: 'Capivara (Elite)',
+      rank: 'elite',
+      statBlocks: { default: { combat: { defesa: 14 } } },
+      links: [{ type: 'item', id: 'item.carne', role: 'drops', slot: 'references', quantityFormula: '1d40' }]
+    });
+  });
+
+  it('preserva Jogador como tipo de personagem ao salvar', () => {
+    const draft = createEntityDraft('npc', { id: 'npc.jogador', name: 'Personagem', characterType: 'npc' });
+    const edited = updateEntityDraft('npc', { ...draftControls('npc', draft), characterType: 'player' });
+    expect(prepareCanonicalPayload('npc', edited).characterType).toBe('player');
+  });
+
   it('preserva títulos antigos distintos ao editar apenas o subtítulo', () => {
     const draft = createEntityDraft('npc', { id: 'npc.a', name: 'A', title: 'Título antigo', subtitle: 'Subtítulo antigo' });
     const edited = updateEntityDraft('npc', { ...draftControls('npc', draft), subtitle: 'Subtítulo novo' });
@@ -62,7 +87,7 @@ describe('edição canônica', () => {
       id: 'monster.multi',
       name: 'Monstro',
       visibility: { entity: 'gm' },
-      statBlocks: { 'Ambesek.T20': { nd: 3 }, custom: { resources: { hp: 12 } } },
+      statBlocks: { default: { nd: 3 }, custom: { resources: { hp: 12 } } },
       components: [{ id: 'a', kind: 'ability', data: { formula: { dice: '1d6' } } }]
     });
     const legacy = {

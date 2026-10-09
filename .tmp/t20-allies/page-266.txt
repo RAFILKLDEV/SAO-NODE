@@ -1,0 +1,99 @@
+Capítulo Seis
+Parceiros
+Parceiros são NPCs que se aventuram com o 
+grupo. Podem ser adquiridos através de habilidades, 
+contratados ou comprados (no caso de animais ou 
+construtos) ou mesmo recebidos como recompensa.
+Usando Parceiros
+Em Tormenta20, o foco da história são os 
+personagens — eles são os astros, os protagonistas, 
+aqueles que resolvem os problemas. NPCs devem 
+ser no máximo coadjuvantes. Assim, evite parceiros 
+que participem da ação o tempo todo. A menos que 
+sua campanha seja justamente sobre recrutar par -
+ceiros, eles devem ser usados apenas em situações 
+especiais; a mais clássica é quando heróis estão 
+perto de enfrentar um vilão poderoso, que não 
+podem derrotar sozinhos. Antes do confronto final, 
+recrutam parceiros para equilibrar a batalha.
+Parceiros podem ser recompensas por boas 
+ideias ou missões completadas. O grupo fez amizade 
+com um guerreiro local? Quando um monstro atacar 
+a cidade, talvez ele apareça para dar uma mãozinha. 
+O grupo salvou um barão? O nobre pode enviar uma 
+cavaleira para acompanhá-los na próxima aventura.
+Por outro lado, evite usar parceiros apenas 
+como bônus. Parceiros devem ter personalidade e 
+fazer parte da história, caso contrário, serão redu-
+zidos a um ajuste na ficha! O mestre não precisa 
+interpretar o parceiro a cada momento — ele é um 
+coadjuvante, não precisa de tanto “tempo de tela”. 
+Mas, às vezes, deve dizer alguma coisa. Parceiros 
+podem ser interpretados pelo próprio jogador que 
+os escolheu, de acordo com a preferência do grupo.
+Parceiros funcionam melhor se usados com 
+parcimônia, para serem algo especial. Mesmo que o 
+parceiro seja amigo do grupo, arranje motivos para 
+que ele não possa se aventurar sempre. O guerreiro 
+precisa proteger a cidade, afinal de contas!
+Regras de Parceiros
+Parceiros não atuam como NPCs completos. 
+Eles não têm um turno e não realizam ações. Em 
+vez disso, cada parceiro ajuda um personagem, 
+fornecendo um bônus. Esse bônus depende do tipo 
+e nível de poder do parceiro (iniciante, veterano ou 
+mestre). Essa classificação é abstrata, não indicando 
+classe e nível do NPC, e fica a cargo do mestre. 
+Parceiros fornecidos por habilidades só mudam de 
+poder (de iniciante para veterano, por exemplo), 
+quando instruído pela habilidade.
+Cada parceiro pode ajudar apenas um persona-
+gem por vez. No início do seu turno, você pode gas-
+tar uma ação de movimento para passar um parceiro 
+para outro personagem em alcance curto até o fim da 
+cena (para fazer isso com um animal, você precisa ser 
+treinado em Adestramento).
+Personagens iniciantes (até o 4º nível) podem 
+ter um parceiro, personagens veteranos e campeões 
+(do 5º ao 16º nível) podem ter até dois e perso -
+nagens lenda (do 17º nível em diante) podem ter 
+até três parceiros. Se um efeito fornecer um par -
+ceiro temporário além do seu limite, você não se 
+beneficiará dele — mas pode passá-lo para outro 
+personagem como visto acima.
+Parceiros não podem ser atacados. Porém, em 
+situações dramáticas, o mestre pode decidir que algo 
+acontece com ele. Se um personagem é capturado 
+por orcs, o cavalo dele pode acabar a serviço dos 
+humanoides — ou ser devorado!
+Tipos de Parceiros
+Estes são exemplos de parceiros. O mestre pode 
+criar outros ou misturar benefícios: por exemplo, 
+um cavaleiro da Luz mestre pode fornecer +2 em 
+testes de ataque e +2 na Defesa (os benefícios de 
+um combatente veterano e um guardião iniciante).
+Adepto
+Um conjurador capaz de ajudá-lo a lançar suas 
+magias. Iniciante: o custo para lançar suas magias 
+de 1º círculo diminui –1 PM. Veterano: como acima, 
+mas também reduz o custo de suas magias de 2º 
+círculo. Mestre: como acima, e esta redução se torna 
+cumulativa com outras reduções.
+Ajudante
+Um bardo, nobre ou sábio que ajuda com pala-
+vras firmes ou encorajadoras. Iniciante: você recebe 
++2 em duas perícias. Veterano: muda para +2 em três 
+perícias. Mestre: muda para +4 em três perícias. As 
+perícias são definidas pelo parceiro. Um ajudante 
+não pode fornecer bônus em Luta ou Pontaria.
+Assassino
+Um ladino ou outro tipo furtivo e letal. Iniciante: 
+você pode usar a habilidade Ataque Furtivo +1d6. Se 
+já possui a habilidade, o bônus é cumulativo. Vetera-
+no: além do Ataque Furtivo, fornece bônus por flan-
+quear contra um inimigo por rodada. Mestre: muda o 
+dano do Ataque Furtivo para +2d6. Note que, além 
+de fornecer +2 em testes de ataque corpo a corpo, o 
+bônus por flanquear facilita que o personagem use 
+seu Ataque Furtivo.
+260

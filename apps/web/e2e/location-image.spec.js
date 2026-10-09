@@ -31,7 +31,7 @@ async function setup(page, { type = 'city', image = '', role = 'gm' } = {}) {
     if (path.endsWith('/auth/me')) return json({ id: 'gm-test', name: 'GM' });
     if (path.endsWith('/auth/csrf')) return json({ csrfToken: 'test' });
     if (path.endsWith('/campaigns/image-test')) return json({ id: 'image-test', name: 'Teste de imagens', role });
-    if (path.endsWith('/memberships') || path.endsWith('/viewers')) return json([]);
+    if (path.endsWith('/memberships') || path.endsWith('/viewers') || path.endsWith('/players') || path.endsWith('/character-favorites')) return json([]);
     if (path.endsWith('/media') && req.method() === 'POST') {
       state.uploads++;
       if (state.uploadGate) await state.uploadGate;
@@ -60,6 +60,26 @@ async function setup(page, { type = 'city', image = '', role = 'gm' } = {}) {
   return state;
 }
 
+test('clique fora fecha editor e imagem; clique dentro e arraste para fora preservam a janela', async ({ page }) => {
+  const state = await setup(page, { image: 'https://images.test/landscape.svg' });
+  await page.getByRole('button', { name: 'Editar', exact: true }).click();
+  const editor = page.locator('.entity-editor');
+  await page.getByLabel('Nome', { exact: true }).fill('Alteração não salva');
+  await editor.getByRole('heading').click();
+  await expect(editor).toBeVisible();
+  const bounds = await editor.boundingBox();
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + 30);
+  await page.mouse.down(); await page.mouse.move(2, 2, { steps: 8 }); await page.mouse.up();
+  await expect(editor).toBeVisible();
+  await page.mouse.click(2, 2);
+  await expect(editor).toBeHidden();
+  expect(state.writes).toEqual([]);
+  await page.getByRole('button', { name: 'Ampliar imagem de Local de teste' }).click();
+  const image = page.getByRole('dialog', { name: 'Imagem de Local de teste' });
+  await image.locator('img').click(); await expect(image).toBeVisible();
+  await page.mouse.click(2, 2); await expect(image).toBeHidden();
+});
+
 test('arquivo só é enviado ao salvar; abas, falhas e nova tentativa preservam o formulário', async ({ page }) => {
   const state = await setup(page);
   await page.getByRole('button', { name: 'Editar', exact: true }).click();
@@ -77,6 +97,8 @@ test('arquivo só é enviado ao salvar; abas, falhas e nova tentativa preservam 
   await expect(page.getByRole('button', { name: 'Enviando imagem…' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Cancelar', exact: true })).toBeDisabled();
   await expect(page.getByLabel('Nome', { exact: true })).toBeDisabled();
+  await page.mouse.click(2, 2);
+  await expect(page.locator('.entity-editor')).toBeVisible();
   releaseUpload();
   await expect(page.getByText('Não foi possível salvar o local.', { exact: true })).toBeVisible();
   expect(state.uploads).toBe(1);

@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { audit } from '../lib/audit.js';
 import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
 import { ALLOWANCES, TARGET_KINDS, apiError } from '@sao/shared';
-import { evaluateGrant, summarizeGroupVisibility } from '@sao/domain';
+import { evaluateGrant, summarizeGroupVisibility, referenceGrantKey } from '@sao/domain';
 import {
   resolveGrantRecipientUserIds
 } from '../lib/realtime.js';
@@ -20,6 +20,12 @@ const grantSchema = z.object({
 });
 
 const batchSchema = z.object({ grants: z.array(grantSchema).min(1).max(500) });
+const discoveryQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(100),
+  subjectType: z.enum(['user', 'group']).optional(),
+  subjectId: z.string().min(1).optional()
+}).refine((query) => !query.subjectId || query.subjectType, { message: 'subjectType is required with subjectId' });
 
 const componentKind = {
   monster_movement: 'movement',
@@ -43,6 +49,7 @@ async function baseVisibilityForGrant(grant) {
       questObjectives: true,
       locationConnections: true,
       monsterComponents: true
+      ,references: true
     }
   });
   if (!entity || entity.deletedAt) return 'gm';
@@ -72,7 +79,14 @@ async function baseVisibilityForGrant(grant) {
     );
   }
   if (grant.targetKind === 'monster_stat') {
-    return (entity.data?.statBlocks?.['Ambesek.T20']?.statsVisibility ?? entity.data?.sheet?.statsVisibility)?.[grant.targetKey] ?? 'public';
+    const sheets = [entity.data?.sheet, ...Object.values(entity.data?.statBlocks ?? {})].filter(Boolean);
+    return sheets.map((sheet) => sheet.statsVisibility?.[grant.targetKey]).find((visibility) => visibility != null) ?? 'public';
+  }
+  if (grant.targetKind === 'reference') {
+    const reference = entity.references.find((item) => referenceGrantKey(entity.type, entity.domainId, {
+      type: item.targetType, id: item.targetDomainId, role: item.role, slot: item.slot ?? 'references'
+    }) === grant.targetKey);
+    return reference?.visibility ?? 'gm';
   }
   return 'gm';
 }
@@ -94,9 +108,14 @@ function grantTargets(entity) {
     add('location_connection', connection.connectionId, connection.visibility);
   for (const component of entity.monsterComponents)
     add(`monster_${component.kind}`, component.componentId, component.visibility);
+  for (const reference of entity.references ?? []) {
+    add('reference', referenceGrantKey(entity.type, entity.domainId, {
+      type: reference.targetType, id: reference.targetDomainId, role: reference.role, slot: reference.slot ?? 'references'
+    }), reference.visibility);
+  }
 
   if (entity.type === 'monster') {
-    const visibility = (entity.data?.statBlocks?.['Ambesek.T20']?.statsVisibility ?? entity.data?.sheet?.statsVisibility) ?? {};
+    const visibility = entity.data?.sheet?.statsVisibility ?? Object.values(entity.data?.statBlocks ?? {}).find((sheet) => Object.keys(sheet.statsVisibility ?? {}).length)?.statsVisibility ?? {};
     for (const key of [
       'basic',
       'nd',
@@ -262,6 +281,7 @@ export async function grantRoutes(app) {
           questObjectives: true,
           locationConnections: true,
           monsterComponents: true
+          ,references: true
         }
       });
       if (!entity || entity.deletedAt)
@@ -335,22 +355,49 @@ export async function grantRoutes(app) {
     }
   );
 
-  app.get(
-    '/api/v1/campaigns/:campaignId/discoveries',
-    { preHandler: [authenticate, requireCampaign, requireGm] },
-    async (request) => {
-      const rows = await prisma.grant.findMany({
-        where: { campaignId: request.campaign.id },
-        orderBy: { updatedAt: 'desc' }
-      });
-      return Promise.all(
-        rows.map(async (row) => ({
-          ...row,
-          ...(row.subjectType === 'group' ? { effectiveState: await groupEffectiveState(row) } : {})
-        }))
-      );
-    }
-  );
+  app.get('/api/v1/campaigns/:campaignId/discoveries/subjects', { preHandler: [authenticate, requireCampaign, requireGm] }, async (request) => {
+    const [members, grants] = await Promise.all([
+      prisma.membership.findMany({ where: { campaignId: request.campaign.id }, select: { userId: true, role: true, user: { select: { name: true, login: true } } }, orderBy: { user: { name: 'asc' } } }),
+      prisma.grant.groupBy({ by: ['subjectId'], where: { campaignId: request.campaign.id, subjectType: 'user' }, _count: { _all: true }, _max: { updatedAt: true } })
+    ]);
+    const summary = new Map(grants.map((row) => [row.subjectId, { count: row._count._all, updatedAt: row._max.updatedAt }]));
+    return members.map((member) => ({ userId: member.userId, role: member.role, name: member.user.name, login: member.user.login, count: summary.get(member.userId)?.count ?? 0, updatedAt: summary.get(member.userId)?.updatedAt ?? null }));
+  });
+
+  app.get('/api/v1/campaigns/:campaignId/discoveries', { preHandler: [authenticate, requireCampaign, requireGm] }, async (request, reply) => {
+    const parsed = discoveryQuerySchema.safeParse(request.query);
+    if (!parsed.success) return reply.code(400).send(apiError('INVALID_QUERY', 'Paginação ou filtro inválido', parsed.error.flatten()));
+    const { page, pageSize, subjectType, subjectId } = parsed.data;
+    const where = { campaignId: request.campaign.id, ...(subjectType ? { subjectType } : {}), ...(subjectId ? { subjectId } : {}) };
+    const [rows, total] = await Promise.all([
+      prisma.grant.findMany({ where, orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }], skip: (page - 1) * pageSize, take: pageSize }),
+      prisma.grant.count({ where })
+    ]);
+    const userIds = [...new Set(rows.flatMap((row) => [row.actorUserId, row.subjectType === 'user' ? row.subjectId : null].filter(Boolean)))];
+    const groupIds = [...new Set(rows.filter((row) => row.subjectType === 'group').map((row) => row.subjectId))];
+    const entityKeys = [...new Map(rows.map((row) => [`${row.entityType}:${row.entityDomainId}`, { type: row.entityType, domainId: row.entityDomainId }])).values()];
+    const [users, groups, entities] = await Promise.all([
+      userIds.length ? prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, login: true } }) : [],
+      groupIds.length ? prisma.group.findMany({ where: { campaignId: request.campaign.id, domainId: { in: groupIds } }, select: { domainId: true, name: true } }) : [],
+      entityKeys.length ? prisma.entity.findMany({ where: { campaignId: request.campaign.id, OR: entityKeys }, include: { fields: true, references: true, locationConnections: true, monsterComponents: true, questObjectives: true, questRewards: true } }) : []
+    ]);
+    const usersById = new Map(users.map((user) => [user.id, user]));
+    const groupsById = new Map(groups.map((group) => [group.domainId, group.name]));
+    const entitiesByKey = new Map(entities.map((entity) => [`${entity.type}:${entity.domainId}`, { name: entity.name, deletedAt: entity.deletedAt, record: entity }]));
+    const { entityRecordToCanonical } = await import('../services/content.js');
+    const items = await Promise.all(rows.map(async (row) => {
+      const entity = entitiesByKey.get(`${row.entityType}:${row.entityDomainId}`);
+      return {
+        ...row,
+        actorName: usersById.get(row.actorUserId)?.name ?? 'Usuário removido',
+        subjectName: row.subjectType === 'user' ? usersById.get(row.subjectId)?.name ?? 'Jogador removido' : groupsById.get(row.subjectId) ?? 'Grupo removido',
+        entityName: entity?.name ?? `${row.entityType}:${row.entityDomainId}`,
+        entity: entity && !entity.deletedAt ? entityRecordToCanonical(entity.record) : null,
+        ...(row.subjectType === 'group' ? { effectiveState: await groupEffectiveState(row) } : {})
+      };
+    }));
+    return { items, total, page, pageSize };
+  });
 
   app.put(
     '/api/v1/campaigns/:campaignId/discoveries',

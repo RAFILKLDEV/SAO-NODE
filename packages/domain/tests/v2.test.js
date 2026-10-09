@@ -63,14 +63,6 @@ describe('contrato saoData v2', () => {
     expect(normalizeEntity('npc', toLegacyEntity('npc', data)).characterType).toBe('entity');
   });
 
-  it('preserva CharacterBinding no saoData 2.0', () => {
-    const data = normalizeEntity('npc', {
-      id: 'npc.binding', name: 'Vínculo', characterType: 'npc',
-      character: { mode: 'linked', providerId: 'Ambesek.T20', externalId: 'firecast-1', uri: 'firecast://1' }
-    });
-    expect(data.character).toMatchObject({ mode: 'linked', providerId: 'Ambesek.T20', externalId: 'firecast-1' });
-  });
-
   it('formata tipos de local em português', () => {
     expect(formatLocationType('forest')).toBe('Floresta');
     expect(formatLocationType('unknown-custom')).toBe('Outro local');
@@ -104,6 +96,7 @@ describe('contrato saoData v2', () => {
     });
     expect(quest.objectives[1]).toMatchObject({
       objectiveId: 'b',
+      playerEditable: true,
       dependsOn: ['a'],
       target: { type: 'monster', id: 'monster.x' }
     });
@@ -115,12 +108,12 @@ describe('contrato saoData v2', () => {
       profession: 'Ferreiro',
       services: [{ type: 'Forja' }],
       mainLocationId: 'loc.a',
-      t20: { dataType: 'Ambesek.T20', snapshot: { custom: { spell: 'Fogo' } } }
+      t20: { dataType: 'Retired.Provider', snapshot: { custom: { spell: 'Fogo' } } }
     });
     expect(npc).toMatchObject({
       identity: { age: 30, profession: 'Ferreiro' },
       services: [{ name: 'Forja' }],
-      character: { snapshot: { custom: { spell: 'Fogo' } } }
+      links: [{ id: 'loc.a', slot: 'locations' }]
     });
     expect(npc.links[0]).toMatchObject({ id: 'loc.a', slot: 'locations' });
   });
@@ -200,11 +193,41 @@ describe('contrato saoData v2', () => {
     const v2 = migrateV1Entity('monster', {
       id: 'monster.x',
       name: 'Javali',
-      t20: { nd: '1', attributes: { strength: '+3' } },
+      sheet: { nd: '1', attributes: { strength: '+3' } },
       attacks: [{ id: 'bite', name: 'Mordida' }]
     });
     const legacy = toLegacyEntity('monster', v2);
-    expect(v2.statBlocks['Ambesek.T20'].attributes.strength).toBe('+3');
+    expect(v2.statBlocks.default.attributes.strength).toBe('+3');
     expect(legacy.attacks[0].data.name).toBe('Mordida');
   });
+    it('keeps monster rank outside generic stat blocks and strips retired provider data', () => {
+      const data = normalizeEntity('monster', {
+        id: 'monster.elite',
+        name: 'Capivara Elite',
+        visibility: {},
+        rank: 'elite',
+        statBlocks: {
+          'Ambesek.T20': { elite: true },
+          custom: { combat: { defense: 14 } }
+        },
+        t20: { nd: '1' }
+      });
+      expect(data.rank).toBe('elite');
+      expect(data.statBlocks.custom.combat).toEqual({ defense: 14 });
+      expect(data.statBlocks).not.toHaveProperty('Ambesek.T20');
+      expect(data).not.toHaveProperty('t20');
+    });
+
+    it('migrates a legacy generic sheet and Elite rank without provider keys', () => {
+      const data = normalizeEntity('monster', {
+        id: 'monster.legacy-elite',
+        name: 'Javali Elite',
+        group: 'elite',
+        sheet: { nd: 2, elite: true, combat: { defense: 16 } },
+        t20: { nd: '2', firecastUri: 'retired://sheet' }
+      }, { format: '1.0' });
+      expect(data.rank).toBe('elite');
+      expect(data.statBlocks.default).toMatchObject({ nd: 2, combat: { defense: 16 } });
+      expect(data.statBlocks).not.toHaveProperty('Ambesek.T20');
+    });
 });

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, NavLink, Outlet, Route, Routes, useNavigate, useParams } from 'react-router';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { api } from './lib/api.js';
+import { useOutsideDismiss } from './lib/useOutsideDismiss.js';
 import { NotificationMenu } from './components/NotificationMenu.jsx';
 import { formatEntityName } from './lib/entityDisplay.js';
 import { resolveCampaignLinks } from './lib/campaignLinks.js';
@@ -16,8 +17,8 @@ import { DiscoveriesPage } from './pages/DiscoveriesPage.jsx';
 import { JsonPage } from './pages/JsonPage.jsx';
 import { AuditPage } from './pages/AuditPage.jsx';
 import { PlayersPage } from './pages/PlayersPage.jsx';
-import { BindingsPage } from './pages/BindingsPage.jsx';
-import { SettingsPage } from './pages/SettingsPage.jsx';
+import { ImportHistoryPage } from './pages/ImportHistoryPage.jsx';
+import { MapPage } from './pages/MapPage.jsx';
 
 function Loading() {
   return <div className="state-card">Carregando…</div>;
@@ -31,12 +32,12 @@ function RequireAuth() {
 }
 
 const adminLinks = [
-  ['players', 'Jogadores', '♙'],
   ['discoveries', 'Descobertas', '◉'],
-  ['json', 'IA e JSON', '⇄'],
-  ['audit', 'Auditoria', '≡'],
-  ['bindings', 'Vínculos T20', '∞'],
-  ['settings', 'Configurações', '⚙']
+  ['json', 'Preparar para IA', '✦'],
+  ['json/import', 'Importar JSON', '↓'],
+  ['json/export', 'Exportar saoData', '↑'],
+  ['json/history', 'Histórico', '◷'],
+  ['audit', 'Auditoria', '≡']
 ];
 
 function idFromCampaignName(name) {
@@ -51,6 +52,8 @@ function idFromCampaignName(name) {
 function SearchBox({ campaignId }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  useOutsideDismiss(rootRef, () => setOpen(false), open);
   const navigate = useNavigate();
   const results = useQuery({
     queryKey: ['search', campaignId, query],
@@ -59,7 +62,7 @@ function SearchBox({ campaignId }) {
   });
   const plural = (type) => (type === 'location' ? 'locations' : `${type}s`);
   return (
-    <div className="search-box">
+    <div className="search-box" ref={rootRef}>
       <input
         aria-label="Busca global"
         placeholder="Buscar NPC, local, item, monstro ou missão…"
@@ -105,6 +108,7 @@ function NotificationToast({ toast, onDismiss }) {
 }
 
 function CampaignLayout() {
+  const [campaignSocket, setCampaignSocket] = useState(null);
   const { campaignId } = useParams();
   const queryClient = useQueryClient();
   const [toast, setToast] = useState(null);
@@ -155,9 +159,10 @@ function CampaignLayout() {
       transports: ['websocket', 'polling'],
       auth: { campaignId }
     });
+    setCampaignSocket(socket);
     const invalidate = () => queryClient.invalidateQueries({ predicate: (query) => query.queryKey.includes(campaignId) });
     const pollTimer = window.setInterval(() => {
-      invalidate();
+      if (document.visibilityState === 'visible') queryClient.invalidateQueries({ predicate: query => query.queryKey.includes(campaignId) && (!socket.connected || !String(query.queryKey[0]).startsWith('map-')) });
     }, 5000);
     socket.on('connect', () => {
       invalidate();
@@ -175,7 +180,27 @@ function CampaignLayout() {
     socket.on('permissions.changed', (_payload) => {
       invalidate();
     });
+    socket.on('group.changed', () => {
+      queryClient.invalidateQueries({ queryKey: ['groups', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['map-group-members', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['map-board', campaignId] });
+    });
     socket.on('progress.changed', (_payload) => {
+      invalidate();
+    });
+    socket.on('map.position.changed', (_payload) => {
+      invalidate();
+    });
+    socket.on('map.layout.changed', (_payload) => {
+      invalidate();
+    });
+    socket.on('map.pin.changed', (_payload) => {
+      invalidate();
+    });
+    socket.on('map.route.changed', (_payload) => {
+      invalidate();
+    });
+    socket.on('map.scale.changed', (_payload) => {
       invalidate();
     });
     socket.on('import.applied', (_payload) => {
@@ -220,6 +245,7 @@ function CampaignLayout() {
         <div className="campaign-name">{campaign.data.name}</div>
         <nav aria-label="Campanha">
           <span className="nav-caption">Campanha</span>
+          <NavLink to={`/campaigns/${campaignId}/map`}><span className="nav-icon">⌖</span><span>Mapa compartilhado</span></NavLink>
           {visibleCampaignLinks.map(([path, label, icon]) => (
             <NavLink key={path} to={`/campaigns/${campaignId}/${path}`}>
               <span className="nav-icon">{icon}</span>
@@ -228,7 +254,7 @@ function CampaignLayout() {
             </NavLink>
           ))}
           {isGm && <span className="nav-caption">Administração</span>}
-          {isGm && adminLinks.map(([path, label, icon]) => <NavLink key={path} to={`/campaigns/${campaignId}/${path}`}><span className="nav-icon">{icon}</span><span>{label}</span></NavLink>)}
+          {isGm && adminLinks.map(([path, label, icon]) => <NavLink key={path} end={path === 'json'} to={`/campaigns/${campaignId}/${path}`}><span className="nav-icon">{icon}</span><span>{label}</span></NavLink>)}
         </nav>
       </aside>
       <main className="main-area">
@@ -241,7 +267,7 @@ function CampaignLayout() {
             error={readNotification.error || readAllNotifications.error} />
         </header>
         <div className="content-area">
-          <Outlet context={{ campaign: campaign.data, isGm }} />
+          <Outlet context={{ campaign: campaign.data, isGm, socket: campaignSocket }} />
         </div>
       </main>
       <NotificationToast
@@ -281,6 +307,7 @@ export function App() {
         <Route path="/campaigns/:campaignId" element={<CampaignLayout />}>
           <Route index element={<Navigate to="npcs" replace />} />
           <Route path="npcs" element={<EntityPage type="npc" />} />
+          <Route path="map" element={<MapPage />} />
           <Route path="locations" element={<EntityPage type="location" />} />
           <Route path="items" element={<EntityPage type="item" />} />
           <Route path="monsters" element={<EntityPage type="monster" />} />
@@ -290,10 +317,11 @@ export function App() {
           <Route path="groups" element={<GroupsPage />} />
           <Route path="players" element={<PlayersPage />} />
           <Route path="discoveries" element={<DiscoveriesPage />} />
-          <Route path="json" element={<JsonPage />} />
+          <Route path="json" element={<JsonPage view="prepare" />} />
+          <Route path="json/import" element={<JsonPage view="import" />} />
+          <Route path="json/export" element={<JsonPage view="export" />} />
+          <Route path="json/history" element={<ImportHistoryPage />} />
           <Route path="audit" element={<AuditPage />} />
-          <Route path="bindings" element={<BindingsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>
     </Routes>

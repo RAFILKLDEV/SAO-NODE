@@ -122,12 +122,6 @@ describe('complete specification models', () => {
       locations: [{ type: 'location', id: 'loc.floor.town' }],
       relations: [{ type: 'npc', id: 'npc.floor.guard', role: 'friend' }],
       services: [{ type: 'craft', name: 'Forja' }],
-      t20: {
-        mode: 'linked',
-        dataType: 'Ambesek.T20',
-        characterId: '42',
-        firecastUri: 'firecast://character/42'
-      }
     });
     expect(npc.identity.profession).toBe('Ferreiro');
     expect(npc.services[0]).toEqual({ name: 'Forja', description: '' });
@@ -180,24 +174,13 @@ describe('complete specification models', () => {
       name: 'Javali',
       group: 'beast',
       imageURL: '',
-      t20: {
-        nd: '1',
-        creatureType: 'animal',
-        subtype: 'javali',
-        size: 'medium',
-        initiative: '+5',
-        perception: '+3',
-        senses: 'far-reaching',
-        defense: '16',
-        fortitude: '+6',
-        reflex: '+3',
-        will: '+1',
-        hp: '20',
-        hpMax: '20',
-        mp: '0',
-        mpMax: '0',
+      rank: 'common',
+      sheet: {
+        nd: '1', type: 'animal', subtype: 'javali', size: 'medium',
+        combat: { initiative: '+5', perception: '+3', defense: '16', fortitude: '+6', reflex: '+3', will: '+1' },
+        resources: { hp: '20', hpMax: '20', mp: '0', mpMax: '0' },
         attributes: { strength: '+3', dexterity: '+1' },
-        statVisibility: { attributes: 'discoverable' }
+        statsVisibility: { attributes: 'discoverable' }
       },
       movements: [{ id: 'walk', type: 'walk', meters: '9', notes: '', visibility: 'discoverable' }],
       attacks: [

@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext, useParams } from 'react-router';
 import { api } from '../lib/api.js';
+import { rollDiceFormula } from '@sao/domain';
 
 const stateLabels = { active: 'Em andamento', completed: 'Concluída', failed: 'Falhou' };
 export function groupPlayerMissions(entries, players, groups) {
@@ -44,7 +45,7 @@ export function ProgressPage() {
   const selected = missionGroups.find((group) => group.character.id === selectedId);
   const error = progress.error || players.error || groups.error || update.error || complete.error;
   return <>
-    <div className="page-heading"><div><small className="eyebrow">CAMPANHA</small><h1>Progresso e decisões</h1><p>Selecione um jogador para acompanhar suas missões e atualizar os objetivos liberados para edição.</p></div></div>
+    <div className="page-heading"><div><small className="eyebrow">CAMPANHA</small><h1>Progresso e decisões</h1><p>Acompanhe as missões atribuídas e atualize seus objetivos visíveis e desbloqueados.</p></div></div>
     {error && <div className="alert error" role="alert">{error.message}</div>}
     {(progress.isLoading || players.isLoading) && <div className="state-card">Carregando progresso…</div>}
     <section className="progress-characters" aria-label="Jogadores e missões">
@@ -62,6 +63,7 @@ export function ProgressPage() {
         <div className="progress-track" role="progressbar" aria-label={`Progresso de ${entry.questName ?? 'missão'}`} aria-valuenow={entry.percentage ?? 0} aria-valuemin="0" aria-valuemax="100"><span style={{ width: `${Math.max(0, Math.min(100, entry.percentage ?? 0))}%` }} /></div>
         <div className="objective-list">{entry.objectives.map((objective) => <ObjectiveProgress key={`${entry.id}:${objective.objectiveId}`} entry={entry} objective={objective} pending={update.isPending} onSave={(value) => update.mutate({ progressId: entry.id, objectiveId: objective.objectiveId, value, version: entry.version })} />)}</div>
         {!entry.objectives.length && <p className="muted">Nenhum objetivo disponível.</p>}
+        {entry.rewards?.length > 0 && <MissionRewards rewards={entry.rewards} />}
         {entry.authoritativeStatusHidden && <p className="muted">A conclusão depende também de objetivos ainda não revelados.</p>}
         {isGm && entry.readyToComplete && entry.state === 'active' && <button className="primary" disabled={complete.isPending} onClick={() => complete.mutate(entry.id)}>Concluir missão</button>}
       </div>
@@ -70,6 +72,28 @@ export function ProgressPage() {
     {!missionGroups.length && !progress.isLoading && !players.isLoading && !error && <div className="state-card">Nenhum jogador ou missão disponível.</div>}
   </>;
 }
+
+function MissionRewards({ rewards }) {
+  const [results, setResults] = useState(null);
+  const rollValue = (value) => typeof value === 'string' && /^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i.test(value)
+    ? rollDiceFormula(value)
+    : value;
+  const roll = () => setResults(rewards.map((reward) => ({
+    name: reward.target?.name ?? reward.data?.name ?? reward.currency ?? reward.type,
+    quantity: rollValue(reward.quantity ?? 1),
+    amount: rollValue(reward.amount)
+  })));
+  return <section className="progress-rewards" aria-label="Recompensas da missão">
+    <header><h4>Recompensas</h4><button type="button" onClick={roll}>Sortear recompensas</button></header>
+    <ul>{rewards.map((reward, index) => <li key={reward.rewardId ?? `${reward.type}-${index}`}>
+      <span>{reward.target?.name ?? reward.data?.name ?? reward.currency ?? reward.type}</span>
+      {reward.quantity != null && <small>Quantidade: {reward.quantity}</small>}
+      {reward.amount != null && <small>Valor: {reward.amount}{reward.currency ? ` ${reward.currency}` : ''}</small>}
+    </li>)}</ul>
+    {results && <div className="progress-reward-results" role="status">{results.map((result, index) => <p key={`${result.name}-${index}`}><strong>{result.name}</strong>{result.quantity != null && ` · ${result.quantity}x`}{result.amount != null && ` · ${result.amount}`}</p>)}</div>}
+  </section>;
+}
+
 function PlayerPhoto({ character }) {
   const [failedUrl, setFailedUrl] = useState(null);
   return character.characterImageUrl && failedUrl !== character.characterImageUrl
@@ -86,6 +110,6 @@ export function ObjectiveProgress({ entry, objective, onSave, pending = false })
     <input aria-label={`Progresso de ${objective.text ?? 'objetivo'}`} type="number" min="0" max={requiredQuantity} step="1" value={value} disabled={!editable || pending} onChange={(event) => setValue(Math.max(0, Math.min(requiredQuantity, Math.trunc(Number(event.target.value)))))} />
     <button disabled={!editable || pending || value === objective.value} onClick={() => onSave(value)}>{pending ? 'Salvando…' : 'Salvar'}</button>
     {objective.optional && <small>Opcional</small>}
-    {!editable && entry.state === 'active' && <small>Edição indisponível: objetivo bloqueado ou reservado ao mestre.</small>}
+    {!editable && entry.state === 'active' && <small>Complete os objetivos anteriores para liberar esta etapa.</small>}
   </div>;
 }

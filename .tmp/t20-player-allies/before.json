@@ -1,0 +1,1476 @@
+[
+  {
+    "id": "cmtomll0j00h4la2l67b6qqpr",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.alpharecoil",
+    "name": "AlphaRecoil",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/195bb56b-2ffa-4416-91ee-fdc8bc813b8f.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 4,
+    "localModifiedAt": "2026-10-01T04:17:23.094Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-05T16:57:24.644Z",
+    "updatedAt": "2026-10-01T19:00:34.336Z",
+    "fields": [
+      {
+        "id": "cmupwg49v003hq92ds50lbujx",
+        "entityId": "cmtomll0j00h4la2l67b6qqpr",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.340Z",
+        "updatedAt": "2026-10-01T19:00:34.340Z"
+      },
+      {
+        "id": "cmupwg49v003iq92d5gh0ibc6",
+        "entityId": "cmtomll0j00h4la2l67b6qqpr",
+        "key": "description",
+        "value": "Classe: Caçador. Jogador de estilo tático e preciso, prefere observar o campo e escolher seus alvos antes de atacar.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.340Z",
+        "updatedAt": "2026-10-01T19:00:34.340Z"
+      },
+      {
+        "id": "cmupwg49v003jq92d00mwb4p9",
+        "entityId": "cmtomll0j00h4la2l67b6qqpr",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.340Z",
+        "updatedAt": "2026-10-01T19:00:34.340Z"
+      },
+      {
+        "id": "cmupwg49v003kq92dzs088au6",
+        "entityId": "cmtomll0j00h4la2l67b6qqpr",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.340Z",
+        "updatedAt": "2026-10-01T19:00:34.340Z"
+      },
+      {
+        "id": "cmupwg49v003lq92dnbssleou",
+        "entityId": "cmtomll0j00h4la2l67b6qqpr",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.340Z",
+        "updatedAt": "2026-10-01T19:00:34.340Z"
+      },
+      {
+        "id": "cmupwg49v003mq92dl26vzqo8",
+        "entityId": "cmtomll0j00h4la2l67b6qqpr",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.340Z",
+        "updatedAt": "2026-10-01T19:00:34.340Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtm49rkq011mpq2mrj4t01pf",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.blg-viper",
+    "name": "BLG Viper",
+    "active": true,
+    "baseVisibility": "discoverable",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/8df47d1b-544f-46c6-8ec4-702bbdfbc6ec.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 5,
+    "localModifiedAt": "2026-10-01T04:18:11.989Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-03T22:48:47.835Z",
+    "updatedAt": "2026-10-01T19:00:34.349Z",
+    "fields": [
+      {
+        "id": "cmupwg4a7003pq92d5tutzvxg",
+        "entityId": "cmtm49rkq011mpq2mrj4t01pf",
+        "key": "appearance",
+        "value": "Mantém um visual funcional e intimidador, priorizando equipamentos que transmitam experiência e prontidão para combate. Evita acessórios puramente decorativos quando não possuem utilidade clara.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.352Z",
+        "updatedAt": "2026-10-01T19:00:34.352Z"
+      },
+      {
+        "id": "cmupwg4a7003qq92dmmlw83e1",
+        "entityId": "cmtm49rkq011mpq2mrj4t01pf",
+        "key": "description",
+        "value": "Classe: Guerreiro. Competitivo e metódico, usa equipamento funcional e intimidador. Já gostava de otimizar builds e estratégias antes mesmo de ficar preso em Aincrad.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.352Z",
+        "updatedAt": "2026-10-01T19:00:34.352Z"
+      },
+      {
+        "id": "cmupwg4a7003rq92dg3a9ypmj",
+        "entityId": "cmtm49rkq011mpq2mrj4t01pf",
+        "key": "gmNotes",
+        "value": "Papel: Competitivo / Estrategista. Ponto forte: planejamento. Problema: pode colocar eficiência acima das pessoas. Gancho: sempre tenta descobrir a forma mais segura e eficiente de resolver um problema.",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.352Z",
+        "updatedAt": "2026-10-01T19:00:34.352Z"
+      },
+      {
+        "id": "cmupwg4a7003sq92djguknasu",
+        "entityId": "cmtm49rkq011mpq2mrj4t01pf",
+        "key": "history",
+        "value": "Antes de ficar preso em Aincrad, já tinha perfil de jogador competitivo e gostava de otimizar builds, equipamentos e estratégias. A mudança das regras do jogo tornou seu comportamento ainda mais cauteloso e metódico.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.352Z",
+        "updatedAt": "2026-10-01T19:00:34.352Z"
+      },
+      {
+        "id": "cmupwg4a7003tq92d0bra8p3l",
+        "entityId": "cmtm49rkq011mpq2mrj4t01pf",
+        "key": "personality",
+        "value": "Direto, disciplinado, exigente e calculista. Odeia desperdício de recursos e decisões impulsivas. Pode colocar eficiência acima das pessoas quando a situação fica perigosa.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.352Z",
+        "updatedAt": "2026-10-01T19:00:34.352Z"
+      },
+      {
+        "id": "cmupwg4a7003uq92ddj2gzn9h",
+        "entityId": "cmtm49rkq011mpq2mrj4t01pf",
+        "key": "shortDescription",
+        "value": "Jogador competitivo e estrategista, focado em eficiência, preparação e desempenho.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.352Z",
+        "updatedAt": "2026-10-01T19:00:34.352Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmugeh7e610wbs62d9037lipv",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.donatelador",
+    "name": "Donatelador",
+    "active": true,
+    "baseVisibility": "discoverable",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "https://images-ng.pixai.art/images/orig/e570be68-5771-4447-bfaf-db2580eb1e5a"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 4,
+    "localModifiedAt": "2026-10-01T04:19:05.142Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-25T03:27:36.367Z",
+    "updatedAt": "2026-10-01T19:00:34.360Z",
+    "fields": [
+      {
+        "id": "cmupwg4ai003xq92dloujx9ue",
+        "entityId": "cmugeh7e610wbs62d9037lipv",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.362Z",
+        "updatedAt": "2026-10-01T19:00:34.362Z"
+      },
+      {
+        "id": "cmupwg4ai003yq92d2rp4kr8h",
+        "entityId": "cmugeh7e610wbs62d9037lipv",
+        "key": "description",
+        "value": "Classe: Arcanista. Jogador que prefere vencer usando conhecimento, preparação e habilidades poderosas em vez de depender apenas de força bruta.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.362Z",
+        "updatedAt": "2026-10-01T19:00:34.362Z"
+      },
+      {
+        "id": "cmupwg4ai003zq92dvbaem3th",
+        "entityId": "cmugeh7e610wbs62d9037lipv",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.362Z",
+        "updatedAt": "2026-10-01T19:00:34.362Z"
+      },
+      {
+        "id": "cmupwg4ai0040q92dnepvvq2c",
+        "entityId": "cmugeh7e610wbs62d9037lipv",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.362Z",
+        "updatedAt": "2026-10-01T19:00:34.362Z"
+      },
+      {
+        "id": "cmupwg4ai0041q92dp89jmw1k",
+        "entityId": "cmugeh7e610wbs62d9037lipv",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.362Z",
+        "updatedAt": "2026-10-01T19:00:34.362Z"
+      },
+      {
+        "id": "cmupwg4ai0042q92dv8dqxttz",
+        "entityId": "cmugeh7e610wbs62d9037lipv",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.362Z",
+        "updatedAt": "2026-10-01T19:00:34.362Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtm577a60004p62l9un5osc2",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.eletricraccon",
+    "name": "EletricRaccon",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/d358d48e-e0cd-4f58-849e-e416d604d5fe.png"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "Anti Shadow Killer",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 7,
+    "localModifiedAt": "2026-10-01T04:18:22.624Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-03T23:14:47.838Z",
+    "updatedAt": "2026-10-01T19:00:34.369Z",
+    "fields": [
+      {
+        "id": "cmupwg4ar004aq92d4hr2gwdt",
+        "entityId": "cmtm577a60004p62l9un5osc2",
+        "key": "shortDescription",
+        "value": "Explorador curioso, obcecado por descobrir mecânicas escondidas e comportamentos incomuns.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.372Z",
+        "updatedAt": "2026-10-01T19:00:34.372Z"
+      },
+      {
+        "id": "cmupwg4ar0045q92d72cg783k",
+        "entityId": "cmtm577a60004p62l9un5osc2",
+        "key": "appearance",
+        "value": "Prefere equipamento leve e prático para exploração. Costuma carregar itens variados, ferramentas e consumíveis que podem parecer inúteis até surgir uma situação inesperada.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.372Z",
+        "updatedAt": "2026-10-01T19:00:34.372Z"
+      },
+      {
+        "id": "cmupwg4ar0046q92dp6aoarmj",
+        "entityId": "cmtm577a60004p62l9un5osc2",
+        "key": "description",
+        "value": "Classe: Inventor. Explorador curioso que carrega ferramentas e itens variados, sempre testando interações e procurando mecânicas escondidas de Aincrad.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.372Z",
+        "updatedAt": "2026-10-01T19:00:34.372Z"
+      },
+      {
+        "id": "cmupwg4ar0047q92dnx33k093",
+        "entityId": "cmtm577a60004p62l9un5osc2",
+        "key": "gmNotes",
+        "value": "Papel: Explorador / Pesquisador. Ponto forte: descobertas. Problema: a curiosidade pode colocar o grupo em perigo. Gancho: está praticamente construindo uma wiki mental de Aincrad.",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.372Z",
+        "updatedAt": "2026-10-01T19:00:34.372Z"
+      },
+      {
+        "id": "cmupwg4ar0048q92ds2aqaqgz",
+        "entityId": "cmtm577a60004p62l9un5osc2",
+        "key": "history",
+        "value": "Sempre gostou mais de explorar jogos do que de competir diretamente. Passava tempo procurando áreas opcionais, interações raras e detalhes que não apareciam em guias. Em Aincrad, essa curiosidade passou a ser uma ferramenta de sobrevivência.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.372Z",
+        "updatedAt": "2026-10-01T19:00:34.372Z"
+      },
+      {
+        "id": "cmupwg4ar0049q92dzkli13tz",
+        "entityId": "cmtm577a60004p62l9un5osc2",
+        "key": "personality",
+        "value": "Curioso, criativo, inquieto e experimental. Tem dificuldade em ignorar mistérios e pode colocar o grupo em situações desnecessárias apenas para descobrir o que acontece.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.372Z",
+        "updatedAt": "2026-10-01T19:00:34.372Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmuec177m00whof2dohat4xrq",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.gruntligeiro",
+    "name": "GruntLigeiro",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/a4a48c31-ca10-40a7-a1cf-d3fd44bd329b.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 4,
+    "localModifiedAt": "2026-10-01T04:18:27.696Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-23T16:43:38.050Z",
+    "updatedAt": "2026-10-01T19:00:34.380Z",
+    "fields": [
+      {
+        "id": "cmupwg4b2004dq92d17v2z6or",
+        "entityId": "cmuec177m00whof2dohat4xrq",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.382Z",
+        "updatedAt": "2026-10-01T19:00:34.382Z"
+      },
+      {
+        "id": "cmupwg4b2004eq92dzt07yxgj",
+        "entityId": "cmuec177m00whof2dohat4xrq",
+        "key": "description",
+        "value": "Classe: Bucaneiro. Ágil e ousado, prefere mobilidade e ataques rápidos, confiando mais em velocidade e iniciativa do que em armaduras pesadas.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.382Z",
+        "updatedAt": "2026-10-01T19:00:34.382Z"
+      },
+      {
+        "id": "cmupwg4b2004fq92do1mnx5br",
+        "entityId": "cmuec177m00whof2dohat4xrq",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.382Z",
+        "updatedAt": "2026-10-01T19:00:34.382Z"
+      },
+      {
+        "id": "cmupwg4b2004gq92dxlr8vlu3",
+        "entityId": "cmuec177m00whof2dohat4xrq",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.382Z",
+        "updatedAt": "2026-10-01T19:00:34.382Z"
+      },
+      {
+        "id": "cmupwg4b2004hq92dicxxrwer",
+        "entityId": "cmuec177m00whof2dohat4xrq",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.382Z",
+        "updatedAt": "2026-10-01T19:00:34.382Z"
+      },
+      {
+        "id": "cmupwg4b2004iq92db71sbdq0",
+        "entityId": "cmuec177m00whof2dohat4xrq",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.382Z",
+        "updatedAt": "2026-10-01T19:00:34.382Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmugb3h5v10o2s62d1c9nkwqh",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.honrado-com-amor",
+    "name": "Honrado com Amor",
+    "active": true,
+    "baseVisibility": "discoverable",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/d101b86f-2d2e-46f3-a591-6110a6ef789c.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 3,
+    "localModifiedAt": "2026-10-01T04:18:32.229Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-25T01:52:56.995Z",
+    "updatedAt": "2026-10-01T19:00:34.389Z",
+    "fields": [
+      {
+        "id": "cmupwg4ba004lq92d48678djr",
+        "entityId": "cmugb3h5v10o2s62d1c9nkwqh",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.391Z",
+        "updatedAt": "2026-10-01T19:00:34.391Z"
+      },
+      {
+        "id": "cmupwg4ba004mq92d9eegy6r1",
+        "entityId": "cmugb3h5v10o2s62d1c9nkwqh",
+        "key": "description",
+        "value": "Classe: Paladino. Guerreiro guiado por honra e lealdade, costuma se colocar na linha de frente para proteger seus companheiros.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.391Z",
+        "updatedAt": "2026-10-01T19:00:34.391Z"
+      },
+      {
+        "id": "cmupwg4ba004nq92d1jn9psjd",
+        "entityId": "cmugb3h5v10o2s62d1c9nkwqh",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.391Z",
+        "updatedAt": "2026-10-01T19:00:34.391Z"
+      },
+      {
+        "id": "cmupwg4ba004oq92d5ls4esv5",
+        "entityId": "cmugb3h5v10o2s62d1c9nkwqh",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.391Z",
+        "updatedAt": "2026-10-01T19:00:34.391Z"
+      },
+      {
+        "id": "cmupwg4ba004pq92d79ts0216",
+        "entityId": "cmugb3h5v10o2s62d1c9nkwqh",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.391Z",
+        "updatedAt": "2026-10-01T19:00:34.391Z"
+      },
+      {
+        "id": "cmupwg4ba004qq92dn1ongh3g",
+        "entityId": "cmugb3h5v10o2s62d1c9nkwqh",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.391Z",
+        "updatedAt": "2026-10-01T19:00:34.391Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtm4eq04011zpq2m3qbxcwtb",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.loud-sininistra",
+    "name": "LOUD Sininistra",
+    "active": true,
+    "baseVisibility": "discoverable",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/17633cb5-db7a-4168-832d-d31e5e93888b.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 6,
+    "localModifiedAt": "2026-10-01T04:18:42.269Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-03T22:52:39.076Z",
+    "updatedAt": "2026-10-01T19:00:34.398Z",
+    "fields": [
+      {
+        "id": "cmupwg4bj004tq92druuvy0w6",
+        "entityId": "cmtm4eq04011zpq2m3qbxcwtb",
+        "key": "appearance",
+        "value": "Cuida bastante da própria apresentação e prefere um visual marcante e fácil de reconhecer. Usa a aparência do avatar como parte de sua presença social.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.400Z",
+        "updatedAt": "2026-10-01T19:00:34.400Z"
+      },
+      {
+        "id": "cmupwg4bj004uq92df5go8tgs",
+        "entityId": "cmtm4eq04011zpq2m3qbxcwtb",
+        "key": "description",
+        "value": "Classe: Bardo. Jogadora social e marcante, usa sua facilidade para conversar e criar vínculos para conseguir informações e manter contatos entre diferentes grupos.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.400Z",
+        "updatedAt": "2026-10-01T19:00:34.400Z"
+      },
+      {
+        "id": "cmupwg4bj004vq92d0jp99cx9",
+        "entityId": "cmtm4eq04011zpq2m3qbxcwtb",
+        "key": "gmNotes",
+        "value": "Papel: Social / Informante. Ponto forte: informação e contatos. Problema: pode confiar demais nas próprias leituras das pessoas. Gancho: normalmente sabe de alguma coisa acontecendo antes do resto do grupo.",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.400Z",
+        "updatedAt": "2026-10-01T19:00:34.400Z"
+      },
+      {
+        "id": "cmupwg4bj004wq92dnuli0ob5",
+        "entityId": "cmtm4eq04011zpq2m3qbxcwtb",
+        "key": "history",
+        "value": "Antes de Aincrad, gostava do aspecto social de jogos online e se envolvia com grupos, comunidades e amizades. Depois de ficar presa no jogo, essa habilidade passou a ter valor estratégico.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.400Z",
+        "updatedAt": "2026-10-01T19:00:34.400Z"
+      },
+      {
+        "id": "cmupwg4bj004xq92dg9qvygbf",
+        "entityId": "cmtm4eq04011zpq2m3qbxcwtb",
+        "key": "personality",
+        "value": "Comunicativa, perceptiva, sociável e adaptável. Tem facilidade para criar vínculos, mas às vezes confia demais na própria capacidade de entender as intenções dos outros.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.400Z",
+        "updatedAt": "2026-10-01T19:00:34.400Z"
+      },
+      {
+        "id": "cmupwg4bj004yq92djbd3xdw4",
+        "entityId": "cmtm4eq04011zpq2m3qbxcwtb",
+        "key": "shortDescription",
+        "value": "Jogadora social e informante, conhecida por manter contatos e acompanhar rumores entre grupos.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.400Z",
+        "updatedAt": "2026-10-01T19:00:34.400Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtmabhrd0178ml2l9ty90bdi",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.noobtownmayor",
+    "name": "NoobTownMayor",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "Ladino - 8",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/0a1af4a8-314e-4cd9-808c-1dab61cf11f4.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "Humano",
+        "gender": "",
+        "profession": "Fortão ( Iniciante ) - Assassino - Fortão ( Iniciante ) "
+      },
+      "services": [],
+      "subtitle": "Renan",
+      "extensions": {
+        "legacyConflicts": [
+          {
+            "code": "ALIAS_CONFLICT",
+            "path": "subtitle",
+            "values": [
+              "Renan",
+              "Ladino"
+            ]
+          }
+        ]
+      },
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 14,
+    "localModifiedAt": "2026-10-08T15:07:52.380Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-04T01:38:06.121Z",
+    "updatedAt": "2026-10-08T15:07:52.381Z",
+    "fields": [
+      {
+        "id": "cmuzo7tvx0004qj2dbvqzk0zy",
+        "entityId": "cmtmabhrd0178ml2l9ty90bdi",
+        "key": "appearance",
+        "value": "Usa equipamento de ladino com aparência prática e discreta. Prefere mobilidade, bolsas, ferramentas e recursos úteis a armaduras pesadas ou chamativas.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-08T15:07:52.462Z",
+        "updatedAt": "2026-10-08T15:07:52.462Z"
+      },
+      {
+        "id": "cmuzo7tvx0005qj2dn6pnzr2p",
+        "entityId": "cmtmabhrd0178ml2l9ty90bdi",
+        "key": "description",
+        "value": "Classe: Ladino. Beta tester veterano de visual prático e discreto, conhece rotas, inimigos e áreas iniciais e costuma usar esse conhecimento para ajudar outros jogadores.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-08T15:07:52.462Z",
+        "updatedAt": "2026-10-08T15:07:52.462Z"
+      },
+      {
+        "id": "cmuzo7tvx0006qj2d0xddwuff",
+        "entityId": "cmtmabhrd0178ml2l9ty90bdi",
+        "key": "gmNotes",
+        "value": "Papel: Veterano / Beta Tester. Ponto forte: conhecimento prévio. Problema: Aincrad mudou desde o Beta. Frase recorrente: 'No Beta era assim...'. Algumas informações dele continuam corretas; outras podem estar perigosamente desatualizadas.",
+        "visibility": "gm",
+        "createdAt": "2026-10-08T15:07:52.462Z",
+        "updatedAt": "2026-10-08T15:07:52.462Z"
+      },
+      {
+        "id": "cmuzo7tvx0007qj2dow0s43lz",
+        "entityId": "cmtmabhrd0178ml2l9ty90bdi",
+        "key": "history",
+        "value": "Participou do Beta do Heaven's World. Durante os testes, ajudava nas front lines coletando itens e enfrentando monstros mais fracos. Apesar de não ser um dos jogadores mais famosos do beta, acumulou bastante conhecimento sobre progressão inicial, rotas e comportamento de inimigos.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-08T15:07:52.462Z",
+        "updatedAt": "2026-10-08T15:07:52.462Z"
+      },
+      {
+        "id": "cmuzo7tvx0008qj2du0f8ed1w",
+        "entityId": "cmtmabhrd0178ml2l9ty90bdi",
+        "key": "personality",
+        "value": "Prestativo, observador, experiente e um pouco confiante demais no próprio conhecimento do beta. Frequentemente compara situações atuais com o que existia durante os testes.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-08T15:07:52.462Z",
+        "updatedAt": "2026-10-08T15:07:52.462Z"
+      },
+      {
+        "id": "cmuzo7tvx0009qj2ddf6bit0f",
+        "entityId": "cmtmabhrd0178ml2l9ty90bdi",
+        "key": "shortDescription",
+        "value": "Beta tester veterano e Ladino 8, conhecido por ajudar jogadores iniciantes e conhecer bem as áreas iniciais.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-08T15:07:52.462Z",
+        "updatedAt": "2026-10-08T15:07:52.462Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtwax12d0043mn2d09tvln3x",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.o-tal-do-mula",
+    "name": "O Tal do Mula",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/50270515-f965-4975-b5e0-f148d2c15845.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 5,
+    "localModifiedAt": "2026-10-01T04:18:52.551Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-11T01:52:32.677Z",
+    "updatedAt": "2026-10-01T19:00:34.415Z",
+    "fields": [
+      {
+        "id": "cmupwg4c10059q92d8960i60z",
+        "entityId": "cmtwax12d0043mn2d09tvln3x",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.418Z",
+        "updatedAt": "2026-10-01T19:00:34.418Z"
+      },
+      {
+        "id": "cmupwg4c1005aq92d2z6yn95a",
+        "entityId": "cmtwax12d0043mn2d09tvln3x",
+        "key": "description",
+        "value": "Classe: Bárbaro. Jogador resistente e teimoso, prefere resolver problemas avançando diretamente e confiando na própria força para continuar de pé.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.418Z",
+        "updatedAt": "2026-10-01T19:00:34.418Z"
+      },
+      {
+        "id": "cmupwg4c1005bq92dy9fwsc1g",
+        "entityId": "cmtwax12d0043mn2d09tvln3x",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.418Z",
+        "updatedAt": "2026-10-01T19:00:34.418Z"
+      },
+      {
+        "id": "cmupwg4c1005cq92du8tuhiuo",
+        "entityId": "cmtwax12d0043mn2d09tvln3x",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.418Z",
+        "updatedAt": "2026-10-01T19:00:34.418Z"
+      },
+      {
+        "id": "cmupwg4c1005dq92du6xa50wl",
+        "entityId": "cmtwax12d0043mn2d09tvln3x",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.418Z",
+        "updatedAt": "2026-10-01T19:00:34.418Z"
+      },
+      {
+        "id": "cmupwg4c1005eq92ddmxfn71h",
+        "entityId": "cmtwax12d0043mn2d09tvln3x",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.418Z",
+        "updatedAt": "2026-10-01T19:00:34.418Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtm5c9c0000mp62l334tdk6b",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.pablo-marcal-do-mal",
+    "name": "Pablo Marçal Do Mal",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/e6eab9d2-a533-4f8b-b480-d6cd8254c36b.png"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 6,
+    "localModifiedAt": "2026-10-01T04:18:57.184Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-03T23:18:43.777Z",
+    "updatedAt": "2026-10-01T19:00:34.424Z",
+    "fields": [
+      {
+        "id": "cmupwg4ca005hq92d5v7etob2",
+        "entityId": "cmtm5c9c0000mp62l334tdk6b",
+        "key": "appearance",
+        "value": "Prefere um visual chamativo e bem cuidado, pensado para transmitir confiança e presença. Gosta de parecer mais bem-sucedido do que realmente está.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.427Z",
+        "updatedAt": "2026-10-01T19:00:34.427Z"
+      },
+      {
+        "id": "cmupwg4ca005iq92dmmef0ls9",
+        "entityId": "cmtm5c9c0000mp62l334tdk6b",
+        "key": "description",
+        "value": "Classe: Nobre. Negociador ambicioso de aparência chamativa, transforma comércio, informação e relações entre jogadores em ferramentas para conquistar influência em Aincrad.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.427Z",
+        "updatedAt": "2026-10-01T19:00:34.427Z"
+      },
+      {
+        "id": "cmupwg4ca005jq92d22akmevj",
+        "entityId": "cmtm5c9c0000mp62l334tdk6b",
+        "key": "gmNotes",
+        "value": "Papel: Comerciante / Negociador. Ponto forte: negociação. Problema: algumas ideias parecem melhores quando ele explica do que quando alguém faz as contas. Gancho: quer construir uma rede comercial dentro de Aincrad.",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.427Z",
+        "updatedAt": "2026-10-01T19:00:34.427Z"
+      },
+      {
+        "id": "cmupwg4ca005kq92d9mlhcruz",
+        "entityId": "cmtm5c9c0000mp62l334tdk6b",
+        "key": "history",
+        "value": "Antes de Aincrad, já gostava de negociação, comércio entre jogadores e sistemas econômicos. Depois de ficar preso, passou a enxergar o mercado e as relações entre jogadores como uma forma de construir influência e segurança.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.427Z",
+        "updatedAt": "2026-10-01T19:00:34.427Z"
+      },
+      {
+        "id": "cmupwg4ca005lq92dpg2rofdc",
+        "entityId": "cmtm5c9c0000mp62l334tdk6b",
+        "key": "personality",
+        "value": "Persuasivo, ambicioso, oportunista e muito confiante. Tem facilidade para convencer outras pessoas e genuinamente acredita em muitas das próprias ideias.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.427Z",
+        "updatedAt": "2026-10-01T19:00:34.427Z"
+      },
+      {
+        "id": "cmupwg4ca005mq92dsia6qvcv",
+        "entityId": "cmtm5c9c0000mp62l334tdk6b",
+        "key": "shortDescription",
+        "value": "Jogador persuasivo e negociador, focado em comércio, influência e oportunidades.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.427Z",
+        "updatedAt": "2026-10-01T19:00:34.427Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtomhjtd00gula2lf85fnpp3",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.quebracraneo",
+    "name": "QuebraCraneo",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/00599203-077a-41f1-a311-d898bb2e6e38.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 4,
+    "localModifiedAt": "2026-10-01T04:18:03.290Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-05T16:54:16.465Z",
+    "updatedAt": "2026-10-01T19:00:34.434Z",
+    "fields": [
+      {
+        "id": "cmupwg4ck005pq92dp1x8gtz3",
+        "entityId": "cmtomhjtd00gula2lf85fnpp3",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.436Z",
+        "updatedAt": "2026-10-01T19:00:34.436Z"
+      },
+      {
+        "id": "cmupwg4ck005qq92d765lltkw",
+        "entityId": "cmtomhjtd00gula2lf85fnpp3",
+        "key": "description",
+        "value": "Classe: Bárbaro. Combatente agressivo e intimidador, prefere enfrentar os inimigos de frente e terminar as lutas usando força bruta.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.436Z",
+        "updatedAt": "2026-10-01T19:00:34.436Z"
+      },
+      {
+        "id": "cmupwg4ck005rq92d0ln3cx3u",
+        "entityId": "cmtomhjtd00gula2lf85fnpp3",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.436Z",
+        "updatedAt": "2026-10-01T19:00:34.436Z"
+      },
+      {
+        "id": "cmupwg4ck005sq92d60x96929",
+        "entityId": "cmtomhjtd00gula2lf85fnpp3",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.436Z",
+        "updatedAt": "2026-10-01T19:00:34.436Z"
+      },
+      {
+        "id": "cmupwg4ck005tq92d4jp4h5bw",
+        "entityId": "cmtomhjtd00gula2lf85fnpp3",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.436Z",
+        "updatedAt": "2026-10-01T19:00:34.436Z"
+      },
+      {
+        "id": "cmupwg4ck005uq92dgbhkeldv",
+        "entityId": "cmtomhjtd00gula2lf85fnpp3",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.436Z",
+        "updatedAt": "2026-10-01T19:00:34.436Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtomh9vy00gkla2lrludlwlf",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.thermaltank",
+    "name": "ThermalTank",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/5f08044d-042e-4861-b40c-c4dce3f7bc66.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 4,
+    "localModifiedAt": "2026-10-01T04:17:57.327Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-05T16:54:03.598Z",
+    "updatedAt": "2026-10-01T19:00:34.443Z",
+    "fields": [
+      {
+        "id": "cmupwg4ct005xq92dxzlp1dd6",
+        "entityId": "cmtomh9vy00gkla2lrludlwlf",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.445Z",
+        "updatedAt": "2026-10-01T19:00:34.445Z"
+      },
+      {
+        "id": "cmupwg4ct005yq92dguvi9hxp",
+        "entityId": "cmtomh9vy00gkla2lrludlwlf",
+        "key": "description",
+        "value": "Classe: Cavaleiro. Especialista em defesa e linha de frente, usa equipamento pesado e assume o papel de segurar os inimigos enquanto o grupo luta em segurança.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.445Z",
+        "updatedAt": "2026-10-01T19:00:34.445Z"
+      },
+      {
+        "id": "cmupwg4ct005zq92dc9m5y896",
+        "entityId": "cmtomh9vy00gkla2lrludlwlf",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.445Z",
+        "updatedAt": "2026-10-01T19:00:34.445Z"
+      },
+      {
+        "id": "cmupwg4ct0060q92dwuao7nhj",
+        "entityId": "cmtomh9vy00gkla2lrludlwlf",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.445Z",
+        "updatedAt": "2026-10-01T19:00:34.445Z"
+      },
+      {
+        "id": "cmupwg4ct0061q92dq7dw100z",
+        "entityId": "cmtomh9vy00gkla2lrludlwlf",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.445Z",
+        "updatedAt": "2026-10-01T19:00:34.445Z"
+      },
+      {
+        "id": "cmupwg4ct0062q92dq8oxc5m6",
+        "entityId": "cmtomh9vy00gkla2lrludlwlf",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.445Z",
+        "updatedAt": "2026-10-01T19:00:34.445Z"
+      }
+    ],
+    "references": []
+  },
+  {
+    "id": "cmtomgysp00gala2l6kyx62my",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "type": "npc",
+    "domainId": "npc.tigeruppercut",
+    "name": "TigerUpperCut",
+    "active": true,
+    "baseVisibility": "gm",
+    "schemaVersion": 2,
+    "data": {
+      "tags": [],
+      "level": "",
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/3ef1d4f8-92ee-46f6-87dd-41dcfc3f3c75.jpg"
+      },
+      "factions": [],
+      "identity": {
+        "age": "",
+        "race": "",
+        "gender": "",
+        "profession": ""
+      },
+      "services": [],
+      "subtitle": "",
+      "extensions": {},
+      "visibility": {
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "characterType": "player",
+      "discoveryRevision": 0
+    },
+    "source": {
+      "kind": "json",
+      "packId": "classes-jogadores",
+      "fileName": "classes-jogadores.json",
+      "importedAt": "2026-10-01T19:00:34.284Z"
+    },
+    "version": 4,
+    "localModifiedAt": "2026-10-01T04:17:52.414Z",
+    "deletedAt": null,
+    "createdAt": "2026-09-05T16:53:49.226Z",
+    "updatedAt": "2026-10-01T19:00:34.452Z",
+    "fields": [
+      {
+        "id": "cmupwg4d20065q92dzpdok2ch",
+        "entityId": "cmtomgysp00gala2l6kyx62my",
+        "key": "appearance",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.454Z",
+        "updatedAt": "2026-10-01T19:00:34.454Z"
+      },
+      {
+        "id": "cmupwg4d20066q92dpyv9b5a7",
+        "entityId": "cmtomgysp00gala2l6kyx62my",
+        "key": "description",
+        "value": "Classe: Lutador. Combatente direto e explosivo, especializado em golpes físicos e combate corpo a corpo, preferindo enfrentar adversários bem de perto.",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.454Z",
+        "updatedAt": "2026-10-01T19:00:34.454Z"
+      },
+      {
+        "id": "cmupwg4d20067q92dtgm6ksil",
+        "entityId": "cmtomgysp00gala2l6kyx62my",
+        "key": "gmNotes",
+        "value": "",
+        "visibility": "gm",
+        "createdAt": "2026-10-01T19:00:34.454Z",
+        "updatedAt": "2026-10-01T19:00:34.454Z"
+      },
+      {
+        "id": "cmupwg4d20068q92dxnq4jchb",
+        "entityId": "cmtomgysp00gala2l6kyx62my",
+        "key": "history",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.454Z",
+        "updatedAt": "2026-10-01T19:00:34.454Z"
+      },
+      {
+        "id": "cmupwg4d20069q92d27w1cocp",
+        "entityId": "cmtomgysp00gala2l6kyx62my",
+        "key": "personality",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.454Z",
+        "updatedAt": "2026-10-01T19:00:34.454Z"
+      },
+      {
+        "id": "cmupwg4d2006aq92dj4pti1wj",
+        "entityId": "cmtomgysp00gala2l6kyx62my",
+        "key": "shortDescription",
+        "value": "",
+        "visibility": "discoverable",
+        "createdAt": "2026-10-01T19:00:34.454Z",
+        "updatedAt": "2026-10-01T19:00:34.454Z"
+      }
+    ],
+    "references": []
+  }
+]

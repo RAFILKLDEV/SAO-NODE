@@ -1,0 +1,14 @@
+.t20-allies-editor { grid-column: 1 / -1; min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+.t20-allies-editor legend { padding: 0 5px; font-size: .86rem; font-weight: 600; }
+.t20-allies-editor > p { margin: 0 0 10px; font-size: .78rem; }
+.t20-allies-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.t20-allies-choices label { display: grid; align-content: start; gap: 5px; font-size: .78rem; }
+.t20-allies-choices select { width: 100%; min-width: 0; font-size: .8rem; }
+.t20-allies-choices small { color: var(--muted); line-height: 1.5; font-size: .75rem; }
+.t20-allies { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.t20-allies h4 { font-size: .86rem; margin: 0 0 8px; }
+.t20-allies ul { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.t20-allies li { border-left: 2px solid var(--gold); padding-left: 10px; }
+.t20-allies strong { font-size: .82rem; }
+.t20-allies p { margin: 3px 0 0; color: var(--muted); line-height: 1.5; font-size: .8rem; }
+@media (max-width: 600px) { .t20-allies-choices { grid-template-columns: 1fr; } }

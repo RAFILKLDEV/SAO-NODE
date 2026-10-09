@@ -1,0 +1,29 @@
+.map-drawing-toolbar { position: absolute; z-index: 15; left: 10px; top: 10px; max-width: calc(100% - 20px); color: #fff; font-size: .76rem; }
+.map-drawing-summary { display: flex; gap: 4px; padding: 4px; width: fit-content; border: 1px solid #8bc8dc55; border-radius: 8px; background: #071a2bf5; box-shadow: 0 4px 16px #0008; }
+.map-drawing-summary button { padding: 5px 8px; font-size: .76rem; box-shadow: none; }
+.map-drawing-options { display: grid; gap: 8px; width: min(300px, calc(100vw - 50px)); max-height: min(430px, 65dvh); overflow: auto; margin-top: 5px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #071a2bf5; box-shadow: 0 8px 24px #0009; }
+.map-drawing-tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.map-drawing-options button { padding: 5px; font-size: .7rem; box-shadow: none; }
+.map-drawing-tools button[aria-pressed="true"] { border-color: var(--sao); background: #36e9ff22; }
+.map-drawing-colors { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.map-drawing-colors button { width: 22px; height: 22px; padding: 0; border: 2px solid transparent; border-radius: 50%; }
+.map-drawing-colors button[aria-pressed="true"] { outline: 2px solid var(--sao); outline-offset: 1px; }
+.map-drawing-colors input { width: 30px; height: 24px; padding: 1px; }
+.map-drawing-options label { display: grid; grid-template-columns: 65px 1fr 38px; gap: 5px; align-items: center; margin: 0; font-size: .7rem; }
+.map-drawing-options label input { padding: 0; width: 100%; accent-color: var(--sao); }
+.map-drawing-options label span { text-align: right; }
+.map-drawing-clear { display: flex; gap: 5px; }
+.map-drawing-toolbar > p { max-width: 300px; margin: 5px 0 0; padding: 5px; border-radius: 6px; background: #3a1024e8; font-size: .7rem; }
+.map-drawing-layer, .map-ping-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; }
+.map-drawing-layer.drawing-active { z-index: 9; pointer-events: auto; touch-action: none; user-select: none; cursor: crosshair; }
+.erasable-drawing { cursor: pointer; pointer-events: stroke; }
+.erasable-drawing:hover { filter: drop-shadow(0 0 3px #fff); }
+.erasable-drawing text { pointer-events: bounding-box; }
+.map-ping-layer { z-index: 14; overflow: visible; }
+.map-ping { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; color: var(--ping-color); }
+.map-ping > span { width: 18px; height: 18px; border: 3px solid currentColor; border-radius: 50%; background: #071a2b99; box-shadow: 0 0 12px currentColor; }
+.map-ping > span::before, .map-ping > span::after { content: ''; position: absolute; left: 50%; top: 9px; width: 28px; height: 28px; border: 2px solid currentColor; border-radius: 50%; transform: translate(-50%, -50%); animation: map-ping-pulse 1.2s ease-out infinite; }
+.map-ping > span::after { animation-delay: .6s; }
+.map-ping strong { max-width: 160px; margin-top: 12px; padding: 2px 5px; border-radius: 4px; background: #071a2bd9; font-size: .7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes map-ping-pulse { from { scale: .6; opacity: 1; } to { scale: 2.5; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .map-ping > span::before, .map-ping > span::after { animation: none; } }

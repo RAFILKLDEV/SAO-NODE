@@ -7,10 +7,12 @@ import {
   deleteEntity,
   applyEntityChanges,
   getEntityForRequest,
+  getMonsterCanonicalForExport,
   listEntitiesForRequest,
   updateEntity
 } from '../services/content.js';
 import { notifyEntityChanged } from '../services/notifications.js';
+import { buildTormenta20CriaturaXml } from '@sao/domain';
 
 const querySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -19,6 +21,7 @@ const querySchema = z.object({
   sort: z.enum(['name', 'updatedAt']).default('name'),
   viewAsUserId: z.string().min(1).optional(),
   format: z.enum(['1', '2']).default('1')
+  ,dropId: z.string().min(1).optional()
 });
 
 export async function entityRoutes(app) {
@@ -48,6 +51,22 @@ export async function entityRoutes(app) {
         return result;
       }
     );
+
+    if (type === 'monster') {
+      app.get(
+        `${base}/:domainId/firecast.xml`,
+        { preHandler: [authenticate, requireCampaign, requireGm] },
+        async (request, reply) => {
+          const monster = await getMonsterCanonicalForExport({
+            campaignId: request.campaign.id,
+            domainId: request.params.domainId
+          });
+          if (!monster) return reply.code(404).send(apiError('NOT_FOUND', 'Entity not found'));
+          const xml = buildTormenta20CriaturaXml(monster);
+          return reply.header('Content-Type', 'application/xml; charset=utf-8').send(xml);
+        }
+      );
+    }
 
     app.post(
       base,

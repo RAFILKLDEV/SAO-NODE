@@ -4,6 +4,7 @@ import { config } from './lib/config.js';
 import { prisma } from './lib/prisma.js';
 import { hashToken } from './lib/security.js';
 import { campaignUserRoom } from './lib/realtime.js';
+import { attachCanvasRealtime } from './services/map-canvas.js';
 
 function parseCookies(header = '') {
   return Object.fromEntries(
@@ -48,6 +49,9 @@ io.use(async (socket, next) => {
     socket.data.userId = session.userId;
     socket.data.campaignId = campaignId;
     socket.data.role = membership.role;
+    socket.data.csrfToken = session.csrfToken;
+    socket.data.sessionId = session.id;
+    socket.data.expiresAt = session.expiresAt.getTime();
     return next();
   } catch {
     return next(new Error('unauthorized'));
@@ -58,6 +62,7 @@ io.on('connection', (socket) => {
   socket.join(`campaign:${socket.data.campaignId}`);
   socket.join(campaignUserRoom(socket.data.campaignId, socket.data.userId));
 });
+attachCanvasRealtime(io);
 
 const shutdown = async () => {
   io.close();

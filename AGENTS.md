@@ -49,6 +49,12 @@ Trabalhe com o menor contexto possível. Antes de abrir arquivos grandes, locali
 7. Rode testes mais amplos somente quando a alteração puder afetar múltiplos módulos.
 8. Na resposta final, resuma causa, arquivos alterados e testes executados; não cole logs longos.
 
+## Codificação e acentos
+
+- Ao editar arquivos de texto ou investigar letras corrompidas, use a skill [sao-preservar-utf8](.agents/skills/sao-preservar-utf8/SKILL.md).
+- Leia e grave com UTF-8 explícito; não use os padrões de encoding do Windows PowerShell para reescrever arquivos.
+- Antes de concluir alterações de texto, execute `node .agents/skills/sao-preservar-utf8/scripts/check-utf8.mjs <arquivos alterados>` e revise os alertas e o diff. Diferencie problemas anteriores de regressões da tarefa; não faça conversões globais por tentativa.
+
 ## Comandos úteis
 
 ```bash

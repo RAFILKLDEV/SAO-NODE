@@ -1,5 +1,7 @@
+import { rollDiceFormula } from './dice.js';
 import { z } from 'zod';
-import { ENTITY_TYPES, VISIBILITIES, T20_CURRENT, T20_LEGACY } from '@sao/shared';
+import { t20AllyTypesSchema } from './t20Allies.js';
+import { ENTITY_TYPES, VISIBILITIES } from '@sao/shared';
 import {
   questTypeOptions,
   questStateOptions,
@@ -68,7 +70,9 @@ export const linkSchema = targetSchema
     chance: z.number().int().min(1).max(100).optional(),
     quantityMin: z.number().int().positive().optional(),
     quantityMax: z.number().int().positive().optional(),
-    valueFormula: z.string().regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i, 'Use uma fórmula como 2d4+2').optional()
+    quantityFormula: z.string().regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i, 'Use uma fórmula como 1d40').optional(),
+    valueFormula: z.string().regex(/^\s*(?:\d+|\d+d\d+(?:\s*[+-]\s*\d+)?)\s*$/i, 'Use uma fórmula como 2d4+2 ou um valor fixo como 10').optional(),
+    visibility: visibility.optional()
   })
   .superRefine((link, ctx) => {
     if ((link.quantityMin ?? link.quantityMax ?? 1) > (link.quantityMax ?? link.quantityMin ?? 1))
@@ -103,13 +107,6 @@ const sheet = z.strictObject({
   statsVisibility: z.record(z.string(), visibility).default({}),
   boss: z.boolean().default(false)
 });
-const binding = z.strictObject({
-  mode: z.enum(['none', 'embedded', 'linked']).default('none'),
-  providerId: text.default(T20_CURRENT),
-  externalId: z.string().default(''),
-  uri: z.string().default(''),
-  snapshot: map.optional()
-});
 export const objectiveSchema = z.strictObject({
   objectiveId: text,
   type: knownValues(text, labelOptions(objectiveTypeLabels)),
@@ -121,7 +118,7 @@ export const objectiveSchema = z.strictObject({
   visibility: visibility.default('public'),
   target: targetSchema.optional(),
   dependsOn: z.array(text).default([]),
-  playerEditable: z.boolean().default(false)
+  playerEditable: z.boolean().default(true)
 });
 export const rewardSchema = z.strictObject({
   rewardId: text,
@@ -161,7 +158,8 @@ export const baseV2Schema = z.strictObject({
 });
 const shapes = {
   npc: baseV2Schema.extend({
-    characterType: z.enum(['npc', 'entity']).default('npc'),
+    characterType: z.enum(['npc', 'entity', 'player']).default('npc'),
+    allyTypes: t20AllyTypesSchema.optional(),
     identity: z
       .strictObject({
         race: z.string().optional(),
@@ -172,8 +170,7 @@ const shapes = {
       .default({}),
     level: numberText.optional(),
     factions: z.array(text).default([]),
-    services: z.array(service).default([]),
-    character: binding.optional()
+    services: z.array(service).default([])
   }),
   location: baseV2Schema.extend({
     type: knownValues(text, locationTypeOptions).default('region'),
@@ -189,6 +186,14 @@ const shapes = {
     category: knownValues(text, itemCategoryOptions).default('misc'),
     rarity: knownValues(text, itemRarityOptions).default('common'),
     value: z.strictObject({ amount: numberText, currency: text }).optional(),
+    quantityMin: z.number().int().positive().optional(),
+    quantityMax: z.number().int().positive().optional(),
+    quantityFormula: z.string().regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i).refine((formula) => {
+      try { rollDiceFormula(formula, () => 0); return true; } catch { return false; }
+    }, 'Use uma fórmula válida como 1d40').optional(),
+    valueFormula: z.string().regex(/^\s*(?:\d+|\d+d\d+(?:\s*[+-]\s*\d+)?)\s*$/i).refine((formula) => {
+      try { rollDiceFormula(formula, () => 0); return true; } catch { return false; }
+    }, 'Use uma fórmula válida como 3d4+3').optional(),
     stats: z
       .array(
         z.strictObject({
@@ -198,9 +203,13 @@ const shapes = {
         })
       )
       .default([])
+  }).superRefine((item, ctx) => {
+    if ((item.quantityMin ?? item.quantityMax ?? 1) > (item.quantityMax ?? item.quantityMin ?? 1))
+      ctx.addIssue({ code: 'custom', path: ['quantityMax'], message: 'Máximo menor que mínimo' });
   }),
   monster: baseV2Schema.extend({
     group: z.string().optional(),
+    rank: z.enum(['common', 'elite', 'boss']).default('common'),
     statBlocks: z.record(text, sheet).default({}),
     components: z
       .array(
@@ -355,7 +364,6 @@ const pick = (value, keys) =>
     keys.filter((key) => value[key] !== undefined).map((key) => [key, value[key]])
   );
 const target = (value) => (value ? pick(value, ['type', 'id']) : undefined);
-const provider = (value) => (!value || value === T20_LEGACY ? T20_CURRENT : value);
 export function stableChildId(prefix, value) {
   const source = JSON.stringify(stableValue(value));
   let hash = 2166136261;
@@ -434,7 +442,9 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'chance',
       'quantityMin',
       'quantityMax',
+      'quantityFormula',
       'valueFormula',
+      'visibility',
       'name',
       'subtitle',
       'available',
@@ -447,7 +457,9 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'chance',
       'quantityMin',
       'quantityMax',
+      'quantityFormula',
       'valueFormula',
+      'visibility',
       'name',
       'subtitle',
       'available',
@@ -460,7 +472,9 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'chance',
       'quantityMin',
       'quantityMax',
+      'quantityFormula',
       'valueFormula',
+      'visibility',
       'name',
       'subtitle',
       'available',
@@ -528,6 +542,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'type',
       'subtype',
       'size',
+      'elite',
       'boss',
       'combat',
       'resources',
@@ -537,33 +552,6 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
     ],
     'sheet'
   );
-  if (type === 'npc')
-    archive(raw.t20, ['mode', 'dataType', 'characterId', 'firecastUri', 'snapshot'], 't20');
-  if (type === 'monster')
-    archive(
-      raw.t20,
-      [
-        'nd',
-        'creatureType',
-        'subtype',
-        'size',
-        'boss',
-        'initiative',
-        'perception',
-        'senses',
-        'defense',
-        'fortitude',
-        'reflex',
-        'will',
-        'hp',
-        'hpMax',
-        'mp',
-        'mpMax',
-        'attributes',
-        'statVisibility'
-      ],
-      't20'
-    );
   const links = [
     ...(raw.links ?? []),
     ...(raw.references ?? []).map((v) => ({ ...v, slot: 'references' }))
@@ -579,11 +567,11 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
   const unique = new Map();
   for (const link of links) {
     const normalized = {
-      ...pick(link, ['type', 'id', 'role', 'slot', 'chance', 'quantityMin', 'quantityMax', 'valueFormula']),
+      ...pick(link, ['type', 'id', 'role', 'slot', 'chance', 'quantityMin', 'quantityMax', 'quantityFormula', 'valueFormula', 'visibility']),
       role: link.role === 'drop' ? 'drops' : (link.role ?? 'related'),
       slot: link.slot ?? 'references'
     };
-    for (const key of ['chance', 'quantityMin', 'quantityMax', 'valueFormula'])
+    for (const key of ['chance', 'quantityMin', 'quantityMax', 'quantityFormula', 'valueFormula'])
       if (normalized[key] == null) delete normalized[key];
     const key = `${normalized.type}:${normalized.id}:${normalized.role}:${normalized.slot}`;
     if (unique.has(key)) take(`links.${key}`, unique.get(key), normalized);
@@ -591,10 +579,10 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
   }
   result.links = [...unique.values()];
   const typeKeys = {
-    npc: ['characterType', 'level', 'factions', 'services'],
+    npc: ['characterType', 'allyTypes', 'level', 'factions', 'services'],
     location: ['type', 'state', 'parentId', 'environment', 'services'],
-    item: ['category', 'rarity', 'value', 'stats'],
-    monster: ['group'],
+    item: ['category', 'rarity', 'value', 'quantityMin', 'quantityMax', 'quantityFormula', 'valueFormula', 'stats'],
+    monster: ['group', 'rank'],
     quest: [
       'type',
       'state',
@@ -620,19 +608,6 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
     result.identity = pick(raw.identity ?? {}, ['race', 'gender', 'age', 'profession']);
     for (const key of ['race', 'gender', 'age', 'profession'])
       result.identity[key] = take(`identity.${key}`, raw.identity?.[key], raw[key]);
-    if (raw.character || raw.t20)
-      result.character = {
-        ...raw.character,
-        mode: take('character.mode', raw.character?.mode, raw.t20?.mode),
-        providerId: take(
-          'character.providerId',
-          raw.character?.providerId,
-          raw.t20 ? provider(raw.t20.dataType) : undefined
-        ),
-        externalId: take('character.externalId', raw.character?.externalId, raw.t20?.characterId),
-        uri: take('character.uri', raw.character?.uri, raw.t20?.firecastUri),
-        snapshot: take('character.snapshot', raw.character?.snapshot, raw.t20?.snapshot)
-      };
   }
   if (type === 'location') {
     if (!result.parentId) delete result.parentId;
@@ -666,49 +641,16 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
     }));
   }
   if (type === 'monster') {
-    const t20 = raw.t20 ?? {};
-    const oldSheet = {
-      nd: t20.nd,
-      type: t20.creatureType,
-      subtype: t20.subtype,
-      size: t20.size,
-      combat: pick(t20, [
-        'initiative',
-        'perception',
-        'senses',
-        'defense',
-        'fortitude',
-        'reflex',
-        'will'
-      ]),
-      resources: pick(t20, ['hp', 'hpMax', 'mp', 'mpMax']),
-      attributes: t20.attributes ?? {},
-      statsVisibility: t20.statVisibility ?? {}
+    const rank = take('rank', raw.rank, raw.sheet?.boss ? 'boss' : undefined, raw.sheet?.elite ? 'elite' : undefined, String(raw.group ?? '').toLowerCase() === 'elite' ? 'elite' : undefined);
+    result.rank = ['common', 'elite', 'boss'].includes(rank) ? rank : 'common';
+    const defaultSheet = pick(raw.sheet ?? {}, [
+      'nd', 'type', 'subtype', 'size', 'combat', 'resources', 'resistances', 'attributes', 'statsVisibility', 'boss'
+    ]);
+    const statBlocks = raw.statBlocks ?? raw.extraStatBlocks ?? {};
+    result.statBlocks = {
+      ...Object.fromEntries(Object.entries(statBlocks).filter(([key]) => !['Ambesek.T20', 'Ambesek.Tormenta20'].includes(key))),
+      ...(Object.keys(defaultSheet).length ? { default: defaultSheet } : {})
     };
-    const merged = {
-      ...oldSheet,
-      ...pick(raw.sheet ?? {}, [
-        'nd',
-        'type',
-        'subtype',
-        'size',
-        'boss',
-        'combat',
-        'resources',
-        'resistances',
-        'attributes',
-        'statsVisibility'
-      ])
-    };
-    for (const group of ['combat', 'resources', 'attributes', 'statsVisibility']) {
-      merged[group] = { ...oldSheet[group], ...raw.sheet?.[group] };
-      for (const key of Object.keys(oldSheet[group] ?? {}))
-        if (raw.sheet?.[group]?.[key] !== undefined)
-          take(`sheet.${group}.${key}`, raw.sheet[group][key], oldSheet[group][key]);
-    }
-    for (const key of ['nd', 'type', 'subtype', 'size'])
-      if (raw.sheet?.[key] !== undefined) take(`sheet.${key}`, raw.sheet[key], oldSheet[key]);
-    result.statBlocks = raw.statBlocks ?? { ...(raw.extraStatBlocks ?? {}), [T20_CURRENT]: merged };
     result.components =
       raw.components ??
       Object.entries(COMPONENT_COLLECTIONS).flatMap(([kind, collection]) =>
@@ -769,7 +711,8 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
       'gender',
       'age',
       'profession',
-      't20'
+      't20',
+      'character'
     ],
     location: ['levelRecommended'],
     quest: ['levelRecommended', 'requirementsLogic', 'objectivesMode'],
@@ -827,10 +770,20 @@ function legacyCharacterType(raw) {
 
 export function normalizeEntity(type, raw, options = {}) {
   if (!entitySchemas[type]) throw new Error(`Tipo de entidade desconhecido: ${type}`);
-  const input =
+  const migrated =
     options.format === '1.0' || (options.format !== '2.0' && !isV2Entity(raw))
       ? migrateV1Entity(type, raw, options)
       : raw;
+  const input = { ...migrated };
+  if (type === 'npc') {
+    delete input.character;
+    delete input.t20;
+  }
+  if (type === 'monster') {
+    delete input.t20;
+    const legacyBlocks = input.statBlocks ?? {};
+    input.statBlocks = Object.fromEntries(Object.entries(legacyBlocks).filter(([key]) => !['Ambesek.T20', 'Ambesek.Tormenta20'].includes(key)));
+  }
   const parsed = entitySchemas[type].parse(type === 'npc' ? { ...input, characterType: legacyCharacterType(input) } : input);
   if (type === 'location')
     parsed.connections = parsed.connections.map((c) => ({
@@ -852,6 +805,36 @@ export function normalizeEntity(type, raw, options = {}) {
     (a, b) => a.order - b.order || a.objectiveId.localeCompare(b.objectiveId, 'en')
   );
   return compact(parsed);
+}
+
+// Promote a legacy drop formula only when every legacy reference for an item
+// agrees. Conflicting references remain on their links and are reported.
+export function normalizeLegacyDropFormulas(entities, diagnostics = [], catalog = []) {
+  const combined = new Map([...catalog, ...entities].map(entry => [`${entry.type}:${entry.data.id}`, entry]));
+  const formulas = new Map();
+  for (const entry of combined.values()) {
+    if (entry.type !== 'monster') continue;
+    for (const link of entry.data?.links ?? []) {
+      if (link.type !== 'item' || !['drop', 'drops'].includes(link.role) || !link.valueFormula) continue;
+      const values = formulas.get(link.id) ?? new Set();
+      values.add(String(link.valueFormula).replace(/\s+/g, '').toLowerCase());
+      formulas.set(link.id, values);
+    }
+  }
+  for (const [id, values] of formulas) {
+    const item = entities.find((entry) => entry.type === 'item' && entry.data?.id === id);
+    if (values.size > 1) {
+      diagnostics.push({ code: 'LEGACY_VALUE_FORMULA_CONFLICT', itemId: id, formulas: [...values] });
+      continue;
+    }
+    if (item && !item.data.valueFormula) {
+      const formula = [...values][0];
+      // Legacy links can contain old formulas outside today's dice limits.
+      try { rollDiceFormula(formula, () => 0); item.data.valueFormula = formula; }
+      catch { diagnostics.push({ code: 'LEGACY_VALUE_FORMULA_INVALID', itemId: id, formula }); }
+    }
+  }
+  return entities;
 }
 
 /** Read/display compatibility projection. Never persist this representation. */
@@ -880,27 +863,15 @@ export function toLegacyEntity(type, data) {
     result.relations = (data.links ?? [])
       .filter((l) => l.slot === 'relations')
       .map(({ slot: _slot, ...l }) => l);
-    if (data.character) {
-      const c = data.character;
-      result.t20 = {
-        mode: c.mode,
-        dataType: c.providerId,
-        characterId: c.externalId,
-        firecastUri: c.uri,
-        snapshot: c.snapshot
-      };
-    }
     delete result.character;
   }
   if (type === 'monster') {
-    result.sheet = data.statBlocks?.[T20_CURRENT] ?? {};
+    result.sheet = data.statBlocks?.default ?? {};
     for (const [kind, key] of Object.entries(COMPONENT_COLLECTIONS))
       result[key] = (data.components ?? [])
         .filter((c) => c.kind === kind)
         .map(({ kind: _kind, ...c }) => c);
-    const other = Object.fromEntries(
-      Object.entries(data.statBlocks ?? {}).filter(([key]) => key !== T20_CURRENT)
-    );
+    const other = Object.fromEntries(Object.entries(data.statBlocks ?? {}).filter(([key]) => key !== 'default'));
     if (Object.keys(other).length) result.extraStatBlocks = other;
     delete result.statBlocks;
     delete result.components;

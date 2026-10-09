@@ -6,7 +6,7 @@ Este mapa relaciona os módulos citados no requisito às responsabilidades equiv
 |---|---|---|
 | `sao_db.lua` | `apps/api/src/services/content.js`, Prisma `Entity*` | CRUD, IDs, referências e persistência de conteúdo |
 | `sao_progress.lua` | `apps/api/src/routes/progress.js`, `packages/domain/src/index.js` | progresso por dono, ordered/free, conclusão derivada |
-| `sao_characters.lua` | `apps/api/src/routes/characters.js`, `CharacterProvider` | bindings e snapshots T20 |
+| `sao_characters.lua` | `apps/api/src/routes/characters.js` | roster e associações de personagens |
 | `sao_discovery.lua` | `apps/api/src/routes/grants.js`, `evaluateGrant()` | gates, grants, grupos e auditoria |
 | serialização legada | `packages/json/src/index.js`, `apps/api/src/routes/json.js` | validação, diff, merge e exportação JSON |
 | `forms/main.lfm` | `apps/web/src/App.jsx`, `styles.css` | shell, menu lateral e identidade visual |

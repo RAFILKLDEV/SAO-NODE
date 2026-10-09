@@ -22,4 +22,9 @@ describe('character roster', () => {
     expect(characterEntries([], [player], 'player')[0].id).toBe('player:user.a');
     expect(characterTarget(player)).toEqual({ targetType: 'player', targetId: 'user.a' });
   });
+  it('shows every character when no filter is selected and includes player characters', () => {
+    const playerCharacter = { id: 'npc.player', characterType: 'player' };
+    expect(characterEntries([npc, entity, playerCharacter], [player], '')).toHaveLength(4);
+    expect(characterEntries([npc, entity, playerCharacter], [], 'player')).toEqual([playerCharacter]);
+  });
 });

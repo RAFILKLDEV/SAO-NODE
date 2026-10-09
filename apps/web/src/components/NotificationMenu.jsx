@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useOutsideDismiss } from '../lib/useOutsideDismiss.js';
 
 export function notificationDestination(campaignId, notification) {
   const base = `/campaigns/${encodeURIComponent(campaignId)}`;
@@ -16,18 +17,16 @@ export function notificationDestination(campaignId, notification) {
 export function NotificationMenu({ campaignId, query, onRead, onReadAll, pending, error }) {
   const [open, setOpen] = useState(false);
   const root = useRef(null);
+  useOutsideDismiss(root, () => setOpen(false), open);
   const trigger = useRef(null);
   const navigate = useNavigate();
   const items = query.data?.items ?? [];
   const unread = items.filter((item) => !item.readAt).length;
   useEffect(() => {
     if (!open) return;
-    const closeOutside = (event) => { if (!root.current?.contains(event.target)) setOpen(false); };
     const escape = (event) => { if (event.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
-    document.addEventListener('pointerdown', closeOutside);
     document.addEventListener('keydown', escape);
     return () => {
-      document.removeEventListener('pointerdown', closeOutside);
       document.removeEventListener('keydown', escape);
     };
   }, [open]);

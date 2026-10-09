@@ -13,6 +13,7 @@ import {
   COMPONENT_COLLECTIONS,
   toLegacyEntity
 } from '@sao/domain';
+import { referenceGrantKey } from '@sao/domain';
 
 const targetKindByComponent = {
   movement: 'monster_movement',
@@ -21,6 +22,10 @@ const targetKindByComponent = {
   skill: 'monster_skill',
   trait: 'monster_trait'
 };
+
+function entityAuditSnapshot(entity) {
+  return entity ? { data: entityRecordToCanonical(entity), source: entity.source ?? null, deletedAt: Boolean(entity.deletedAt) } : null;
+}
 
 export const monsterOutputKeys = {
   movement: 'movements',
@@ -114,7 +119,9 @@ export async function replaceSimpleChildren(tx, entityId, type, split) {
         chance: reference.chance,
         quantityMin: reference.quantityMin,
         quantityMax: reference.quantityMax,
-        valueFormula: reference.valueFormula
+        quantityFormula: reference.quantityFormula,
+        valueFormula: reference.valueFormula,
+        visibility: reference.visibility ?? 'public'
       }))
     });
   }
@@ -231,13 +238,15 @@ export async function createEntity({ campaignId, type, input, actorUserId, sourc
     });
     await replaceSimpleChildren(tx, entity.id, type, split);
     if (type === 'quest') await reconcileQuestObjectives(tx, entity.id, split.objectives);
+    const saved = await tx.entity.findUnique({ where: { id: entity.id }, include: includeAll });
     await audit(tx, {
       campaignId,
       actorUserId,
       action: 'entity.create',
       entityType: type,
       entityDomainId: parsed.id,
-      after: parsed
+      after: entityAuditSnapshot(saved),
+      resultVersion: saved.version
     });
     return entity;
   }, { isolationLevel: 'Serializable' });
@@ -257,7 +266,7 @@ export async function updateEntity({
   return prisma.$transaction(async (tx) => {
     const current = await tx.entity.findUnique({
       where: { campaignId_type_domainId: { campaignId, type, domainId } },
-      include: { fields: true, references: true }
+      include: includeAll
     });
     if (!current) return null;
     await validateCatalogWrite(tx, campaignId, type, parsed._canonical);
@@ -270,7 +279,7 @@ export async function updateEntity({
         baseVisibility: parsed.baseVisibility ?? current.baseVisibility,
         schemaVersion: 2,
         data: split.data,
-        source: source ?? parsed.source ?? current.source,
+        source: source === undefined ? (parsed.source ?? current.source) : source,
         localModifiedAt: source ? current.localModifiedAt : new Date(),
         version: { increment: 1 }
       }
@@ -282,23 +291,26 @@ export async function updateEntity({
     }
     await replaceSimpleChildren(tx, current.id, type, split);
     if (type === 'quest') await reconcileQuestObjectives(tx, current.id, split.objectives);
+    const saved = await tx.entity.findUnique({ where: { id: current.id }, include: includeAll });
     await audit(tx, {
       campaignId,
       actorUserId,
       action: 'entity.update',
       entityType: type,
       entityDomainId: domainId,
-      before: current.data,
-      after: parsed
+      before: entityAuditSnapshot(current),
+      after: entityAuditSnapshot(saved),
+      resultVersion: saved.version
     });
-    return tx.entity.findUnique({ where: { id: current.id } });
+    return saved;
   }, { isolationLevel: 'Serializable' });
 }
 
 export async function deleteEntity({ campaignId, type, domainId, actorUserId }) {
   return prisma.$transaction(async (tx) => {
     const current = await tx.entity.findUnique({
-      where: { campaignId_type_domainId: { campaignId, type, domainId } }
+      where: { campaignId_type_domainId: { campaignId, type, domainId } },
+      include: includeAll
     });
     if (!current) return false;
     // References are derived from the same canonical documents used for
@@ -318,17 +330,19 @@ export async function deleteEntity({ campaignId, type, domainId, actorUserId }) 
       }
     }
     if (incoming.length) return { blocked: true, references: incoming };
+    const deleted = await tx.entity.update({
+      where: { id: current.id },
+      data: { deletedAt: new Date(), version: { increment: 1 } }
+    });
     await audit(tx, {
       campaignId,
       actorUserId,
       action: 'entity.delete',
       entityType: type,
       entityDomainId: domainId,
-      before: current.data
-    });
-    await tx.entity.update({
-      where: { id: current.id },
-      data: { deletedAt: new Date(), version: { increment: 1 } }
+      before: entityAuditSnapshot(current),
+      after: { ...entityAuditSnapshot(current), deletedAt: true },
+      resultVersion: deleted.version
     });
     return { blocked: false };
   });
@@ -408,8 +422,9 @@ export async function applyEntityChanges({
     if (result.count !== 1) { const error = new Error('Version conflict'); error.code = 'VERSION_CONFLICT'; throw error; }
     await replaceSimpleChildren(tx, current.id, type, split);
     if (type === 'quest') await reconcileQuestObjectives(tx, current.id, split.objectives);
-    await audit(tx, { campaignId, actorUserId, action: 'entity.update', entityType: type, entityDomainId: domainId, before: current.data, after: parsed });
-    return tx.entity.findUnique({ where: { id: current.id } });
+    const saved = await tx.entity.findUnique({ where: { id: current.id }, include: includeAll });
+    await audit(tx, { campaignId, actorUserId, action: 'entity.update', entityType: type, entityDomainId: domainId, before: entityAuditSnapshot(current), after: entityAuditSnapshot(saved), resultVersion: saved.version });
+    return saved;
   }, { isolationLevel: 'Serializable' });
 }
 
@@ -453,6 +468,24 @@ function accessFor({ baseVisibility, context, grants, targetKind, targetKey }) {
     userId: context.userId,
     groups: context.groups,
     grants: relevant
+  });
+}
+
+function relationAccess({ entity, reference, context, grants }) {
+  if (context.gm) return { allowed: true };
+  const baseVisibility = reference.visibility ?? 'public';
+  if (baseVisibility === 'gm') return { allowed: false };
+  return accessFor({
+    baseVisibility,
+    context,
+    grants,
+    targetKind: 'reference',
+    targetKey: referenceGrantKey(entity.type, entity.domainId, {
+      type: reference.targetType,
+      id: reference.targetDomainId,
+      role: reference.role,
+      slot: reference.slot ?? 'references'
+    })
   });
 }
 
@@ -532,7 +565,7 @@ export function filterMonsterSheet({ sheet = {}, request, context, grants }) {
 }
 
 async function describeTargetForRequest(
-  { type, id, role, chance, quantityMin, quantityMax, valueFormula },
+  { type, id, role, chance, quantityMin, quantityMax, quantityFormula, valueFormula, visibility },
   request,
   context
 ) {
@@ -553,7 +586,9 @@ async function describeTargetForRequest(
       ...(chance != null ? { chance } : {}),
       ...(quantityMin != null ? { quantityMin } : {}),
       ...(quantityMax != null ? { quantityMax } : {}),
+      ...(quantityFormula ? { quantityFormula } : {}),
       ...(valueFormula ? { valueFormula } : {}),
+      ...(context.gm && visibility ? { visibility } : {}),
       available: false,
       ...(context.gm ? { broken: true } : {})
     };
@@ -566,7 +601,9 @@ async function describeTargetForRequest(
     ...(chance != null ? { chance } : {}),
     ...(quantityMin != null ? { quantityMin } : {}),
     ...(quantityMax != null ? { quantityMax } : {}),
+    ...(quantityFormula ? { quantityFormula } : {}),
     ...(valueFormula ? { valueFormula } : {}),
+    ...(context.gm && visibility ? { visibility } : {}),
     available,
     ...(available || context.gm ? { name: target.name, subtitle: target.data?.subtitle ?? target.data?.title } : {})
   };
@@ -772,6 +809,9 @@ export async function serializeEntityForRequest(entity, request, options = {}) {
         }
       });
   const canonical = entityRecordToCanonical(entity);
+  canonical.links = canonical.links.filter(link => relationAccess({ entity, reference: {
+    targetType: link.type, targetDomainId: link.id, role: link.role, slot: link.slot, visibility: link.visibility
+  }, context, grants }).allowed);
   const projection = toLegacyEntity(entity.type, canonical);
   for (const key of ['fields', 'references', 'connections', 'objectives', 'rewards', ...Object.values(COMPONENT_COLLECTIONS)]) delete projection[key];
   entity = { ...entity, data: projection };
@@ -785,6 +825,9 @@ export async function serializeEntityForRequest(entity, request, options = {}) {
     targetKey: 'existence'
   });
   if (!gate.allowed) return null;
+
+  // Map locations require their general information, not only visible existence.
+  if (options.requireSection && !sectionAccess({ entity, section: options.requireSection, request, context, grants }).allowed) return null;
 
   const fields = entity.fields
     .filter(
@@ -803,6 +846,7 @@ export async function serializeEntityForRequest(entity, request, options = {}) {
   const references = [];
   if (sectionAccess({ entity, section: 'references', request, context, grants }).allowed) {
     for (const reference of entity.references.filter(r => (r.slot ?? 'references') === 'references')) {
+      if (!relationAccess({ entity, reference, context, grants }).allowed) continue;
       const described = await describeTargetForRequest(
         {
           type: reference.targetType,
@@ -811,7 +855,9 @@ export async function serializeEntityForRequest(entity, request, options = {}) {
           chance: reference.chance,
           quantityMin: reference.quantityMin,
           quantityMax: reference.quantityMax,
+          quantityFormula: reference.quantityFormula,
           valueFormula: reference.valueFormula
+          ,visibility: reference.visibility ?? 'public'
         },
         request,
         context
@@ -1039,7 +1085,8 @@ export async function listEntitiesForRequest({
   page = 1,
   pageSize = 50,
   search = '',
-  sort = 'name'
+  sort = 'name',
+  dropId
 }) {
   const where = {
     campaignId: request.campaign.id,
@@ -1047,26 +1094,46 @@ export async function listEntitiesForRequest({
     deletedAt: null,
     ...(search ? { name: { contains: search, mode: 'insensitive' } } : {})
   };
-  const rows = await prisma.entity.findMany({
-    where,
-    include: includeAll,
-    orderBy: sort === 'updatedAt' ? { updatedAt: 'desc' } : { name: 'asc' },
-    skip: (page - 1) * pageSize,
-    take: pageSize
-  });
-  const items = (
-    await Promise.all(rows.map((entity) => serializeEntityForRequest(entity, request)))
-  ).filter(Boolean);
+  if (dropId) {
+    // Match authorized relations before pagination; raw candidates are only an optimization.
+    if (type !== 'monster') return { items: [], page, pageSize, returned: 0 };
+    where.references = { some: { targetType: 'item', targetDomainId: dropId, role: { in: ['drops', 'drop'] }, slot: 'references' } };
+    const items = [];
+    let visibleCount = 0;
+    for (let skip = 0; ; skip += 100) {
+      const rows = await prisma.entity.findMany({ where, include: includeAll, orderBy: [sort === 'updatedAt' ? { updatedAt: 'desc' } : { name: 'asc' }, { id: 'asc' }], skip, take: 100 });
+      for (const row of rows) {
+        const visible = await serializeEntityForRequest(row, request, { backlinks: false, format: '1' });
+        if (!visible?.references.some(ref => ref.type === 'item' && ref.id === dropId && ['drops', 'drop'].includes(ref.role))) continue;
+        if (visibleCount++ >= (page - 1) * pageSize) items.push(await serializeEntityForRequest(row, request));
+        if (items.length === pageSize) return { items, page, pageSize, returned: items.length };
+      }
+      if (rows.length < 100) return { items, page, pageSize, returned: items.length };
+    }
+  }
+  const rows = await prisma.entity.findMany({ where, include: includeAll,
+    orderBy: sort === 'updatedAt' ? { updatedAt: 'desc' } : { name: 'asc' }, skip: (page - 1) * pageSize, take: pageSize });
+  const items = (await Promise.all(rows.map(entity => serializeEntityForRequest(entity, request)))).filter(Boolean);
   return { items, page, pageSize, returned: items.length };
 }
 
-export async function getEntityForRequest({ request, type, domainId }) {
+export async function getEntityForRequest({ request, type, domainId, options }) {
   const entity = await prisma.entity.findUnique({
     where: { campaignId_type_domainId: { campaignId: request.campaign.id, type, domainId } },
     include: includeAll
   });
   if (!entity || entity.deletedAt) return null;
-  return serializeEntityForRequest(entity, request);
+  return serializeEntityForRequest(entity, request, options);
+}
+
+/** Entidade monster v2 canônica (sem filtragem de visibilidade), usada para exportação GM-only. */
+export async function getMonsterCanonicalForExport({ campaignId, domainId }) {
+  const entity = await prisma.entity.findUnique({
+    where: { campaignId_type_domainId: { campaignId, type: 'monster', domainId } },
+    include: includeAll
+  });
+  if (!entity || entity.deletedAt) return null;
+  return entityRecordToCanonical(entity);
 }
 
 export async function searchForRequest({ request, query, limit = 30 }) {
@@ -1092,7 +1159,8 @@ export async function upsertImportedEntityTx({ tx, campaignId, type, input, acto
   const parsed = normalizeInput(type, input);
   const split = splitEntity(type, parsed);
   const current = await tx.entity.findUnique({
-    where: { campaignId_type_domainId: { campaignId, type, domainId: parsed.id } }
+    where: { campaignId_type_domainId: { campaignId, type, domainId: parsed.id } },
+    include: includeAll
   });
   let entity;
   if (current) {
@@ -1126,16 +1194,18 @@ export async function upsertImportedEntityTx({ tx, campaignId, type, input, acto
   }
   await replaceSimpleChildren(tx, entity.id, type, split);
   if (type === 'quest') await reconcileQuestObjectives(tx, entity.id, split.objectives);
+  const saved = await tx.entity.findUnique({ where: { id: entity.id }, include: includeAll });
   await audit(tx, {
     campaignId,
     actorUserId,
     action: current ? 'entity.import.update' : 'entity.import.create',
     entityType: type,
     entityDomainId: parsed.id,
-    before: current?.data,
-    after: parsed
+    before: entityAuditSnapshot(current),
+    after: entityAuditSnapshot(saved),
+    resultVersion: saved.version
   });
-  return entity;
+  return saved;
 }
 
 export async function softRemoveImportedEntityTx({
@@ -1147,23 +1217,26 @@ export async function softRemoveImportedEntityTx({
   source
 }) {
   const current = await tx.entity.findUnique({
-    where: { campaignId_type_domainId: { campaignId, type, domainId } }
+    where: { campaignId_type_domainId: { campaignId, type, domainId } },
+    include: includeAll
   });
   if (!current) return null;
   const entity = await tx.entity.update({
     where: { id: current.id },
     data: { deletedAt: new Date(), source, version: { increment: 1 } }
   });
+  const saved = await tx.entity.findUnique({ where: { id: entity.id }, include: includeAll });
   await audit(tx, {
     campaignId,
     actorUserId,
     action: 'entity.import.remove',
     entityType: type,
     entityDomainId: domainId,
-    before: current.data,
-    after: { removedFromImport: true }
+    before: entityAuditSnapshot(current),
+    after: entityAuditSnapshot(saved),
+    resultVersion: saved.version
   });
-  return entity;
+  return saved;
 }
 
 export function entityRecordToAuthoritative(entity) {
@@ -1181,7 +1254,9 @@ export function entityRecordToCanonical(entity, options = {}) {
     ...(r.chance != null ? { chance: r.chance } : {}),
     ...(r.quantityMin != null ? { quantityMin: r.quantityMin } : {}),
     ...(r.quantityMax != null ? { quantityMax: r.quantityMax } : {}),
+    ...(r.quantityFormula ? { quantityFormula: r.quantityFormula } : {}),
     ...(r.valueFormula ? { valueFormula: r.valueFormula } : {})
+    ,visibility: r.visibility ?? 'public'
   }));
   const canonical = isV2Entity(entity.data);
   if (canonical) raw.links = links;

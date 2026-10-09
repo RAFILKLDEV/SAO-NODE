@@ -1,0 +1,95 @@
+O Mestre
+Perseguidor
+Um caçador, animal farejador ou outro especia -
+lista em localizar alvos. Iniciante: +2 em Percepção 
+e Sobrevivência. Veterano: você pode usar Sentidos 
+Aguçados. Mestre: você pode usar Percepção às Cegas.
+Vigilante
+Um vigia ou animal de guarda, sempre atento 
+aos arredores. Iniciante: +2 em Percepção e Iniciativa. 
+Veterano: você pode usar Esquiva Sobrenatural. Mes-
+tre: você pode usar Olhos nas Costas.
+montarias e Combate Montado
+Montarias são um tipo específico de parceiro. 
+Elas usam as seguintes regras especiais.
+• Para usar um parceiro montaria você precisa 
+montar nele. Para passá-lo para outro aliado, precisa 
+desmontar antes. Ambas são ações de movimento.
+• Uma vez montado, você precisa gastar uma 
+ação de movimento e fazer um teste de Cavalgar 
+(CD 10) por turno para guiar a montaria. Se passar, 
+recebe os benefícios dela. Se falhar, perde a ação de 
+movimento. Se falhar por 5 ou mais, cai da montaria 
+e sofre 1d6 pontos de dano. Se for treinado em Ca-
+valgar, você recebe os bônus da montaria automati -
+camente, sem precisar gastar a ação ou fazer o teste.
+• Se você sofrer dano, deve fazer um teste de 
+Cavalgar (CD igual ao dano). Se falhar, cai da mon-
+taria e sofre 1d6 pontos de dano. Se possuir o poder 
+Ginete, você não precisa fazer esse teste.
+• Cada parceiro montaria possui uma categoria 
+de tamanho (indicada ao lado do nome do parceiro). 
+Um personagem só pode montar uma montaria 
+maior do que ele mesmo, e enquanto estiver monta-
+do usa o tamanho da montaria para efeitos do espaço 
+que ocupa e para modificador de Furtividade.
+Por Que Parceiros?
+Parceiros são mais indicados que NPCs 
+com fichas porque aceleram o jogo e 
+mantêm o foco nos personagens. Se cada 
+parceiro tivesse suas próprias ações, o 
+jogo ficaria lento. Além disso, se agisse 
+independentemente, um parceiro poderia 
+acabar rolando o ataque que mata o vilão, 
+frustrando os jogadores. Com parceiros 
+que oferecem bônus, quem efetivamente 
+age é sempre o jogador.
+Atirador
+Um arqueiro, besteiro ou outro combatente à 
+distância. Iniciante: uma vez por rodada, você recebe 
++1d6 em uma rolagem de dano à distância. Veterano: 
+muda para +1d10. Mestre: muda para +2d8.
+Combatente
+Um bucaneiro, guerreiro, paladino ou animal 
+de caça. Iniciante: +1 em testes de ataque. Veterano: 
+muda para +2 em testes de ataque. Mestre: muda 
+para +3 em testes de ataque e, uma vez por rodada, 
+você pode gastar 5 PM para fazer um ataque extra.
+Destruidor
+Um arcanista ou inventor. Iniciante: uma vez por 
+rodada, como uma ação livre, você pode gastar 1 
+PM para causar 2d6 pontos de dano de ácido, ele-
+tricidade, fogo ou frio (de acordo com o parceiro) 
+em um alvo em alcance curto. Veterano: como acima, 
+mas você também pode gastar 2 PM para causar 4d6 
+pontos de dano. Mestre: como acima, mas você tam-
+bém pode gastar 4 PM para causar 6d6 pontos de 
+dano em uma área de 6m de raio em alcance médio.
+Fortão
+Um bárbaro, lutador ou outro tipo que bate pri-
+meiro e pensa depois. Iniciante: uma vez por rodada, 
+você recebe +1d8 em uma rolagem de dano corpo 
+a corpo. Veterano: muda para +1d12. Mestre: muda 
+para +3d6.
+Guardião
+Um cavaleiro, cão de guarda ou outro NPC cuja 
+função primária é proteger. Iniciante: você recebe +2 
+na Defesa. Veterano: muda para +3. Mestre: muda 
+para +4 na Defesa e +2 em testes de resistência.
+Magivocador
+Um conjurador especializado em magias ofensi -
+vas. Iniciante: o dano de suas magias aumenta em +1 
+dado do mesmo tipo. Veterano: como acima, e a CD 
+para resistir a suas magias aumenta em +1. Mestre: 
+como acima, e o dano de suas magias aumenta em +1 
+dado do mesmo tipo (para um total de +2 dados).
+Médico
+Um clérigo, druida, herbalista ou outro NPC com 
+capacidades curativas. Iniciante: uma vez por rodada, 
+como uma ação livre, você pode gastar 1 PM para 
+curar 1d8+1 PV de uma criatura adjaente. Veterano: 
+como acima, mas você pode gastar 3 PM para curar 
+3d8+3 PV ou remover uma condição prejudicial 
+(como abalado ou fatigado). Mestre: como acima, mas 
+você também pode gastar 5 PM para curar 6d8+6 PV .
+261

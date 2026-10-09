@@ -65,6 +65,7 @@ async function serializeProgress(progress, request) {
       version: progress.version,
       percentage: evaluation.percentage,
       readyToComplete: evaluation.readyToComplete,
+      rewards: (progress.questEntity.questRewards ?? []).map((reward) => reward.data),
       objectives: currentObjectives.map((entry) => ({
         objectiveId: entry.objectiveId,
         text: progress.questEntity.questObjectives.find((objective) => objective.objectiveId === entry.objectiveId)?.text ?? 'Objetivo removido',
@@ -95,6 +96,7 @@ async function serializeProgress(progress, request) {
     completedAt: progress.completedAt,
     version: progress.version,
     percentage: visibleEvaluation.percentage,
+    rewards: visibleQuest.rewards ?? [],
     ...(hasHiddenRequired ? { authoritativeStatusHidden: true } : { readyToComplete: evaluation.readyToComplete }),
     objectives: progress.objectives
       .filter((entry) => visibleObjectives.some((objective) => objective.objectiveId === entry.objectiveId))
@@ -106,14 +108,14 @@ async function serializeProgress(progress, request) {
           value: entry.value,
           requiredQuantity: definition?.requiredQuantity ?? 1,
           optional: Boolean(definition?.optional),
-          editable: Boolean(definition?.playerEditable) && !evaluation.objectives[entry.objectiveId]?.blocked
+          editable: progress.state === 'active' && !evaluation.objectives[entry.objectiveId]?.blocked
         };
       })
   };
 }
 
 const progressInclude = {
-  questEntity: { include: { questObjectives: true } },
+  questEntity: { include: { questObjectives: true, questRewards: true } },
   objectives: true
 };
 
@@ -188,8 +190,8 @@ export async function progressRoutes(app) {
 
     const gm = isGm(request);
     const visibleQuest = gm ? null : await getEntityForRequest({ request, type: 'quest', domainId: progress.questEntity.domainId });
-    if (!gm && (!visibleQuest?.objectives.some(o => o.objectiveId === objective.objectiveId) || !objective.playerEditable)) {
-      return reply.code(403).send(apiError('FORBIDDEN', 'This objective is not player-editable'));
+    if (!gm && !visibleQuest?.objectives.some(o => o.objectiveId === objective.objectiveId)) {
+      return reply.code(403).send(apiError('FORBIDDEN', 'Este objetivo ainda não está disponível para você.'));
     }
 
     const { evaluation } = evaluationFor(progress);

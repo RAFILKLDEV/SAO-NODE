@@ -8,7 +8,8 @@ export const associationRoles = [
   { value: 'enemy', label: 'Inimigo', symmetric: true },
   { value: 'family', label: 'Família', symmetric: true },
   { value: 'rival', label: 'Rival', symmetric: true },
-  { value: 'found-in', label: 'Encontrado em', targetType: 'location' },
+  { value: 'found-in', label: 'Encontrado em', sourceType: 'monster', targetType: 'location' },
+  { value: 'quest-character', label: 'Personagem da missão', sourceType: 'quest', targetType: 'npc' },
   { value: 'used-by', label: 'Utilizado por' },
   { value: 'managed-by', label: 'Administrado por' },
   { value: 'part-of', label: 'Parte de (referência)' },
@@ -17,6 +18,8 @@ export const associationRoles = [
 
 export const isAssociationDrop = (role) => role === 'drop' || role === 'drops';
 export const associationKey = (link) => JSON.stringify([link.type, link.id, link.role ?? 'related', link.slot ?? 'references']);
+export const referenceGrantKey = (sourceType, sourceId, link) =>
+  `reference:${sourceType}:${sourceId}:${associationKey({ ...link, role: link.role === 'drop' ? 'drops' : link.role })}`;
 export const isSymmetricAssociation = (role) => Boolean(associationRoles.find((entry) => entry.value === role)?.symmetric);
 
 export function associationRoleAllowed(role, sourceType, targetType) {
@@ -34,9 +37,11 @@ export function normalizeAssociation(source, input) {
   if (isAssociationDrop(link.role)) {
     link.role = 'drops';
     link.chance ??= 100;
-    link.quantityMin ??= link.quantityMax ?? 1;
-    link.quantityMax ??= link.quantityMin;
-  } else if (link.chance != null || link.quantityMin != null || link.quantityMax != null || link.valueFormula != null) {
+    if (!link.quantityFormula) {
+      link.quantityMin ??= link.quantityMax ?? 1;
+      link.quantityMax ??= link.quantityMin;
+    }
+  } else if (link.chance != null || link.quantityMin != null || link.quantityMax != null || link.quantityFormula != null || link.valueFormula != null) {
     fail('Chance e quantidade pertencem a associações de Drop.');
   }
   return link;

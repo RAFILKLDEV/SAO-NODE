@@ -118,8 +118,9 @@
         ],
         "links": [],
         "extensions": {},
+        "rank": "common",
         "statBlocks": {
-          "Ambesek.T20": {
+          "default": {
             "nd": "1",
             "combat": {},
             "resources": {},
@@ -182,7 +183,7 @@
             "secret": false,
             "visibility": "public",
             "dependsOn": [],
-            "playerEditable": false
+            "playerEditable": true
           }
         ],
         "rewards": [

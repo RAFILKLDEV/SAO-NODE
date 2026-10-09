@@ -162,16 +162,8 @@
         ],
         "extensions": {},
         "group": "beast",
-        "statBlocks": {
-          "Ambesek.T20": {
-            "combat": {},
-            "resources": {},
-            "resistances": {},
-            "attributes": {},
-            "statsVisibility": {},
-            "boss": false
-          }
-        },
+        "rank": "common",
+        "statBlocks": {},
         "components": [
           {
             "id": "tusk-charge",

@@ -11,7 +11,9 @@ export async function audit(tx, input) {
       subjectType: input.subjectType,
       subjectId: input.subjectId,
       before: input.before ?? undefined,
-      after: input.after ?? undefined
+      after: input.after ?? undefined,
+      resultVersion: input.resultVersion,
+      revertsAuditId: input.revertsAuditId
     }
   });
 }

@@ -1,4 +1,7 @@
-﻿import { formatLocationType, labels, bulkEntityLabels, entityTypeLabels, singular, entityTypes, objectiveTypeLabels, referenceRoleLabels, referenceRoleOptions, operationOptions, questTypeOptions, questStateOptions, requirementLogicOptions, objectiveModeOptions, locationTypeOptions, locationStateOptions, itemCategoryOptions, itemRarityOptions, monsterSizeOptions, monsterTypeOptions, idPrefixes, visibilityLabels, fieldLabels, sectionLabels, monsterStatLabels } from '@sao/domain';
+import { referenceGrantKey } from '@sao/domain';
+import { MaterialValue } from '../components/MaterialValue.jsx';
+import { filterMonstersByLocation } from '../lib/monsterLocationFilter.js';
+import { formatLocationType, labels, bulkEntityLabels, entityTypeLabels, singular, entityTypes, objectiveTypeLabels, referenceRoleLabels, referenceRoleOptions, operationOptions, questTypeOptions, questStateOptions, requirementLogicOptions, objectiveModeOptions, locationTypeOptions, locationStateOptions, itemCategoryOptions, itemRarityOptions, monsterSizeOptions, monsterTypeOptions, idPrefixes, visibilityLabels, fieldLabels, sectionLabels, monsterStatLabels } from '@sao/domain';
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -7,13 +10,13 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router';
 
 import { api } from '../lib/api.js';
+import { useOutsideDismiss } from '../lib/useOutsideDismiss.js';
 import { LocationMenu } from '../components/LocationMenu.jsx';
 import { formatDropResult } from '../lib/dropDisplay.js';
 import { LocationImage, LocationImagePicker } from '../components/LocationImage.jsx';
-import { formatT20StatBlock } from '../lib/t20StatBlock.js';
 import { locationImageUrlError } from '../lib/locationImage.js';
 
-import { createEntityDraft, draftControls, updateEntityDraft, prepareCanonicalPayload, discoverableCreation } from '../lib/entityDraft.js';
+import { createEntityDraft, createMonsterEliteDraft, draftControls, updateEntityDraft, prepareCanonicalPayload, discoverableCreation } from '../lib/entityDraft.js';
 
 import { hasRenderableContent } from '../lib/entityContent.js';
 
@@ -29,8 +32,8 @@ import {
 
 } from '../lib/locationMenu.js';
 
-import { filterMonstersByLocation } from '../lib/monsterLocationFilter.js';
-import { characterEntries, characterTarget, isCharacterFavorite } from '../lib/characters.js';
+import { characterEntries, characterTarget } from '../lib/characters.js';
+import { T20Allies, T20AlliesEditor } from '../components/T20Allies.jsx';
 import { locationBranchEntries, locationDiscoveryRows } from '../lib/locationDiscovery.js';
 import { baseDiscoveryTargets, discoveryTargetKey, npcDiscoveryTargets, questDiscoveryTargets, categorizedDiscoveryTypes, categorizedDiscoveryTargets, availableDiscoveryTargets, expandDiscoveryTargets, groupDiscoveryTargetsForDisplay } from '../lib/discoveryTargets.js';
 
@@ -155,7 +158,6 @@ function starter(type) {
 
         services: 'discoverable',
 
-        t20: 'discoverable'
 
       },
 
@@ -171,7 +173,6 @@ function starter(type) {
 
       },
 
-      t20: { mode: 'none', dataType: 'Ambesek.T20', characterId: '', firecastUri: '' }
 
     };
 
@@ -239,69 +240,9 @@ function starter(type) {
 
       imageURL: '',
 
-      sectionVisibility: { ...base.sectionVisibility, t20: 'discoverable' },
+      rank: 'common',
 
-      t20: {
-
-        nd: '',
-
-        creatureType: '',
-
-        subtype: '',
-
-        size: '',
-
-        initiative: '',
-
-        perception: '',
-
-        senses: '',
-
-        defense: '',
-
-        fortitude: '',
-
-        reflex: '',
-
-        will: '',
-
-        hp: '',
-
-        hpMax: '',
-
-        mp: '',
-
-        mpMax: '',
-
-        attributes: {
-
-          strength: '',
-
-          dexterity: '',
-
-          constitution: '',
-
-          intelligence: '',
-
-          wisdom: '',
-
-          charisma: ''
-
-        },
-
-        statVisibility: {
-
-          basic: 'discoverable',
-
-          combat: 'discoverable',
-
-          resources: 'discoverable',
-
-          attributes: 'discoverable'
-
-        }
-
-      },
+      sheet: { nd: '', type: '', subtype: '', size: '', combat: {}, resources: {}, resistances: {}, attributes: {} },
 
       movements: [],
 
@@ -776,6 +717,7 @@ function QuestAssign({ campaignId, questId, questName }) {
   const [selectedOwners, setSelectedOwners] = useState(() => new Set());
   const [search, setSearch] = useState('');
   const dialogRef = useRef(null);
+  useOutsideDismiss(dialogRef, () => setOpen(false), open);
   useEffect(() => {
     if (open) dialogRef.current?.showModal();
     else dialogRef.current?.close();
@@ -1043,9 +985,13 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
   const [dropRoll, setDropRoll] = useState(null);
 
+  const [isRolling, setIsRolling] = useState(false);
+
   const [rollError, setRollError] = useState('');
 
   const [copyState, setCopyState] = useState('');
+  const dropDialogRef = useRef(null);
+  useOutsideDismiss(dropDialogRef, () => { setDropRoll(null); setCopyState(''); }, Boolean(dropRoll));
 
   const basicTargets = ['basic', 'nd', 'type', 'subtype', 'size'].map((key) => ({
 
@@ -1081,7 +1027,11 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
   const rollDrops = async () => {
 
+    if (isRolling) return;
+
     try {
+
+      setIsRolling(true);
 
       setRollError('');
 
@@ -1094,6 +1044,10 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
       setRollError(error.message || 'Não foi possível rolar os drops.');
 
       setDropRoll([]);
+
+    } finally {
+
+      setIsRolling(false);
 
     }
 
@@ -1126,8 +1080,6 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
   return (
 
     <div className="module-stack">
-
-      <ModuleCard title="Ficha T20"><pre className="t20-stat-block">{formatT20StatBlock(entity)}</pre></ModuleCard>
 
       {hasBasicData && (
 
@@ -1279,7 +1231,7 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
             <strong>Possíveis itens</strong>
 
-            <button type="button" onClick={rollDrops}>Sortear drop</button>
+            <button type="button" onClick={rollDrops} disabled={isRolling}>{isRolling ? 'Sorteando…' : 'Sortear drop'}</button>
 
           </div>
 
@@ -1293,6 +1245,7 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
           />
 
+          {isGm && dropReferences.map(reference => <div key={reference.id} className="component-head"><span>{reference.name ?? reference.id} · {visibilityLabels[reference.visibility ?? 'public']}</span><DiscoveryButton isGm={isGm} onGrant={onGrant} kind="reference" targetKey={referenceGrantKey('monster', entity.id, reference)} label={'Drop: ' + (reference.name ?? reference.id)} /></div>)}
           {rollError && <div className="alert error">{rollError}</div>}
 
         </ModuleCard>
@@ -1331,7 +1284,7 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
         <div className="modal-backdrop" role="presentation">
 
-          <div className="modal" role="dialog" aria-modal="true">
+          <div ref={dropDialogRef} className="modal" role="dialog" aria-modal="true">
 
             <div className="modal-head">
 
@@ -1349,7 +1302,31 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
             <div className="modal-content">
 
-              <pre>{dropRoll.length ? dropRoll.map(formatDropResult).join('\n') : 'Nenhum item foi sorteado.'}</pre>
+              {dropRoll.length ? (
+
+                <div className="drop-roll-list" aria-live="polite">
+
+                  {dropRoll.map((drop, index) => (
+
+                    <article className="drop-roll-entry" key={`${drop.id}:${index}`}>
+
+                      <strong>{formatDropResult(drop)}</strong>
+
+                      <div className="drop-roll-calculation">
+
+                        <span>Chance: {drop.chance ?? 100}%</span>
+
+                        {drop.valueFormula ? <span>Valor: <code>{drop.valueFormula}</code> = <strong>{drop.cashValue ?? '—'} cash</strong></span> : drop.cashValue != null ? <span>Valor: {drop.cashValue} cash</span> : null}
+
+                      </div>
+
+                    </article>
+
+                  ))}
+
+                </div>
+
+              ) : <p className="muted">Nenhum item foi sorteado.</p>}
 
               {copyState && <p className="muted">{copyState}</p>}
 
@@ -1358,6 +1335,8 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
             <div className="modal-actions">
 
               <button type="button" onClick={() => setDropRoll(null)}>Fechar</button>
+
+              <button type="button" onClick={rollDrops} disabled={isRolling}>{isRolling ? 'Sorteando…' : 'Rerolar drops'}</button>
 
               <button type="button" className="primary" onClick={copyRollText}>Copiar</button>
 
@@ -2036,7 +2015,7 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
               };
 
-  const hasBasicData = hasRenderableContent(basic);
+  const hasBasicData = hasRenderableContent(basic) || (type === 'npc' && Boolean(entity.allyTypes?.length));
 
   return (
 
@@ -2108,7 +2087,9 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
             <ModuleCard title="Informações básicas" targetKey="section.basic" isGm={isGm} onGrant={onGrant}>
 
-              <DataGrid data={basic} />
+              {hasRenderableContent(basic) && <DataGrid data={basic} />}
+
+              {type === 'npc' && <T20Allies value={entity.allyTypes} />}
 
             </ModuleCard>
 
@@ -2166,6 +2147,7 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
       </div>
 
+      {type === 'item' && entity.category === 'material' && <MaterialValue key={entity.id + ':' + entity.valueFormula} formula={entity.valueFormula} />}
       <TypeDetails
 
         entity={entity}
@@ -2730,9 +2712,9 @@ function ReferencePicker({ value, onChange, allowedTypes = entityTypes, label = 
 
     <div className="reference-picker">
 
-      <label>{label}<select value={currentType} onChange={(event) => onChange({ type: event.target.value, id: '', role: value?.role ?? 'related', chance: value?.chance, valueFormula: value?.valueFormula })}>{allowedTypes.map((type) => <option key={type} value={type}>{singular[type]}</option>)}</select></label>
+      <label>{label}<select value={currentType} onChange={(event) => onChange({ type: event.target.value, id: '', role: value?.role ?? 'related', chance: value?.chance, quantityFormula: value?.quantityFormula, valueFormula: value?.valueFormula })}>{allowedTypes.map((type) => <option key={type} value={type}>{singular[type]}</option>)}</select></label>
 
-      <label>Registro<select disabled={query.isLoading || query.isError} value={value?.id ?? ''} onChange={(event) => onChange({ type: currentType, id: event.target.value, role: value?.role ?? 'related', chance: value?.chance, valueFormula: value?.valueFormula })}>
+      <label>Registro<select disabled={query.isLoading || query.isError} value={value?.id ?? ''} onChange={(event) => onChange({ type: currentType, id: event.target.value, role: value?.role ?? 'related', chance: value?.chance, quantityFormula: value?.quantityFormula, valueFormula: value?.valueFormula })}>
 
         <option value="">{query.isLoading ? 'Carregando…' : query.isError ? 'Não foi possível carregar' : 'Selecione…'}</option>
 
@@ -2806,7 +2788,7 @@ export function formatLocationTarget(item, items = []) {
 
 
 
-function ReferenceListEditor({ values = [], onChange, title = 'Referências', allowedTypes = entityTypes, role = 'related', roleOptions = referenceRoleOptions }) {
+function ReferenceListEditor({ values = [], onChange, title = 'Referências', allowedTypes = entityTypes, role = 'related', roleOptions = referenceRoleOptions, dropValueOnly = false }) {
 
   const clean = values.filter(Boolean).map((reference) => reference.target ?? reference);
 
@@ -2824,13 +2806,15 @@ function ReferenceListEditor({ values = [], onChange, title = 'Referências', al
 
         const showChance = effectiveRole === 'drops' || effectiveRole === 'drop';
 
-        const showQuantityRange = showChance && reference.type === 'item' && (reference.category === 'material' || reference.quantityMin != null || reference.quantityMax != null);
+        const showQuantityRange = showChance && reference.type === 'item' && !dropValueOnly;
+
+        const showValueFormula = showChance && reference.type === 'item' && dropValueOnly;
 
         return (
 
           <div className="editor-row reference-edit-row" key={`${reference.type}:${reference.id}:${index}`}>
 
-            <ReferencePicker value={reference} allowedTypes={allowedTypes} onChange={(next) => updateReference(index, { ...next, role: reference.role ?? role, chance: reference.chance ?? next.chance, quantityMin: reference.quantityMin ?? next.quantityMin, quantityMax: reference.quantityMax ?? next.quantityMax, valueFormula: reference.valueFormula ?? next.valueFormula })} />
+            <ReferencePicker value={reference} allowedTypes={allowedTypes} onChange={(next) => updateReference(index, { ...next, role: reference.role ?? role, chance: reference.chance ?? next.chance, quantityMin: reference.quantityMin ?? next.quantityMin, quantityMax: reference.quantityMax ?? next.quantityMax, quantityFormula: reference.quantityFormula ?? next.quantityFormula, valueFormula: reference.valueFormula ?? next.valueFormula })} />
 
             <label className="reference-role-field">Relação<select aria-label="Tipo de relação" value={effectiveRole} onChange={(event) => updateReference(index, { role: event.target.value, chance: reference.chance })}>{roleOptions.some((option) => option.value === effectiveRole) ? null : <option value={effectiveRole}>{referenceRoleLabel(effectiveRole)}</option>}{roleOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
 
@@ -2870,8 +2854,12 @@ function ReferenceListEditor({ values = [], onChange, title = 'Referências', al
 
             )}
 
+            {showQuantityRange && <label className="reference-role-field">Fórmula de quantidade<input type="text" placeholder="Ex.: 1d40" value={reference.quantityFormula ?? ''} onChange={(event) => updateReference(index, { quantityFormula: event.target.value || undefined })} /></label>}
+
+            {showValueFormula && <label className="reference-role-field">Valor (cash)<input type="text" inputMode="decimal" placeholder="Ex.: 10 ou 2d4+2" value={reference.valueFormula ?? ''} onChange={(event) => updateReference(index, { valueFormula: event.target.value || undefined })} /></label>}
+
             {showChance && reference.type === 'item' && (
-              <label className="reference-role-field">Valor em cash<input type="text" placeholder="2d4+2" aria-label="Valor aleatorio em cash" title="Formula do valor em cash do drop, por exemplo 2d4+2" value={reference.valueFormula ?? ''} onChange={(event) => updateReference(index, { valueFormula: event.target.value || undefined })} /></label>
+              <label className="reference-role-field">Visibilidade da relação<select value={reference.visibility ?? 'public'} onChange={(event) => updateReference(index, { visibility: event.target.value })}><option value="public">Público</option><option value="discoverable">Descobrível</option><option value="gm">Somente mestre</option></select></label>
             )}
 
             <button className="danger" onClick={() => onChange(clean.filter((_, itemIndex) => itemIndex !== index))}>Remover</button>
@@ -3012,7 +3000,8 @@ function QuestObjectiveEditor({ data, setData }) {
 
     <div className="editor-list">
 
-      <div className="editor-list-head"><strong>Objetivos</strong><button type="button" onClick={() => setData({ ...data, objectives: [...objectives, { objectiveId: nextObjectiveId(), type: 'talk', text: '', order: objectives.length + 1, requiredQuantity: 1, optional: false, secret: false, visibility: 'discoverable', dependsOn: [], playerEditable: false }] })}>＋ Objetivo</button></div>
+      <div className="editor-list-head"><strong>Objetivos</strong><button type="button" onClick={() => setData({ ...data, objectives: [...objectives, { objectiveId: nextObjectiveId(), type: 'talk', text: '', order: objectives.length + 1, requiredQuantity: 1, optional: false, secret: false, visibility: 'discoverable', dependsOn: [], playerEditable: true }] })}>＋ Objetivo</button></div>
+      <p className="muted">Os jogadores podem atualizar os objetivos visíveis e desbloqueados das missões atribuídas a eles ou aos seus grupos.</p>
 
       {objectives.map((objective, index) => (
 
@@ -3033,8 +3022,6 @@ function QuestObjectiveEditor({ data, setData }) {
             <label className="check-field"><input type="checkbox" checked={Boolean(objective.optional)} onChange={(event) => update(index, { optional: event.target.checked })} /> Opcional</label>
 
             <label className="check-field"><input type="checkbox" checked={Boolean(objective.secret)} onChange={(event) => update(index, { secret: event.target.checked })} /> Secreto</label>
-
-            <label className="check-field"><input type="checkbox" checked={Boolean(objective.playerEditable)} onChange={(event) => update(index, { playerEditable: event.target.checked })} /> Jogador pode atualizar</label>
 
           </div>
 
@@ -3204,15 +3191,15 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
           {type !== 'npc' && <FormField label="Subtítulo" value={data.subtitle ?? ''} onChange={(value) => set('subtitle', value)} />}
 
-          {type === 'npc' && <><FormField label="Tipo de personagem" value={data.characterType ?? 'npc'} options={[{ value: 'npc', label: 'NPC' }, { value: 'entity', label: 'Entidade' }]} onChange={(value) => set('characterType', value)} /><FormField label="Subtítulo" value={data.subtitle ?? data.title ?? ''} onChange={(value) => set('subtitle', value)} /><FormField label="Nível" value={data.level} onChange={(value) => set('level', value)} /></>}
+          {type === 'npc' && <><FormField label="Tipo de personagem" value={data.characterType ?? 'npc'} options={[{ value: 'npc', label: 'NPC' }, { value: 'player', label: 'Jogador' }, { value: 'entity', label: 'Entidade' }]} onChange={(value) => set('characterType', value)} /><FormField label="Subtítulo" value={data.subtitle ?? data.title ?? ''} onChange={(value) => set('subtitle', value)} /><FormField label="Nível" value={data.level} onChange={(value) => set('level', value)} /><T20AlliesEditor value={data.allyTypes} onChange={value => set('allyTypes', value)} /></>}
 
           {type === 'location' && <><LocationRegionPicker campaignId={campaignId} data={data} onChange={setData} currentId={data.id} /><FormField label="Tipo" value={data.type} options={locationTypeOptions.some((option) => option.value === data.type) ? locationTypeOptions : [...locationTypeOptions, { value: data.type, label: formatLocationType(data.type) }]} onChange={(value) => set('type', value)} /><FormField label="Estado" value={data.state} options={locationStateOptions} onChange={(value) => set('state', value)} /><FormField label="Nível recomendado" value={data.recommendedLevel} onChange={(value) => set('recommendedLevel', value)} /></>}
 
           {type === 'location' && <LocationImagePicker selection={locationImage} onChange={onLocationImageChange} />}
 
-          {type === 'item' && <><FormField label="Categoria" value={data.category} options={itemCategoryOptions} onChange={(value) => set('category', value)} /><FormField label="Raridade" value={data.rarity} options={itemRarityOptions} onChange={(value) => set('rarity', value)} /><FormField label="Valor (T$)" type="number" step="10" value={data.value?.amount ?? 0} onChange={(amount) => set('value', { ...(data.value ?? {}), amount, currency: 'T$' })} /></>}
+          {type === 'item' && <><FormField label="Categoria" value={data.category} options={itemCategoryOptions} onChange={(value) => set('category', value)} /><FormField label="Quantidade mínima padrão" type="number" min="1" value={data.quantityMin ?? ""} onChange={(value) => set("quantityMin", value || undefined)} /><FormField label="Quantidade máxima padrão" type="number" min="1" value={data.quantityMax ?? ""} onChange={(value) => set("quantityMax", value || undefined)} /><FormField label="Raridade" value={data.rarity} options={itemRarityOptions} onChange={(value) => set('rarity', value)} /><FormField label="Fórmula padrão de quantidade" value={data.quantityFormula ?? ''} onChange={(value) => set('quantityFormula', value || undefined)} />{data.category === 'material' && <><FormField label="Fórmula do valor (cash)" value={data.valueFormula ?? ''} onChange={(value) => set('valueFormula', value || undefined)} /><MaterialValue key={data.valueFormula} formula={data.valueFormula} /></>}<FormField label="Valor (T$)" type="number" step="10" value={data.value?.amount ?? 0} onChange={(amount) => set('value', { ...(data.value ?? {}), amount, currency: 'T$' })} /></>}
 
-          {type === 'monster' && <><FormField label="Grupo" value={data.group} onChange={(value) => set('group', value)} /><label className="checkbox-field"><input type="checkbox" checked={Boolean(data.sheet?.boss)} onChange={(event) => set('sheet', { ...(data.sheet ?? {}), boss: event.target.checked })} /> Boss</label></>}
+          {type === 'monster' && <><FormField label="Grupo" value={data.group} onChange={(value) => set('group', value)} /><FormField label="Classificação" value={monsterRank(data)} options={monsterRankFilters.map(({ value, label }) => ({ value, label }))} onChange={(rank) => set('rank', rank)} /></>}
 
           {type === 'quest' && <><FormField label="Subtítulo" value={data.subtitle} onChange={(value) => set('subtitle', value)} /><FormField label="Tipo" value={data.type} options={questTypeOptions} onChange={(value) => set('type', value)} /><FormField label="Estado" value={data.state} options={questStateOptions} onChange={(value) => set('state', value)} /><FormField label="Nível recomendado" value={data.recommendedLevel} onChange={(value) => set('recommendedLevel', value)} /><FormField label="Critério dos requisitos" value={data.requirementLogic ?? 'all'} options={requirementLogicOptions} onChange={(value) => set('requirementLogic', value)} /><FormField label="Ordem dos objetivos" value={data.objectiveMode ?? 'free'} options={objectiveModeOptions} onChange={(value) => set('objectiveMode', value)} /></>}
 
@@ -3252,13 +3239,15 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
             role="drops"
 
+            dropValueOnly
+
             roleOptions={[{ value: 'drops', label: 'Drop' }]}
 
             onChange={(values) => {
 
               const otherReferences = (data.references ?? []).filter((reference) => !(reference.type === 'item' && (reference.role === 'drops' || reference.role === 'drop')));
 
-              set('references', [...otherReferences, ...values.map((reference) => ({ ...reference, type: 'item', role: 'drops', chance: reference.chance ?? 100, quantityMin: reference.quantityMin, quantityMax: reference.quantityMax, valueFormula: reference.valueFormula }))]);
+              set('references', [...otherReferences, ...values.map(({ quantityMin: _quantityMin, quantityMax: _quantityMax, quantityFormula: _quantityFormula, ...reference }) => ({ ...reference, type: 'item', role: 'drops', chance: reference.chance ?? 100, valueFormula: reference.valueFormula }))]);
 
             }}
 
@@ -3359,12 +3348,14 @@ function EntityEditor({ type, initial, version, onClose, onSaved, campaignId }) 
     onSettled: () => { savingRef.current = false; setSavePhase(''); }
 
   });
+  const modalRef = useRef(null);
+  useOutsideDismiss(modalRef, onClose, !save.isPending);
 
   return (
 
     <div className="modal-backdrop" role="presentation">
 
-      <div className="modal entity-editor" role="dialog" aria-modal="true">
+      <div ref={modalRef} className="modal entity-editor" role="dialog" aria-modal="true">
 
         <div className="modal-head">
 
@@ -3462,6 +3453,8 @@ function locationBreadcrumbLabel(item, items) {
 
 
 function BulkDeleteModal({ items, type, isPending, error, onConfirm, onClose }) {
+  const modalRef = useRef(null);
+  useOutsideDismiss(modalRef, onClose);
 
   const isLocation = type === 'location';
 
@@ -3499,7 +3492,7 @@ function BulkDeleteModal({ items, type, isPending, error, onConfirm, onClose }) 
 
     <div className="modal-backdrop">
 
-      <div className="modal discovery-modal" role="dialog" aria-modal="true">
+      <div ref={modalRef} className="modal discovery-modal" role="dialog" aria-modal="true">
 
         <div className="modal-head">
 
@@ -3602,6 +3595,8 @@ function BulkDeleteModal({ items, type, isPending, error, onConfirm, onClose }) 
 
 
 function DiscoveryModal({ request, campaignId, entityType, entityId, locations = [], onClose }) {
+  const modalRef = useRef(null);
+  useOutsideDismiss(modalRef, onClose);
 
   const queryClient = useQueryClient();
 
@@ -3834,7 +3829,7 @@ function DiscoveryModal({ request, campaignId, entityType, entityId, locations =
 
     <div className="modal-backdrop">
 
-      <div className={`modal discovery-modal${entityType === 'npc' && request.bulk ? ' npc-discovery-modal' : ''}`} role="dialog" aria-modal="true">
+      <div ref={modalRef} className={`modal discovery-modal${entityType === 'npc' && request.bulk ? ' npc-discovery-modal' : ''}`} role="dialog" aria-modal="true">
 
         <div className="modal-head">
 
@@ -4165,7 +4160,7 @@ export function buildBulkEntityDiscoveryRequest({ type, items = [] }) {
 
     entities: orderedItems.map((item) => {
       const entity = {
-      ...(item.fields?.length ? { fields: item.fields, identity: item.identity, locations: item.locations, relations: item.relations, services: item.services, t20: item.t20, references: item.references } : {}),
+      ...(item.fields?.length ? { fields: item.fields, identity: item.identity, locations: item.locations, relations: item.relations, services: item.services, references: item.references } : {}),
       ...(type === 'monster' && item.references ? { references: item.references } : {}),
       ...(type === 'location' && item.connections?.length ? { connections: item.connections } : {}),
       ...(type === 'monster' ? {
@@ -4356,7 +4351,7 @@ function floorLabel(floor) {
 
 export function monsterNdLabel(entity) {
 
-  const nd = entity?.sheet?.nd ?? entity?.t20?.nd ?? entity?.nd ?? '';
+  const nd = entity?.sheet?.nd ?? entity?.nd ?? '';
 
   if (nd === '' || nd == null) return '';
 
@@ -4366,59 +4361,49 @@ export function monsterNdLabel(entity) {
 
 
 
-function MonsterLocationFilter({ locations, selectedRegion, selectedLocation, onRegionChange, onLocationChange }) {
-
-  const regions = resolveLocationMenuRegions({ items: locations });
-
-  const locationOptions = selectedRegion
-
-    ? resolveLocationMenuEntries({ items: locations, selectedRegion })
-
-    : [];
-
-
-
+function MonsterLocationFilter({ locations, selectedRegion, onRegionChange, active, onActivate }) {
+  const byId = new Map(locations.map((location) => [location.id, location]));
+  const optionLabel = (location) => {
+    let current = location;
+    let region = '';
+    const seen = new Set();
+    while (current && !seen.has(current.id)) {
+      seen.add(current.id);
+      if (current.type === 'region') region = current.name;
+      current = byId.get(current.parentId);
+    }
+    const floor = locationFloor(location, locations);
+    const floorName = floor === 'sem-andar' ? 'Sem andar' : `Andar ${String(floor).replace(/^(?:f|andar\s*)0*/i, '')}`;
+    return `${floorName} - ${region || 'Sem região'} - ${location.name}`;
+  };
   return (
-
-    <div className="monster-location-filter">
-
-      <label>
-
-        Região
-
-        <select value={selectedRegion} onChange={(event) => onRegionChange(event.target.value)}>
-
-          <option value="">Todas as regiões</option>
-
-          {regions.map((region) => <option key={region.id} value={region.id} title={formatEntityName(region)}>{formatEntityName(region)}</option>)}
-
-        </select>
-
-      </label>
-
-      <label>
-
-        Local
-
-        <select value={selectedLocation} disabled={!selectedRegion} onChange={(event) => onLocationChange(event.target.value)}>
-
-          <option value="">Todos os locais da região</option>
-
-          {locationOptions.map((location) => <option key={location.id} value={location.id} title={formatEntityName(location)}>{formatEntityName(location)}</option>)}
-
-        </select>
-
-      </label>
-
-    </div>
-
+    <>
+      <button type="button" className={`monster-rank-filter ${active ? 'active' : ''}`} title="Filtrar por local" aria-label="Filtrar por local" aria-expanded={active} onClick={onActivate}><span aria-hidden="true">⌖</span><small>Local</small></button>
+      {active && <label className="monster-location-select"><span>Local</span><select value={selectedRegion} onChange={(event) => onRegionChange(event.target.value)}>
+        <option value="">Todos os locais</option>
+        {[...locations].sort((a, b) => optionLabel(a).localeCompare(optionLabel(b), 'pt-BR')).map((location) => <option key={location.id} value={location.id}>{optionLabel(location)}</option>)}
+      </select></label>}
+    </>
   );
-
 }
 
 export function isBossMonster(monster) {
   return monster?.sheet?.boss === true || monster?.boss === true || String(monster?.sheet?.type ?? '').toLowerCase() === 'boss' || String(monster?.group ?? '').toLowerCase() === 'boss';
 }
+
+export function monsterRank(monster) {
+  if (['common', 'elite', 'boss'].includes(monster?.rank)) return monster.rank;
+  if (isBossMonster(monster)) return 'boss';
+  if (monster?.elite === true || String(monster?.group ?? '').toLowerCase() === 'elite') return 'elite';
+  return 'common';
+}
+
+const monsterRankFilters = [
+  { value: 'common', label: 'Comum', icon: '○' },
+  { value: 'elite', label: 'Elite', icon: '✦' },
+  { value: 'boss', label: 'Boss', icon: '♛' }
+];
+const questTypeIcons = { main: '✦', side: '◆', daily: '☼', event: '⚑' };
 
 export { isCharacterEntity } from '../lib/characters.js';
 
@@ -4444,13 +4429,24 @@ export function EntityPage({ type }) {
 
   const [monsterRegionId, setMonsterRegionId] = useState('');
 
-  const [monsterLocationId, setMonsterLocationId] = useState('');
+  const [monsterDropId, setMonsterDropId] = useState('');
+  const [monsterRankFilter, setMonsterRankFilter] = useState('');
 
-  const [monsterBossFilter, setMonsterBossFilter] = useState('all');
+  const [characterFilter, setCharacterFilter] = useState('');
 
-  const [characterFilter, setCharacterFilter] = useState('npc');
+  const [questTypeFilter, setQuestTypeFilter] = useState('');
+
+  const [favoriteFilter, setFavoriteFilter] = useState(false);
 
   const [itemCategoryFilter, setItemCategoryFilter] = useState('all');
+
+  const selectMonsterFilter = (filter) => {
+    const active = filter === 'favorites' ? favoriteFilter : monsterRankFilter === filter;
+    const next = !active;
+    setFavoriteFilter(filter === 'favorites' && next);
+    setMonsterRankFilter(next && filter !== 'favorites' ? filter : '');
+    setMonsterRegionId('');
+  };
 
   const queryClient = useQueryClient();
 
@@ -4462,11 +4458,11 @@ export function EntityPage({ type }) {
   const characterFavorites = useQuery({
     queryKey: ['character-favorites', campaignId],
     queryFn: () => api(`/api/v1/campaigns/${campaignId}/character-favorites`),
-    enabled: type === 'npc'
+    enabled: ['npc', 'location', 'item', 'monster', 'quest'].includes(type)
   });
   const toggleCharacterFavorite = useMutation({
     mutationFn: ({ item, favorite }) => {
-      const { targetType, targetId } = characterTarget(item);
+      const { targetType, targetId } = type === 'npc' ? characterTarget(item) : { targetType: type, targetId: item.id };
       return api(`/api/v1/campaigns/${campaignId}/character-favorites/${targetType}/${encodeURIComponent(targetId)}`, { method: favorite ? 'DELETE' : 'PUT' });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character-favorites', campaignId] })
@@ -4498,7 +4494,7 @@ export function EntityPage({ type }) {
 
   const list = useQuery({
 
-    queryKey: ['entities', campaignId, type, viewAsUserId],
+    queryKey: ['entities', campaignId, type, viewAsUserId, monsterDropId],
 
     queryFn: () =>
 
@@ -4508,7 +4504,7 @@ export function EntityPage({ type }) {
 
           viewAsUserId ? `&viewAsUserId=${encodeURIComponent(viewAsUserId)}` : ''
 
-        }`
+        }${type === 'monster' && monsterDropId ? `&dropId=${encodeURIComponent(monsterDropId)}` : ''}`
 
       )
 
@@ -4532,6 +4528,12 @@ export function EntityPage({ type }) {
 
     enabled: type === 'monster'
 
+  });
+
+  const dropItems = useQuery({
+    queryKey: ['entities', campaignId, 'item', 'drop-picker', viewAsUserId],
+    queryFn: () => api('/api/v1/campaigns/' + campaignId + '/items?pageSize=100' + (viewAsUserId ? '&viewAsUserId=' + encodeURIComponent(viewAsUserId) : '')),
+    enabled: type === 'monster'
   });
 
   const detail = useQuery({
@@ -4576,35 +4578,40 @@ export function EntityPage({ type }) {
 
         locations: locations.data?.items ?? [],
 
-        regionId: monsterRegionId,
+        regionId: '',
 
-        locationId: monsterLocationId
+        locationId: monsterRankFilter === 'location' ? monsterRegionId : ''
 
       })
 
       : list.data?.items ?? [],
 
-    [list.data, locations.data, monsterLocationId, monsterRegionId, type]
+    [list.data, locations.data, monsterRankFilter, monsterRegionId, type]
 
   );
 
   const displayItems = useMemo(
-    () => type === 'monster' && monsterBossFilter !== 'all'
-      ? visibleItems.filter((item) => monsterBossFilter === 'boss' ? isBossMonster(item) : !isBossMonster(item))
-      : type === 'npc'
-      ? characterEntries(visibleItems, characterRoster, characterFilter, characterFavorites.data ?? [])
-      : type === 'item' && itemCategoryFilter !== 'all'
-      ? visibleItems.filter((item) => item.category === itemCategoryFilter)
-      : visibleItems,
-    [characterFilter, characterFavorites.data, characterRoster, itemCategoryFilter, monsterBossFilter, type, visibleItems]
+    () => {
+      let entries = visibleItems;
+      if (type === 'monster') {
+        if (['common', 'elite', 'boss'].includes(monsterRankFilter)) entries = entries.filter((item) => monsterRank(item) === monsterRankFilter);
+      }
+      if (type === 'npc') entries = characterEntries(entries, characterRoster, characterFilter, characterFavorites.data ?? []);
+      if (type === 'item' && itemCategoryFilter !== 'all') entries = entries.filter((item) => item.category === itemCategoryFilter);
+      if (type === 'quest' && questTypeFilter) entries = entries.filter((item) => item.type === questTypeFilter);
+      if (favoriteFilter && type !== 'npc') entries = entries.filter((item) => characterFavorites.data?.some((favorite) => favorite.targetType === type && favorite.targetId === item.id));
+      return entries;
+    },
+    [characterFilter, characterFavorites.data, characterRoster, favoriteFilter, itemCategoryFilter, monsterRankFilter, questTypeFilter, type, visibleItems]
   );
 
   const characterFilters = type === 'npc' ? (
     <div className="character-filters" role="toolbar" aria-label="Filtrar personagens">
-      <button type="button" className={`character-filter ${characterFilter === 'npc' ? 'active' : ''}`} title="NPCs" aria-label="NPCs" onClick={() => setCharacterFilter('npc')}><span aria-hidden="true">♟</span><small>NPCs</small></button>
-      <button type="button" className={`character-filter ${characterFilter === 'player' ? 'active' : ''}`} title="Jogadores" aria-label="Jogadores" onClick={() => setCharacterFilter('player')}><span aria-hidden="true">♙</span><small>Jogadores</small></button>
-      <button type="button" className={`character-filter ${characterFilter === 'entity' ? 'active' : ''}`} title="Entidades" aria-label="Entidades" onClick={() => setCharacterFilter('entity')}><span aria-hidden="true">⇄</span><small>Entidades</small></button>
-      <button type="button" className={`character-filter ${characterFilter === 'favorites' ? 'active' : ''}`} title="Favoritos" aria-label="Favoritos" onClick={() => setCharacterFilter('favorites')}><span aria-hidden="true">★</span><small>Favoritos</small></button>
+      <button type="button" className={`character-filter ${!characterFilter ? 'active' : ''}`} title="Todos os personagens" aria-label="Todos os personagens" onClick={() => setCharacterFilter('')}><span aria-hidden="true">☷</span><small>Todos</small></button>
+      <button type="button" className={`character-filter ${characterFilter === 'npc' ? 'active' : ''}`} title="NPCs" aria-label="NPCs" onClick={() => setCharacterFilter((current) => current === 'npc' ? '' : 'npc')}><span aria-hidden="true">♟</span><small>NPCs</small></button>
+      <button type="button" className={`character-filter ${characterFilter === 'player' ? 'active' : ''}`} title="Jogadores" aria-label="Jogadores" onClick={() => setCharacterFilter((current) => current === 'player' ? '' : 'player')}><span aria-hidden="true">♙</span><small>Jogadores</small></button>
+      <button type="button" className={`character-filter ${characterFilter === 'entity' ? 'active' : ''}`} title="Entidades" aria-label="Entidades" onClick={() => setCharacterFilter((current) => current === 'entity' ? '' : 'entity')}><span aria-hidden="true">⇄</span><small>Entidades</small></button>
+      <button type="button" className={`character-filter ${characterFilter === 'favorites' ? 'active' : ''}`} title="Favoritos" aria-label="Favoritos" onClick={() => setCharacterFilter((current) => current === 'favorites' ? '' : 'favorites')}><span aria-hidden="true">★</span><small>Favoritos</small></button>
     </div>
   ) : null;
 
@@ -4612,7 +4619,7 @@ export function EntityPage({ type }) {
 
   useEffect(() => {
 
-    if (!list.data || (type === 'npc' && (characterPlayers.isPending || characterFavorites.isPending))) return;
+    if (!list.data || characterFavorites.isPending || (type === 'npc' && characterPlayers.isPending)) return;
 
     if (!selectedId || !displayItems.some((item) => item.id === selectedId)) {
 
@@ -4704,7 +4711,18 @@ export function EntityPage({ type }) {
   const selectedPlayer = playerSelected
     ? characterRoster.find((player) => player.id === selectedId)
     : null;
-  const favoriteCurrent = current ? isCharacterFavorite(current, characterFavorites.data ?? []) : selectedPlayer ? isCharacterFavorite(selectedPlayer, characterFavorites.data ?? []) : false;
+  const favoriteTarget = (item) => type === 'npc' ? characterTarget(item) : { targetType: type, targetId: item.id };
+  const favoriteCurrentTarget = current ? favoriteTarget(current) : selectedPlayer ? characterTarget(selectedPlayer) : null;
+  const favoriteCurrent = Boolean(favoriteCurrentTarget && characterFavorites.data?.some((favorite) => favorite.targetType === favoriteCurrentTarget.targetType && favorite.targetId === favoriteCurrentTarget.targetId));
+  const openEliteCopy = () => {
+    const existing = list.data?.items ?? [];
+    let copyName = `${current.name} (Elite)`;
+    let suffix = 2;
+    while (existing.some((item) => item.id === idFromName('monster', copyName) || item.name?.toLowerCase() === copyName.toLowerCase())) {
+      copyName = `${current.name} (Elite ${suffix++})`;
+    }
+    setEditor({ data: createMonsterEliteDraft(current, copyName, idFromName('monster', copyName)) });
+  };
 
   return (
 
@@ -4819,6 +4837,14 @@ export function EntityPage({ type }) {
 
           {characterFilters}
 
+          {type !== 'npc' && type !== 'monster' && <div className="entity-filter-toolbar" role="toolbar" aria-label="Filtros">
+            <button type="button" className={`entity-icon-filter ${favoriteFilter ? 'active' : ''}`} title="Favoritos" aria-label="Favoritos" aria-pressed={favoriteFilter} onClick={() => setFavoriteFilter((value) => !value)}><span aria-hidden="true">★</span><small>Favoritos</small></button>
+          </div>}
+
+          {type === 'quest' && <div className="entity-filter-toolbar" role="toolbar" aria-label="Filtrar missões por tipo">
+            {questTypeOptions.map((option) => <button key={option.value} type="button" className={`entity-icon-filter ${questTypeFilter === option.value ? 'active' : ''}`} title={option.label} aria-label={option.label} aria-pressed={questTypeFilter === option.value} onClick={() => setQuestTypeFilter((value) => value === option.value ? '' : option.value)}><span aria-hidden="true">{questTypeIcons[option.value]}</span><small>{option.label}</small></button>)}
+          </div>}
+
           {type === 'item' && <div className="item-category-filters" role="toolbar" aria-label="Filtrar itens por categoria">
 
             {itemCategoryFilters.map((filter) => <button
@@ -4839,7 +4865,7 @@ export function EntityPage({ type }) {
 
           <LocationMenu
 
-              items={list.data.items}
+              items={displayItems}
 
               selectedId={selectedId}
 
@@ -4856,20 +4882,15 @@ export function EntityPage({ type }) {
 
             <>
 
-              <MonsterLocationFilter
-
-                locations={locations.data?.items ?? []}
-
-                selectedRegion={monsterRegionId}
-
-                selectedLocation={monsterLocationId}
-
-                onRegionChange={(regionId) => { setMonsterRegionId(regionId); setMonsterLocationId(''); }}
-
-                onLocationChange={setMonsterLocationId}
-
-              />
-              <label className="monster-boss-filter">Tipo de monstro<select value={monsterBossFilter} onChange={(event) => setMonsterBossFilter(event.target.value)}><option value="all">Todos</option><option value="boss">Apenas Boss</option><option value="normal">Sem Boss</option></select></label>
+              <div className="monster-filter-toolbar" role="toolbar" aria-label="Filtrar monstros">
+                {monsterRankFilters.map((filter) => <button key={filter.value} type="button" className={`monster-rank-filter ${monsterRankFilter === filter.value ? 'active' : ''}`} title={filter.label} aria-label={filter.label} aria-pressed={monsterRankFilter === filter.value} onClick={() => selectMonsterFilter(filter.value)}><span aria-hidden="true">{filter.icon}</span><small>{filter.label}</small></button>)}
+                <button type="button" className={`monster-rank-filter ${favoriteFilter ? 'active' : ''}`} title="Favoritos" aria-label="Favoritos" aria-pressed={favoriteFilter} onClick={() => selectMonsterFilter('favorites')}><span aria-hidden="true">★</span><small>Favoritos</small></button>
+                <MonsterLocationFilter locations={locations.data?.items ?? []} selectedRegion={monsterRegionId} onRegionChange={setMonsterRegionId} active={monsterRankFilter === 'location'} onActivate={() => selectMonsterFilter('location')} />
+              </div>
+              <div className="monster-drop-filters">
+                <label>Drop<select value={monsterDropId} onChange={(event) => setMonsterDropId(event.target.value)}><option value="">Todos os drops</option>{monsterDropId && !(dropItems.data?.items ?? []).some(item => item.id === monsterDropId) && <option value={monsterDropId}>Item selecionado</option>}{(dropItems.data?.items ?? []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              </div>
+              {dropItems.isError && <p role="alert">Não foi possível buscar itens.</p>}
 
               {displayItems.map((item) => {
 
@@ -4881,7 +4902,7 @@ export function EntityPage({ type }) {
 
                     key={item.id}
 
-                    className={selectedId === item.id ? 'selected' : ''}
+                    className={[selectedId === item.id ? 'selected' : '', type === 'item' ? 'item-rarity ' + rarityClass(item.rarity) : ''].join(' ')}
 
                     onClick={() => setParams({ selected: item.id })}
 
@@ -4921,7 +4942,7 @@ export function EntityPage({ type }) {
 
                   key={item.id}
 
-                  className={selectedId === item.id ? 'selected' : ''}
+                  className={[selectedId === item.id ? 'selected' : '', type === 'item' ? 'item-rarity ' + rarityClass(item.rarity) : ''].join(' ')}
 
                   onClick={() => setParams({ selected: item.id })}
 
@@ -4933,7 +4954,7 @@ export function EntityPage({ type }) {
 
                   <span className="list-label-wrap">
 
-                    <strong className={type === 'item' ? rarityClass(item.rarity) : undefined}>{formatEntityName(item)}</strong>
+                    <strong>{formatEntityName(item)}</strong>
 
                     {monsterNd && <small className="list-meta">{monsterNd}</small>}
 
@@ -4957,10 +4978,13 @@ export function EntityPage({ type }) {
 
         <section className="detail-pane">
 
-          {(current || selectedPlayer) && type === 'npc' && <div className="detail-actions"><button type="button" onClick={() => toggleCharacterFavorite.mutate({ item: current ?? selectedPlayer, favorite: favoriteCurrent })} aria-pressed={favoriteCurrent} disabled={toggleCharacterFavorite.isPending || characterFavorites.isPending || characterFavorites.isError}>{favoriteCurrent ? '★ Desfavoritar' : '☆ Favoritar'}</button></div>}
+          {(current || selectedPlayer) && <div className="detail-actions">
+            <button type="button" onClick={() => toggleCharacterFavorite.mutate({ item: current ?? selectedPlayer, favorite: favoriteCurrent })} aria-pressed={favoriteCurrent} disabled={toggleCharacterFavorite.isPending || characterFavorites.isPending || characterFavorites.isError}>{favoriteCurrent ? '★ Desfavoritar' : '☆ Favoritar'}</button>
+            {current && type === 'monster' && effectiveIsGm && <button type="button" onClick={openEliteCopy}>✦ Criar cópia Elite</button>}
+          </div>}
 
           {toggleCharacterFavorite.isError && <p role="alert">{toggleCharacterFavorite.error.message}</p>}
-          {type === 'npc' && (characterPlayers.isError || characterFavorites.isError) && <p role="alert">Não foi possível carregar jogadores ou favoritos.</p>}
+          {characterFavorites.isError || (type === 'npc' && characterPlayers.isError) ? <p role="alert">Não foi possível carregar favoritos ou personagens.</p> : null}
           {playerSelected && !selectedPlayer ? <p role="status">Carregando jogador…</p> : selectedPlayer ? (
             <article className="state-card"><h2>{selectedPlayer.name}</h2><p>Jogador da campanha</p>{selectedPlayer.characterImageUrl && <img className="list-thumbnail" src={selectedPlayer.characterImageUrl} alt="" />}</article>
           ) : detail.isLoading ? (

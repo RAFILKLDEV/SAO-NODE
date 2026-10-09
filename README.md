@@ -2,17 +2,11 @@
 
 Aplicação multiusuário para campanhas de RPG estilo MMORPG/Sword Art Online, implementada em JavaScript com Node.js 22, Fastify, PostgreSQL/Prisma, React/Vite e Socket.IO.
 
-## Compatibilidade
+## Dados
 
-- `moduleId`: `br.sao.rpg.firecast.database`
-- `dataType`: `br.sao.rpg.database`
-- T20 atual: `Ambesek.T20`
-- alias T20 legado: `Ambesek.Tormenta20`
 - JSON: `saoData`, `schemaVersion: "2.0"` (o parser migra pacotes v1)
 - Estrutura canônica: `containers`, entidades tipadas, `visibility`, `media`, `links`, `statBlocks` e componentes estáveis
 - Guia e migração: [docs/data-v2.md](docs/data-v2.md) e `node scripts/migrate-data-v2.mjs`
-
-A implementação fica em uma pasta própria e não depende de APIs internas do Firecast. O bridge externo é deliberadamente um contrato separado.
 
 ## Estrutura
 
@@ -153,10 +147,6 @@ export DATABASE_URL='postgresql://...'
 ```
 
 No PowerShell, os mesmos executáveis podem ser chamados diretamente com a URL do banco definida em `$env:DATABASE_URL`.
-
-## Firecast/T20
-
-O projeto não inventa acesso Node.js às APIs internas do Firecast. `CharacterProvider` define o contrato para um bridge futuro; o provider local/manual e o mock são funcionais. Snapshots são informativos e a ficha externa permanece fonte de verdade.
 
 ## Observação sobre as fontes legadas
 

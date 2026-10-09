@@ -1,0 +1,1 @@
+ALTER TABLE "Reference" ADD COLUMN "quantityFormula" TEXT;

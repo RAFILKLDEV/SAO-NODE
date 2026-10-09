@@ -3,14 +3,21 @@ import {
   assertNamespacedId,
   buildLocationTree,
   calculateTravelMinutes,
+  canPlayerUpdateObjective,
   evaluateGrant,
   evaluateQuestProgress,
-  normalizeT20ProviderId,
+  normalizeEntity,
   rollDrops,
   summarizeGroupVisibility
 } from '../src/index.js';
 
 describe('domain invariants', () => {
+  it('permits updates to non-secret objectives independently of the legacy editing flag', () => {
+    const quest = { objectives: [{ objectiveId: 'legacy', playerEditable: false }, { objectiveId: 'hidden', playerEditable: true, secret: true }] };
+    expect(canPlayerUpdateObjective(quest, 'legacy')).toBe(true);
+    expect(canPlayerUpdateObjective(quest, 'hidden')).toBe(false);
+    expect(canPlayerUpdateObjective(quest, 'missing')).toBe(false);
+  });
   it('validates namespaced ids', () => {
     expect(assertNamespacedId('npc', 'npc.f1.greenfields.ragnar')).toBe(true);
     expect(() => assertNamespacedId('npc', 'item.f1.bad')).toThrow();
@@ -58,6 +65,28 @@ describe('domain invariants', () => {
     expect(rolled[0].quantity).toBeLessThanOrEqual(60);
   });
 
+  it('rolls a monster-specific quantity formula for drops', () => {
+    const rolled = rollDrops([{ type: 'item', id: 'item.meat', role: 'drops', chance: 100, quantityFormula: '1d40' }], () => 0);
+    expect(rolled[0].quantity).toBe(1);
+    expect(rolled[0].quantityFormula).toBe('1d40');
+  });
+
+  it('respects an explicit quantity range over a formula', () => {
+    const rolled = rollDrops([{ type: 'item', id: 'item.meat', role: 'drops', chance: 100, quantityMin: 7, quantityMax: 9, quantityFormula: '1d40' }], () => 0);
+    expect(rolled[0].quantity).toBe(7);
+  });
+
+  it('preserves an item-level default quantity formula', () => {
+    const item = normalizeEntity('item', { id: 'item.meat', name: 'Carne', quantityFormula: '1d20' }, { format: '2.0' });
+    expect(item.quantityFormula).toBe('1d20');
+  });
+
+  it('preserves item-level quantity ranges', () => {
+    const item = normalizeEntity('item', { id: 'item.meat', name: 'Carne', quantityMin: 2, quantityMax: 5 }, { format: '2.0' });
+    expect(item.quantityMin).toBe(2);
+    expect(item.quantityMax).toBe(5);
+  });
+
   it('rolls a cash value formula for loot drops', () => {
     const rolled = rollDrops([{ type: 'item', id: 'item.gem', role: 'drops', chance: 100, valueFormula: '2d4+2' }], () => 0);
     expect(rolled[0].cashValue).toBe(4);
@@ -88,10 +117,6 @@ describe('domain invariants', () => {
 
     expect(evaluateQuestProgress(quest, { boars: 2, talk: 0 }).percentage).toBe(33);
     expect(evaluateQuestProgress(quest, { boars: 5, talk: 1 }).percentage).toBe(100);
-  });
-
-  it('normalizes legacy T20 alias', () => {
-    expect(normalizeT20ProviderId('Ambesek.Tormenta20')).toBe('Ambesek.T20');
   });
 
   it('evaluates individual and group grants', () => {

@@ -1,0 +1,6 @@
+interface:
+  display_name: "SAO — preservar UTF-8"
+  short_description: "Evitar acentos e símbolos corrompidos no SAO-NODE"
+  default_prompt: "Use $sao-preservar-utf8 para preservar acentos e verificar a codificação dos arquivos alterados no SAO-NODE."
+policy:
+  allow_implicit_invocation: true

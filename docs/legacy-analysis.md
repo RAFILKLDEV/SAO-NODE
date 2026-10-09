@@ -15,8 +15,7 @@ A migração web preserva essa separação: conteúdo autoritativo fica em `Enti
 ## Invariantes adotados
 
 - unicidade por `campaignId + type + domainId`;
-- `moduleId=br.sao.rpg.firecast.database` e `dataType=br.sao.rpg.database` preservados como compatibilidade;
-- T20 atual `Ambesek.T20`, aceitando `Ambesek.Tormenta20` como alias legado;
+- identificadores específicos de plugin e provider externo não fazem parte do contrato atual;
 - IDs de reimportação nunca são recriados;
 - referências quebradas são mantidas;
 - segredo é filtrado no servidor;

@@ -24,6 +24,8 @@ import { characterRoutes } from './routes/characters.js';
 import { mediaRoutes } from './routes/media.js';
 import { associationRoutes } from './routes/associations.js';
 import { notificationRoutes } from './routes/notifications.js';
+import { mapRoutes } from './routes/map.js';
+import { mapCanvasRoutes } from './routes/map-canvas.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -44,7 +46,7 @@ export async function buildApp() {
     origin: config.webOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['content-type', 'x-csrf-token', 'if-match']
+    allowedHeaders: ['content-type', 'x-csrf-token', 'if-match', 'x-map-preview-id']
   });
   await app.register(helmet, {
     contentSecurityPolicy: false,
@@ -125,6 +127,8 @@ export async function buildApp() {
   await app.register(mediaRoutes);
   await app.register(associationRoutes);
   await app.register(notificationRoutes);
+  await app.register(mapRoutes);
+  await app.register(mapCanvasRoutes);
 
   return app;
 }

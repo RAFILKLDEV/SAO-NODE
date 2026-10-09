@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { authenticate, requireCampaign, requireCsrf, requireGm } from '../lib/auth.js';
+import { authenticate, isGm, requireCampaign, requireCsrf } from '../lib/auth.js';
 import { config } from '../lib/config.js';
 import { apiError } from '@sao/shared';
 
@@ -94,8 +94,10 @@ function campaignUploadDir(campaignId) {
 export async function mediaRoutes(app) {
   app.post(
     '/api/v1/campaigns/:campaignId/media',
-    { preHandler: [authenticate, requireCampaign, requireGm, requireCsrf] },
+    { preHandler: [authenticate, requireCampaign, requireCsrf], config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
     async (request, reply) => {
+      if (!isGm(request) && request.query.purpose !== 'profile')
+        return reply.code(403).send(apiError('FORBIDDEN', 'Jogadores só podem enviar foto para o próprio perfil.'));
       try {
         const part = await request.file({
           limits: { fileSize: config.maxImageBytes, files: 1 }

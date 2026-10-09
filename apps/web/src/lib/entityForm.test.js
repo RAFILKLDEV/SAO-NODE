@@ -26,7 +26,6 @@ const cases = {
     services: ['Hospedagem', ''],
     locations: [{ type: 'location', id: 'loc.teste', role: 'visited' }, { type: 'location', id: '', role: 'visited' }],
     relations: [{ type: 'location', id: 'loc.teste', role: 'related' }, { type: 'npc', id: '', role: 'related' }],
-    t20: { mode: 'linked', dataType: 'Ambesek.T20', characterId: '42', firecastUri: 'firecast://character/42' }
   },
   location: {
     ...base('loc.teste', 'Local'), type: 'city', state: 'safe', parentId: '',
@@ -103,7 +102,7 @@ describe('payload completo do editor de entidades', () => {
         secret: false,
         visibility: 'discoverable',
         dependsOn: [],
-        playerEditable: false
+        playerEditable: true
       }))
     });
 

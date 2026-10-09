@@ -1,10 +1,12 @@
+import { rollDiceFormula } from './dice.js';
+export { rollDiceFormula } from './dice.js';
 import { z } from 'zod';
+import { t20AllyTypesSchema } from './t20Allies.js';
+export * from './t20Allies.js';
 import {
   baseEntitySchema,
   referenceSchema,
-  visibilitySchema,
-  T20_CURRENT,
-  T20_LEGACY
+  visibilitySchema
 } from '@sao/shared';
 
 const extensibleString = z.string().min(1);
@@ -32,49 +34,9 @@ const serviceSchema = z
       : { name: service.name?.trim() || service.type.trim(), description: service.description ?? '' }
   );
 
-const t20SnapshotSchema = z
-  .object({
-    name: z.string().default(''),
-    player: z.string().default(''),
-    race: z.string().default(''),
-    origin: z.string().default(''),
-    job: z.string().default(''),
-    level: z.string().default(''),
-    strMod: z.string().default(''),
-    dexMod: z.string().default(''),
-    conMod: z.string().default(''),
-    intMod: z.string().default(''),
-    wisMod: z.string().default(''),
-    chaMod: z.string().default(''),
-    defense: z.string().default(''),
-    fortitude: z.string().default(''),
-    reflex: z.string().default(''),
-    will: z.string().default(''),
-    hp: z.string().default(''),
-    hpMax: z.string().default(''),
-    mp: z.string().default(''),
-    mpMax: z.string().default(''),
-    avatar: z.string().default(''),
-    dataType: z.string().default(''),
-    readAt: z.number().default(0),
-    attributeSummary: z.string().default(''),
-    hpText: z.string().default(''),
-    mpText: z.string().default(''),
-    saveSummary: z.string().default(''),
-    summary: z.string().default('')
-  })
-  .partial();
-
-const npcT20Schema = z.object({
-  mode: z.enum(['none', 'embedded', 'linked']).default('none'),
-  dataType: z.string().default(T20_CURRENT),
-  characterId: z.string().default(''),
-  firecastUri: z.string().default(''),
-  snapshot: t20SnapshotSchema.optional()
-});
-
 export const npcSchema = baseEntitySchema.extend({
-  characterType: z.enum(['npc', 'entity']).default('npc'),
+  characterType: z.enum(['npc', 'entity', 'player']).default('npc'),
+  allyTypes: t20AllyTypesSchema.optional(),
   title: z.string().optional(),
   identity: z
     .object({
@@ -100,8 +62,7 @@ export const npcSchema = baseEntitySchema.extend({
   primaryLocationId: z.string().optional(),
   currentLocationId: z.string().optional(),
   locations: z.array(referenceSchema).default([]),
-  relations: z.array(referenceSchema).default([]),
-  t20: npcT20Schema.optional()
+  relations: z.array(referenceSchema).default([])
 });
 
 export const locationConnectionSchema = z
@@ -147,7 +108,14 @@ export const itemSchema = baseEntitySchema.extend({
   imageURL: urlValue,
   imageUrl: urlValue,
   value: z.object({ amount: stringValue, currency: z.string().min(1) }).optional(),
+  quantityMin: z.number().int().positive().optional(),
+  quantityMax: z.number().int().positive().optional(),
+  quantityFormula: z.string().regex(/^\s*\d+d\d+(?:\s*[+-]\s*\d+)?\s*$/i, 'Use uma fórmula como 1d40').optional(),
+  valueFormula: z.string().regex(/^\s*(?:\d+|\d+d\d+(?:\s*[+-]\s*\d+)?)\s*$/i, 'Use uma fórmula como 2d4+2 ou um valor fixo como 10').optional(),
   stats: z.array(itemStatSchema).default([])
+}).superRefine((item, ctx) => {
+  if ((item.quantityMin ?? item.quantityMax ?? 1) > (item.quantityMax ?? item.quantityMin ?? 1))
+    ctx.addIssue({ code: 'custom', path: ['quantityMax'], message: 'Máximo menor que mínimo' });
 });
 
 const visibleComponent = z.object({
@@ -157,6 +125,7 @@ const visibleComponent = z.object({
 
 export const monsterSchema = baseEntitySchema.extend({
   group: z.string().optional(),
+  rank: z.enum(['common', 'elite', 'boss']).default('common'),
   imageURL: urlValue,
   imageUrl: urlValue,
   sheet: z
@@ -173,27 +142,6 @@ export const monsterSchema = baseEntitySchema.extend({
       boss: z.boolean().default(false)
     })
     .default({}),
-  t20: z
-    .object({
-      nd: stringValue.optional(),
-      creatureType: z.string().optional(),
-      subtype: z.string().optional(),
-      size: z.string().optional(),
-      initiative: z.string().optional(),
-      perception: z.string().optional(),
-      senses: z.string().optional(),
-      defense: z.string().optional(),
-      fortitude: z.string().optional(),
-      reflex: z.string().optional(),
-      will: z.string().optional(),
-      hp: z.string().optional(),
-      hpMax: z.string().optional(),
-      mp: z.string().optional(),
-      mpMax: z.string().optional(),
-      attributes: z.record(z.string(), z.unknown()).default({}),
-      statVisibility: z.record(z.string(), visibilitySchema).default({})
-    })
-    .optional(),
   movements: z
     .array(visibleComponent.extend({ data: z.record(z.string(), z.unknown()) }))
     .default([]),
@@ -224,7 +172,7 @@ export const questObjectiveSchema = z
     targetId: z.string().optional(),
     dependsOn: z.array(z.string()).default([]),
     dependsOnObjectiveIds: z.array(z.string()).optional(),
-    playerEditable: z.boolean().default(false)
+    playerEditable: z.boolean().default(true)
   })
   .refine((value) => value.objectiveId || value.id, { message: 'objectiveId or id is required' });
 
@@ -371,18 +319,6 @@ export function buildBacklinks(entities) {
   return backlinks;
 }
 
-export function rollDiceFormula(formula, random = Math.random) {
-  if (!formula) return null;
-  const match = String(formula).trim().match(/^(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?$/i);
-  if (!match) throw new Error(`Invalid value formula: ${formula}`);
-  const dice = Number(match[1]);
-  const sides = Number(match[2]);
-  const modifier = Number(match[4] ?? 0) * (match[3] === '-' ? -1 : 1);
-  if (!Number.isInteger(dice) || dice < 1 || dice > 100 || !Number.isInteger(sides) || sides < 1 || sides > 10000)
-    throw new Error(`Invalid value formula: ${formula}`);
-  return Array.from({ length: dice }, () => 1 + Math.floor(random() * sides)).reduce((sum, value) => sum + value, modifier);
-}
-
 export function rollDrops(references, random = Math.random) {
   return references
     .filter((ref) => ref.type === 'item' && ref.role === 'drops')
@@ -401,6 +337,12 @@ export function rollDrops(references, random = Math.random) {
         }
         if (Math.floor(random() * 100) + 1 > chance) return null;
         const quantity = quantityMin + Math.floor(random() * (quantityMax - quantityMin + 1));
+        return { ...ref, quantity, ...(ref.valueFormula ? { cashValue: rollDiceFormula(ref.valueFormula, random) } : {}) };
+      }
+
+      if (ref.quantityFormula) {
+        if (Math.floor(random() * 100) + 1 > chance) return null;
+        const quantity = rollDiceFormula(ref.quantityFormula, random);
         return { ...ref, quantity, ...(ref.valueFormula ? { cashValue: rollDiceFormula(ref.valueFormula, random) } : {}) };
       }
 
@@ -455,12 +397,7 @@ export function visiblePlayerProgress(quest, evaluation) {
 
 export function canPlayerUpdateObjective(quest, objectiveId) {
   const objective = quest.objectives.find((item) => item.objectiveId === objectiveId);
-  return Boolean(objective && !objective.secret && objective.playerEditable);
-}
-
-export function normalizeT20ProviderId(value) {
-  if (value === T20_LEGACY) return T20_CURRENT;
-  return value;
+  return Boolean(objective && !objective.secret);
 }
 
 export function evaluateGrant({ baseVisibility, isGm, userId, groups = [], grants = [] }) {
@@ -528,3 +465,5 @@ export * from './v2.js';
 export * from './associations.js';
 
 export * from './entityMetadata.js';
+export * from './exporters/tormenta20Xml.js';
+export * from './mapNetwork.js';

@@ -5,7 +5,8 @@ import {
   normalizeEntity,
   stableValue,
   toLegacyEntity,
-  validateEntityCatalog
+  validateEntityCatalog,
+  normalizeLegacyDropFormulas
 } from '@sao/domain';
 
 export const ROOT_VERSION = '2.0';
@@ -119,6 +120,7 @@ export function parseSaoDataJson(input, options = {}) {
       conflicts: options.conflicts ?? 'error'
     })
   }));
+  if (options.migrateDropFormulas !== false) normalizeLegacyDropFormulas(entities, diagnostics, options.catalog);
   const keys = new Set();
   for (const entity of entities) {
     const key = `${entity.type}:${entity.data.id}`;
@@ -265,7 +267,8 @@ export const JSON_IMPORT_TEMPLATE = {
         ...(type === 'location' ? { placement: { floor: '1' } } : {}),
         ...(type === 'monster'
           ? {
-              statBlocks: { 'Ambesek.T20': { nd: '1' } },
+              rank: 'common',
+              statBlocks: { default: { nd: '1' } },
               components: [
                 {
                   id: 'habilidade-exemplo',
@@ -282,7 +285,7 @@ export const JSON_IMPORT_TEMPLATE = {
   }))
 };
 export function saoDataJsonSchema() {
-  return z.toJSONSchema(
+  const schema = z.toJSONSchema(
     z.union([
       v2PackSchema.extend({
         entities: z.array(
@@ -298,5 +301,12 @@ export function saoDataJsonSchema() {
     ]),
     { unrepresentable: 'any' }
   );
+  const pack = schema.anyOf?.[0] ?? schema;
+  const entityItems = pack.properties?.entities?.items;
+  return schema.anyOf ? {
+    ...pack,
+    oneOf: schema.anyOf,
+    properties: { ...pack.properties, entities: { ...pack.properties.entities, items: { ...entityItems, oneOf: entityItems.anyOf ?? entityItems.oneOf } } }
+  } : schema;
 }
 export { entitySchemas, migrateV1Entity };

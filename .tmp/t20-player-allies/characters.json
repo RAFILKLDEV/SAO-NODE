@@ -1,0 +1,1060 @@
+[
+  {
+    "pk": "cmtomll0j00h4la2l67b6qqpr",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.alpharecoil",
+    "name": "AlphaRecoil",
+    "active": true,
+    "version": 4,
+    "data": {
+      "id": "npc.alpharecoil",
+      "name": "AlphaRecoil",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/195bb56b-2ffa-4416-91ee-fdc8bc813b8f.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Caçador. Jogador de estilo tático e preciso, prefere observar o campo e escolher seus alvos antes de atacar.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtm49rkq011mpq2mrj4t01pf",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.blg-viper",
+    "name": "BLG Viper",
+    "active": true,
+    "version": 5,
+    "data": {
+      "id": "npc.blg-viper",
+      "name": "BLG Viper",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "discoverable",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/8df47d1b-544f-46c6-8ec4-702bbdfbc6ec.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "Mantém um visual funcional e intimidador, priorizando equipamentos que transmitam experiência e prontidão para combate. Evita acessórios puramente decorativos quando não possuem utilidade clara.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Guerreiro. Competitivo e metódico, usa equipamento funcional e intimidador. Já gostava de otimizar builds e estratégias antes mesmo de ficar preso em Aincrad.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "Papel: Competitivo / Estrategista. Ponto forte: planejamento. Problema: pode colocar eficiência acima das pessoas. Gancho: sempre tenta descobrir a forma mais segura e eficiente de resolver um problema.",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "Antes de ficar preso em Aincrad, já tinha perfil de jogador competitivo e gostava de otimizar builds, equipamentos e estratégias. A mudança das regras do jogo tornou seu comportamento ainda mais cauteloso e metódico.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "Direto, disciplinado, exigente e calculista. Odeia desperdício de recursos e decisões impulsivas. Pode colocar eficiência acima das pessoas quando a situação fica perigosa.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "Jogador competitivo e estrategista, focado em eficiência, preparação e desempenho.",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmugeh7e610wbs62d9037lipv",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.donatelador",
+    "name": "Donatelador",
+    "active": true,
+    "version": 4,
+    "data": {
+      "id": "npc.donatelador",
+      "name": "Donatelador",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "discoverable",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "https://images-ng.pixai.art/images/orig/e570be68-5771-4447-bfaf-db2580eb1e5a"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Arcanista. Jogador que prefere vencer usando conhecimento, preparação e habilidades poderosas em vez de depender apenas de força bruta.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtm577a60004p62l9un5osc2",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.eletricraccon",
+    "name": "EletricRaccon",
+    "active": true,
+    "version": 7,
+    "data": {
+      "id": "npc.eletricraccon",
+      "name": "EletricRaccon",
+      "subtitle": "Anti Shadow Killer",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/d358d48e-e0cd-4f58-849e-e416d604d5fe.png"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "Prefere equipamento leve e prático para exploração. Costuma carregar itens variados, ferramentas e consumíveis que podem parecer inúteis até surgir uma situação inesperada.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Inventor. Explorador curioso que carrega ferramentas e itens variados, sempre testando interações e procurando mecânicas escondidas de Aincrad.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "Papel: Explorador / Pesquisador. Ponto forte: descobertas. Problema: a curiosidade pode colocar o grupo em perigo. Gancho: está praticamente construindo uma wiki mental de Aincrad.",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "Sempre gostou mais de explorar jogos do que de competir diretamente. Passava tempo procurando áreas opcionais, interações raras e detalhes que não apareciam em guias. Em Aincrad, essa curiosidade passou a ser uma ferramenta de sobrevivência.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "Curioso, criativo, inquieto e experimental. Tem dificuldade em ignorar mistérios e pode colocar o grupo em situações desnecessárias apenas para descobrir o que acontece.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "Explorador curioso, obcecado por descobrir mecânicas escondidas e comportamentos incomuns.",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmuec177m00whof2dohat4xrq",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.gruntligeiro",
+    "name": "GruntLigeiro",
+    "active": true,
+    "version": 4,
+    "data": {
+      "id": "npc.gruntligeiro",
+      "name": "GruntLigeiro",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/a4a48c31-ca10-40a7-a1cf-d3fd44bd329b.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Bucaneiro. Ágil e ousado, prefere mobilidade e ataques rápidos, confiando mais em velocidade e iniciativa do que em armaduras pesadas.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmugb3h5v10o2s62d1c9nkwqh",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.honrado-com-amor",
+    "name": "Honrado com Amor",
+    "active": true,
+    "version": 3,
+    "data": {
+      "id": "npc.honrado-com-amor",
+      "name": "Honrado com Amor",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "discoverable",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/d101b86f-2d2e-46f3-a591-6110a6ef789c.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Paladino. Guerreiro guiado por honra e lealdade, costuma se colocar na linha de frente para proteger seus companheiros.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtm4eq04011zpq2m3qbxcwtb",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.loud-sininistra",
+    "name": "LOUD Sininistra",
+    "active": true,
+    "version": 6,
+    "data": {
+      "id": "npc.loud-sininistra",
+      "name": "LOUD Sininistra",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "discoverable",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/17633cb5-db7a-4168-832d-d31e5e93888b.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "Cuida bastante da própria apresentação e prefere um visual marcante e fácil de reconhecer. Usa a aparência do avatar como parte de sua presença social.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Bardo. Jogadora social e marcante, usa sua facilidade para conversar e criar vínculos para conseguir informações e manter contatos entre diferentes grupos.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "Papel: Social / Informante. Ponto forte: informação e contatos. Problema: pode confiar demais nas próprias leituras das pessoas. Gancho: normalmente sabe de alguma coisa acontecendo antes do resto do grupo.",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "Antes de Aincrad, gostava do aspecto social de jogos online e se envolvia com grupos, comunidades e amizades. Depois de ficar presa no jogo, essa habilidade passou a ter valor estratégico.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "Comunicativa, perceptiva, sociável e adaptável. Tem facilidade para criar vínculos, mas às vezes confia demais na própria capacidade de entender as intenções dos outros.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "Jogadora social e informante, conhecida por manter contatos e acompanhar rumores entre grupos.",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtmabhrd0178ml2l9ty90bdi",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.noobtownmayor",
+    "name": "NoobTownMayor",
+    "active": true,
+    "version": 14,
+    "data": {
+      "id": "npc.noobtownmayor",
+      "name": "NoobTownMayor",
+      "subtitle": "Renan",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/0a1af4a8-314e-4cd9-808c-1dab61cf11f4.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "Usa equipamento de ladino com aparência prática e discreta. Prefere mobilidade, bolsas, ferramentas e recursos úteis a armaduras pesadas ou chamativas.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Ladino. Beta tester veterano de visual prático e discreto, conhece rotas, inimigos e áreas iniciais e costuma usar esse conhecimento para ajudar outros jogadores.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "Papel: Veterano / Beta Tester. Ponto forte: conhecimento prévio. Problema: Aincrad mudou desde o Beta. Frase recorrente: 'No Beta era assim...'. Algumas informações dele continuam corretas; outras podem estar perigosamente desatualizadas.",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "Participou do Beta do Heaven's World. Durante os testes, ajudava nas front lines coletando itens e enfrentando monstros mais fracos. Apesar de não ser um dos jogadores mais famosos do beta, acumulou bastante conhecimento sobre progressão inicial, rotas e comportamento de inimigos.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "Prestativo, observador, experiente e um pouco confiante demais no próprio conhecimento do beta. Frequentemente compara situações atuais com o que existia durante os testes.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "Beta tester veterano e Ladino 8, conhecido por ajudar jogadores iniciantes e conhecer bem as áreas iniciais.",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {
+        "legacyConflicts": [
+          {
+            "code": "ALIAS_CONFLICT",
+            "path": "subtitle",
+            "values": [
+              "Renan",
+              "Ladino"
+            ]
+          }
+        ]
+      },
+      "characterType": "player",
+      "identity": {
+        "race": "Humano",
+        "gender": "",
+        "age": "",
+        "profession": "Fortão ( Iniciante ) - Assassino - Fortão ( Iniciante ) "
+      },
+      "level": "Ladino - 8",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtwax12d0043mn2d09tvln3x",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.o-tal-do-mula",
+    "name": "O Tal do Mula",
+    "active": true,
+    "version": 5,
+    "data": {
+      "id": "npc.o-tal-do-mula",
+      "name": "O Tal do Mula",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/50270515-f965-4975-b5e0-f148d2c15845.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Bárbaro. Jogador resistente e teimoso, prefere resolver problemas avançando diretamente e confiando na própria força para continuar de pé.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {
+        "legacySource": {
+          "kind": "local",
+          "modifiedLocally": true
+        }
+      },
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtm5c9c0000mp62l334tdk6b",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.pablo-marcal-do-mal",
+    "name": "Pablo Marçal Do Mal",
+    "active": true,
+    "version": 6,
+    "data": {
+      "id": "npc.pablo-marcal-do-mal",
+      "name": "Pablo Marçal Do Mal",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/e6eab9d2-a533-4f8b-b480-d6cd8254c36b.png"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "Prefere um visual chamativo e bem cuidado, pensado para transmitir confiança e presença. Gosta de parecer mais bem-sucedido do que realmente está.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Nobre. Negociador ambicioso de aparência chamativa, transforma comércio, informação e relações entre jogadores em ferramentas para conquistar influência em Aincrad.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "Papel: Comerciante / Negociador. Ponto forte: negociação. Problema: algumas ideias parecem melhores quando ele explica do que quando alguém faz as contas. Gancho: quer construir uma rede comercial dentro de Aincrad.",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "Antes de Aincrad, já gostava de negociação, comércio entre jogadores e sistemas econômicos. Depois de ficar preso, passou a enxergar o mercado e as relações entre jogadores como uma forma de construir influência e segurança.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "Persuasivo, ambicioso, oportunista e muito confiante. Tem facilidade para convencer outras pessoas e genuinamente acredita em muitas das próprias ideias.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "Jogador persuasivo e negociador, focado em comércio, influência e oportunidades.",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtomhjtd00gula2lf85fnpp3",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.quebracraneo",
+    "name": "QuebraCraneo",
+    "active": true,
+    "version": 4,
+    "data": {
+      "id": "npc.quebracraneo",
+      "name": "QuebraCraneo",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/00599203-077a-41f1-a311-d898bb2e6e38.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Bárbaro. Combatente agressivo e intimidador, prefere enfrentar os inimigos de frente e terminar as lutas usando força bruta.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtomh9vy00gkla2lrludlwlf",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.thermaltank",
+    "name": "ThermalTank",
+    "active": true,
+    "version": 4,
+    "data": {
+      "id": "npc.thermaltank",
+      "name": "ThermalTank",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/5f08044d-042e-4861-b40c-c4dce3f7bc66.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Cavaleiro. Especialista em defesa e linha de frente, usa equipamento pesado e assume o papel de segurar os inimigos enquanto o grupo luta em segurança.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  },
+  {
+    "pk": "cmtomgysp00gala2l6kyx62my",
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "campaign": "Heaven's World",
+    "id": "npc.tigeruppercut",
+    "name": "TigerUpperCut",
+    "active": true,
+    "version": 4,
+    "data": {
+      "id": "npc.tigeruppercut",
+      "name": "TigerUpperCut",
+      "subtitle": "",
+      "active": true,
+      "tags": [],
+      "discoveryRevision": 0,
+      "visibility": {
+        "entity": "gm",
+        "sections": {
+          "t20": "discoverable",
+          "basic": "discoverable",
+          "identity": "discoverable",
+          "services": "discoverable",
+          "locations": "discoverable",
+          "relations": "discoverable",
+          "additional": "discoverable",
+          "extensions": "discoverable",
+          "references": "discoverable",
+          "extraStatBlocks": "discoverable"
+        }
+      },
+      "media": {
+        "image": "/api/v1/campaigns/cmtdmj4tw0002fk5o7xgh6w66/media/3ef1d4f8-92ee-46f6-87dd-41dcfc3f3c75.jpg"
+      },
+      "fields": [
+        {
+          "key": "appearance",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "description",
+          "value": "Classe: Lutador. Combatente direto e explosivo, especializado em golpes físicos e combate corpo a corpo, preferindo enfrentar adversários bem de perto.",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "gmNotes",
+          "value": "",
+          "visibility": "gm"
+        },
+        {
+          "key": "history",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "personality",
+          "value": "",
+          "visibility": "discoverable"
+        },
+        {
+          "key": "shortDescription",
+          "value": "",
+          "visibility": "discoverable"
+        }
+      ],
+      "links": [],
+      "extensions": {},
+      "characterType": "player",
+      "identity": {
+        "race": "",
+        "gender": "",
+        "age": "",
+        "profession": ""
+      },
+      "level": "",
+      "factions": [],
+      "services": []
+    }
+  }
+]

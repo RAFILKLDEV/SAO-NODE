@@ -55,8 +55,10 @@ export const referenceRoleLabels = {
   connection: 'Conexão',
   requirement: 'Requisito',
   reward: 'Recompensa',
+  'quest-character': 'Personagem da missão',
   drops: 'Drop',
-  drop: 'Drop'
+  drop: 'Drop',
+  'found-in': 'Encontrado em'
 };
 export const referenceRoleOptions = [
   { value: 'related', label: 'Relacionado' },
@@ -373,6 +375,7 @@ export const sectionFields = {
       'title',
       'subtitle',
       'level',
+      'allyTypes',
       'imageURL',
       'imageUrl',
       'tokenUrl',
@@ -404,7 +407,7 @@ export const sectionFields = {
     services: ['services']
   },
   item: {
-    basic: ['subtitle', 'category', 'rarity', 'imageURL', 'imageUrl', 'value', 'tags'],
+    basic: ['subtitle', 'category', 'rarity', 'imageURL', 'imageUrl', 'value', 'valueFormula', 'tags'],
     stats: ['stats']
   },
   monster: {

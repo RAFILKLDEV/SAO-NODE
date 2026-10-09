@@ -3,9 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Exercise the actual routes while keeping these tests independent of PostgreSQL.
 vi.mock('../src/lib/prisma.js', () => ({ prisma: {
-  membership: { findMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn() },
+  membership: { findMany: vi.fn(), findFirst: vi.fn() },
   characterFavorite: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
-  characterBinding: { findMany: vi.fn(), upsert: vi.fn() }, $transaction: vi.fn()
 } }));
 vi.mock('../src/lib/auth.js', () => ({
   authenticate: async (request) => { request.auth = { user: { id: request.headers['x-user'] ?? 'u1' } }; },
@@ -30,7 +29,7 @@ beforeEach(async () => {
   prisma.characterFavorite.upsert.mockImplementation(async ({ create }) => { records.set(key(create), create); return create; });
   prisma.characterFavorite.findMany.mockImplementation(async ({ where }) => [...records.values()].filter((record) => matches(record, where)).map(({ targetType, targetId }) => ({ targetType, targetId })));
   prisma.characterFavorite.deleteMany.mockImplementation(async ({ where }) => { for (const [id, record] of records) if (matches(record, where)) records.delete(id); return { count: 1 }; });
-  getEntityForRequest.mockImplementation(async ({ domainId }) => domainId === 'npc.hidden' ? null : { id: domainId, characterType: domainId === 'npc.entity' ? 'entity' : 'npc' });
+  getEntityForRequest.mockImplementation(async ({ domainId }) => domainId.endsWith('.hidden') ? null : { id: domainId, characterType: domainId === 'npc.entity' ? 'entity' : 'npc' });
   prisma.membership.findFirst.mockResolvedValue({ userId: 'u2' });
 });
 afterEach(async () => { await app.close(); });
@@ -64,16 +63,11 @@ describe('character routes', () => {
     expect((await request('PUT', '/character-favorites/player/outside')).statusCode).toBe(404);
     expect(prisma.characterFavorite.upsert).not.toHaveBeenCalled();
   });
-  it('keeps CharacterBinding provider normalization, snapshots and personal reads working', async () => {
-    prisma.membership.findUnique.mockResolvedValue({ userId: 'u2' });
-    prisma.$transaction.mockImplementation((callback) => callback(prisma));
-    prisma.characterBinding.upsert.mockImplementation(async ({ create }) => create);
-    const snapshot = { name: 'Herói', hp: 22, attributes: { strength: 3 }, custom: 'Firecast' };
-    const response = await app.inject({ method: 'PUT', url: '/api/v1/campaigns/c1/bindings', headers: { 'x-role': 'gm' }, payload: { userId: 'u2', mode: 'manual', providerId: 'Ambesek.Tormenta20', externalId: 'firecast-1', snapshot } });
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ providerId: 'Ambesek.T20', externalId: 'firecast-1', snapshot });
-    prisma.characterBinding.findMany.mockResolvedValue([]);
-    await request('GET', '/bindings', 'u2');
-    expect(prisma.characterBinding.findMany).toHaveBeenCalledWith({ where: { campaignId: 'c1', userId: 'u2' }, orderBy: { updatedAt: 'desc' } });
+  it('allows favorites for locations, items, monsters and quests only when visible', async () => {
+    for (const targetType of ['location', 'item', 'monster', 'quest']) {
+      expect((await request('PUT', `/character-favorites/${targetType}/${targetType}.visible`)).statusCode).toBe(200);
+      expect(getEntityForRequest).toHaveBeenLastCalledWith(expect.objectContaining({ type: targetType, domainId: `${targetType}.visible` }));
+    }
+    expect((await request('PUT', '/character-favorites/monster/monster.hidden')).statusCode).toBe(404);
   });
 });

@@ -53,7 +53,6 @@ Além dos campos comuns:
 | `level` | texto ou número opcional | Nível do NPC. |
 | `factions` | string[], `[]` | IDs ou nomes de facções. |
 | `services` | array, `[]` | Serviços oferecidos; cada item é `{name, description}` e `description` tem padrão vazio. |
-| `character` | objeto opcional | Vínculo de ficha externa: `mode` (`none`, `embedded`, `linked`), `providerId` (padrão `Ambesek.T20`), `externalId`, `uri` e `snapshot` JSON opcional. |
 
 ## 4. Local (`type: "location"`)
 
@@ -84,7 +83,8 @@ Uma conexão é `{id, target, type?, direction?, distanceKm?, travelMinutes?, ac
 | Campo | Tipo/padrão | Explicação |
 |---|---|---|
 | `group` | string opcional | Grupo ou família do monstro. |
-| `statBlocks` | objeto, `{}` | Fichas separadas por sistema. A chave recomendada para T20 é `Ambesek.T20`; o alias legado `Ambesek.Tormenta20` é convertido. |
+| `rank` | `common`, `elite` ou `boss` | Classificação do monstro, independente dos blocos de ficha. |
+| `statBlocks` | objeto, `{}` | Fichas genéricas separadas por chave; blocos não dependem de integração ou sistema externo. |
 | `components` | array, `[]` | Movimentos, ataques, habilidades, perícias e traços. |
 
 Cada `statBlocks[provider]` contém `nd?`, `type?`, `subtype?`, `size?`, e os mapas `combat`, `resources`, `resistances`, `attributes` (todos padrão `{}`), além de `statsVisibility` (mapa `campo -> public|gm|discoverable`). Os mapas preservam os atributos do sistema sem impor uma lista fixa.
@@ -111,7 +111,7 @@ Cada componente é `{id, kind, visibility, data}`. `kind` é `movement`, `attack
 | `rewards` | array, `[]` | Recompensas (ver abaixo). |
 | `timeLimitMinutes` | inteiro positivo opcional | Limite de tempo da missão. |
 
-Objetivo: `{objectiveId, type, text, order, requiredQuantity, optional, secret, visibility, target?, dependsOn, playerEditable}`. `objectiveId` é estável e único; `order` é inteiro ≥ 0; `requiredQuantity` é inteiro positivo (padrão 1); `optional`, `secret` e `playerEditable` são booleanos (padrão `false`); `dependsOn` lista IDs existentes na mesma missão (padrão `[]`) e não pode formar ciclo. `secret` oculta o objetivo do jogador; `playerEditable` permite que o jogador atualize seu progresso quando o objetivo não é secreto.
+Objetivo: `{objectiveId, type, text, order, requiredQuantity, optional, secret, visibility, target?, dependsOn, playerEditable}`. `objectiveId` é estável e único; `order` é inteiro ≥ 0; `requiredQuantity` é inteiro positivo (padrão 1); `optional` e `secret` são booleanos (padrão `false`); `playerEditable` é booleano (padrão `true`), mantido por compatibilidade. Jogadores podem atualizar os objetivos visíveis e desbloqueados de missões em andamento atribuídas a eles ou aos seus grupos, independentemente desse campo. `dependsOn` lista IDs existentes na mesma missão (padrão `[]`) e não pode formar ciclo. `secret` oculta o objetivo do jogador até uma revelação autorizada.
 
 Recompensa: `{rewardId, type, target?, amount?, quantity?, currency?, choiceGroup?, data?}`. `rewardId` é único e estável. `target` aponta para a entidade recompensada; os demais campos representam valor, quantidade, moeda, grupo de escolha e dados específicos.
 

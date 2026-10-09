@@ -1,0 +1,223 @@
+[
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.alpharecoil",
+    "name": "AlphaRecoil",
+    "version": 4,
+    "allyTypes": [
+      {
+        "type": "atirador",
+        "rank": "iniciante"
+      },
+      {
+        "type": "perseguidor",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Rifle na imagem; caçador tático que observa o campo e seleciona alvos."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.blg-viper",
+    "name": "BLG Viper",
+    "version": 5,
+    "allyTypes": [
+      {
+        "type": "ajudante",
+        "rank": "iniciante"
+      },
+      {
+        "type": "combatente",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Espada e proteção funcional; guerreiro com foco em planejamento e preparação do grupo."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.donatelador",
+    "name": "Donatelador",
+    "version": 4,
+    "allyTypes": [
+      {
+        "type": "adepto",
+        "rank": "iniciante"
+      },
+      {
+        "type": "magivocador",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "A ficha informa Arcanista, conhecimento e habilidades poderosas; a espada da imagem não comprova especialização física."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.eletricraccon",
+    "name": "EletricRaccon",
+    "version": 7,
+    "allyTypes": [
+      {
+        "type": "ajudante",
+        "rank": "iniciante"
+      },
+      {
+        "type": "perseguidor",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Equipamento leve na imagem; inventor e explorador com ferramentas, pesquisa e descoberta de áreas."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.gruntligeiro",
+    "name": "GruntLigeiro",
+    "version": 4,
+    "allyTypes": [
+      {
+        "type": "combatente",
+        "rank": "iniciante"
+      },
+      {
+        "type": "vigilante",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Visual sem armadura pesada; bucaneiro de ataques rápidos, mobilidade e iniciativa."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.honrado-com-amor",
+    "name": "Honrado com Amor",
+    "version": 3,
+    "allyTypes": [
+      {
+        "type": "combatente",
+        "rank": "iniciante"
+      },
+      {
+        "type": "guardiao",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Armadura e arma na imagem; paladino que atua na linha de frente e protege companheiros."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.loud-sininistra",
+    "name": "LOUD Sininistra",
+    "version": 6,
+    "allyTypes": [
+      {
+        "type": "ajudante",
+        "rank": "iniciante"
+      },
+      {
+        "type": "vigilante",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Visual leve e marcante; bardo social e informante que acompanha rumores e percebe intenções."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.noobtownmayor",
+    "name": "NoobTownMayor",
+    "version": 14,
+    "allyTypes": [
+      {
+        "type": "assassino",
+        "rank": "iniciante"
+      },
+      {
+        "type": "fortao",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Ladino de equipamento leve; preservar os dois tipos já indicados na profissão, incluindo Fortão Iniciante."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.o-tal-do-mula",
+    "name": "O Tal do Mula",
+    "version": 5,
+    "allyTypes": [
+      {
+        "type": "fortao",
+        "rank": "iniciante"
+      },
+      {
+        "type": "guardiao",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Proteções na imagem; bárbaro descrito como resistente, com força e capacidade de continuar de pé."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.pablo-marcal-do-mal",
+    "name": "Pablo Marçal Do Mal",
+    "version": 6,
+    "allyTypes": [
+      {
+        "type": "ajudante",
+        "rank": "iniciante"
+      },
+      {
+        "type": "guardiao",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Nobre negociador e influente; escudo e armadura na imagem fundamentam a função defensiva complementar."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.quebracraneo",
+    "name": "QuebraCraneo",
+    "version": 4,
+    "allyTypes": [
+      {
+        "type": "combatente",
+        "rank": "iniciante"
+      },
+      {
+        "type": "fortao",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Arma pesada na imagem; bárbaro agressivo que resolve combates com força bruta."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.thermaltank",
+    "name": "ThermalTank",
+    "version": 4,
+    "allyTypes": [
+      {
+        "type": "combatente",
+        "rank": "iniciante"
+      },
+      {
+        "type": "guardiao",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Armadura pesada; cavaleiro especializado em defesa e em segurar inimigos na linha de frente."
+  },
+  {
+    "campaignId": "cmtdmj4tw0002fk5o7xgh6w66",
+    "id": "npc.tigeruppercut",
+    "name": "TigerUpperCut",
+    "version": 4,
+    "allyTypes": [
+      {
+        "type": "combatente",
+        "rank": "iniciante"
+      },
+      {
+        "type": "fortao",
+        "rank": "iniciante"
+      }
+    ],
+    "rationale": "Imagem sem arma pesada; lutador especializado em golpes físicos explosivos e combate corpo a corpo."
+  }
+]

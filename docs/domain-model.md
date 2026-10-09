@@ -23,11 +23,9 @@ O modelo externo canônico é saoData v2. Os registros normalizados abaixo são 
 
 A ordem de decisão adotada é: mestre sempre administra; grant individual explícito; deny de grupo; allow de grupo; visibilidade-base. Conteúdo `discoverable` não é público até haver allow. Objetivo marcado `secret` exige allow explícito para jogador mesmo quando a visibilidade-base for pública.
 
-## Organização e T20
+## Organização
 
-`Membership`, `Group` e `GroupMember` modelam acesso à campanha. `CharacterBinding` guarda modo, provider, externalId e snapshot. `NpcAssociation` é organizacional e não concede permissão.
-
-O contrato `CharacterProvider` vive em `packages/domain`; o provider manual/local e o mock não tentam acessar APIs internas do Firecast.
+`Membership`, `Group` e `GroupMember` modelam acesso à campanha. `NpcAssociation` é organizacional e não concede permissão.
 
 ## Dados derivados
 

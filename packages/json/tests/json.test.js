@@ -62,6 +62,22 @@ describe('saoData JSON', () => {
     expect(() => buildDiff([], parsed.pack)).not.toThrow();
   });
 
+  it('accepts the complete compact-operation envelope used in the AI guide', () => {
+    const parsed = parseSaoDataJson({
+      schemaVersion: '2.0',
+      packId: 'alteracoes-campanha',
+      name: 'Alterações da campanha',
+      operations: [{
+        type: 'monster', id: 'monster.lobo',
+        set: { group: 'matilha' },
+        add: { links: [{ type: 'item', id: 'item.carne', role: 'drops' }] },
+        remove: {}
+      }]
+    });
+    expect(parsed.pack.operations).toHaveLength(1);
+    expect(() => parseSaoDataJson({ schemaVersion: '2.0', packId: 'p', name: 'n', operations: [{ type: 'monster', id: 'monster.lobo', set: {} }] })).not.toThrow();
+  });
+
   it('extracts URLs from Markdown links in compact operations', () => {
     const { pack } = parseSaoDataJson({
       schemaVersion: '2.0',

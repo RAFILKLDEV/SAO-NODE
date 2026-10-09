@@ -7,6 +7,9 @@ describe('association editor domain rules', () => {
     expect(normalizeAssociation(source, { type: 'item', id: 'item.fur', role: 'drop' })).toEqual({
       type: 'item', id: 'item.fur', role: 'drops', slot: 'references', chance: 100, quantityMin: 1, quantityMax: 1
     });
+    expect(normalizeAssociation(source, { type: 'item', id: 'item.meat', role: 'drops', quantityFormula: '1d40' })).toMatchObject({
+      type: 'item', id: 'item.meat', role: 'drops', chance: 100, quantityFormula: '1d40'
+    });
   });
   it('rejects self links, invalid namespace and NPC-only slots', () => {
     expect(() => normalizeAssociation(source, { ...source, role: 'related' })).toThrow('si mesma');
@@ -20,6 +23,8 @@ describe('association editor domain rules', () => {
     expect(normalizeAssociation(source, { type: 'quest', id: 'quest.hunt', role: 'protects' }).role).toBe('protects');
     expect(associationRoleAllowed('found-in', 'monster', 'location')).toBe(true);
     expect(associationRoleAllowed('found-in', 'monster', 'item')).toBe(false);
+    expect(associationRoleAllowed('quest-character', 'quest', 'npc')).toBe(true);
+    expect(associationRoleAllowed('quest-character', 'npc', 'quest')).toBe(false);
   });
   it('deduplicates repeated links and rejects conflicting details', () => {
     const link = { type: 'item', id: 'item.fur', role: 'drops', chance: 40 };

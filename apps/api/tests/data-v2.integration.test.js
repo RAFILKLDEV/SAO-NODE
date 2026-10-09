@@ -65,7 +65,7 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))('v2 com PostgreSQL real',
           }
         ],
         statBlocks: {
-          'Ambesek.T20': { combat: { defense: 18 }, statsVisibility: { combat: 'gm' } }
+          default: { combat: { defense: 18 }, statsVisibility: { combat: 'gm' } }
         },
         components: [
           { id: 'rage', kind: 'ability', visibility: 'gm', data: { name: 'Fúria' } },
@@ -214,7 +214,7 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))('v2 com PostgreSQL real',
       await call('GET', 'monsters/monster.boar?format=2', null, playerHeaders)
     ).json();
     expect(monster.data.components.map((c) => c.id)).toEqual(['bite']);
-    expect(monster.data.statBlocks['Ambesek.T20'].combat).toEqual({});
+    expect(monster.data.statBlocks.default.combat).toEqual({});
     const location = (await call('GET', 'locations/loc.child?format=2')).json();
     expect(location.data.connections[0]).toMatchObject({
       id: 'road',
@@ -222,6 +222,17 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))('v2 com PostgreSQL real',
       travelMinutes: 5,
       target: { type: 'location', id: 'loc.root' }
     });
+  });
+  it('exporta XML do Tormenta20/Firecast apenas para o mestre', async () => {
+    const forbidden = await call('GET', 'monsters/monster.boar/firecast.xml', null, playerHeaders);
+    expect(forbidden.statusCode).toBe(403);
+    const response = await call('GET', 'monsters/monster.boar/firecast.xml');
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.headers['content-type']).toMatch(/application\/xml/);
+    expect(response.body).toContain('<nome>Javali</nome>');
+    expect(response.body).toContain('Fúria');
+    const missing = await call('GET', 'monsters/monster.unknown/firecast.xml');
+    expect(missing.statusCode).toBe(404);
   });
   it('impede ciclos via CRUD e conserva visibilidade omitida na edição', async () => {
     const root = (await call('GET', 'locations/loc.root?format=2')).json();
@@ -249,6 +260,9 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))('v2 com PostgreSQL real',
     });
     expect(started.statusCode, started.body).toBe(201);
     const progress = started.json();
+    expect(progress.rewards).toEqual([
+      { rewardId: 'hide', type: 'item', target: { type: 'item', id: 'item.hide' }, quantity: 2 }
+    ]);
     const updated = await call(
       'PATCH',
       `progress/${progress.id}/objectives/kill`,
@@ -286,6 +300,9 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))('v2 com PostgreSQL real',
     expect((await call('GET', 'progress', null, playerHeaders)).json()[0].objectives[0].value).toBe(
       2
     );
+    expect((await call('GET', 'progress', null, playerHeaders)).json()[0].rewards[0]).toMatchObject({
+      rewardId: 'hide', type: 'item', quantity: 2, target: { id: 'item.hide', available: true }
+    });
     const removed = structuredClone(pack);
     removed.entities.find((e) => e.type === 'quest').data.objectives = [];
     await apply(removed);

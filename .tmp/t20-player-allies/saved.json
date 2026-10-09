@@ -1,0 +1,80 @@
+[
+  {
+    "id": "npc.alpharecoil",
+    "name": "AlphaRecoil",
+    "version": 5,
+    "auditId": "cmuzru5hc0001fk60sgulqx4w"
+  },
+  {
+    "id": "npc.blg-viper",
+    "name": "BLG Viper",
+    "version": 6,
+    "auditId": "cmuzru5hx0003fk60bq00m2p8"
+  },
+  {
+    "id": "npc.donatelador",
+    "name": "Donatelador",
+    "version": 5,
+    "auditId": "cmuzru5ia0005fk60tcijnwew"
+  },
+  {
+    "id": "npc.eletricraccon",
+    "name": "EletricRaccon",
+    "version": 8,
+    "auditId": "cmuzru5il0007fk60wg47883r"
+  },
+  {
+    "id": "npc.gruntligeiro",
+    "name": "GruntLigeiro",
+    "version": 5,
+    "auditId": "cmuzru5j10009fk60z2agkcs6"
+  },
+  {
+    "id": "npc.honrado-com-amor",
+    "name": "Honrado com Amor",
+    "version": 4,
+    "auditId": "cmuzru5jd000bfk6072bdejmx"
+  },
+  {
+    "id": "npc.loud-sininistra",
+    "name": "LOUD Sininistra",
+    "version": 7,
+    "auditId": "cmuzru5jn000dfk60bgcbke0q"
+  },
+  {
+    "id": "npc.noobtownmayor",
+    "name": "NoobTownMayor",
+    "version": 15,
+    "auditId": "cmuzru5jy000ffk606pcuu8vo"
+  },
+  {
+    "id": "npc.o-tal-do-mula",
+    "name": "O Tal do Mula",
+    "version": 6,
+    "auditId": "cmuzru5k8000hfk60duxrhc1j"
+  },
+  {
+    "id": "npc.pablo-marcal-do-mal",
+    "name": "Pablo Marçal Do Mal",
+    "version": 7,
+    "auditId": "cmuzru5kj000jfk60xyozp1zq"
+  },
+  {
+    "id": "npc.quebracraneo",
+    "name": "QuebraCraneo",
+    "version": 5,
+    "auditId": "cmuzru5ku000lfk60x3ff3wwr"
+  },
+  {
+    "id": "npc.thermaltank",
+    "name": "ThermalTank",
+    "version": 5,
+    "auditId": "cmuzru5l6000nfk60ixkt3h2u"
+  },
+  {
+    "id": "npc.tigeruppercut",
+    "name": "TigerUpperCut",
+    "version": 5,
+    "auditId": "cmuzru5li000pfk60h72rbm9u"
+  }
+]

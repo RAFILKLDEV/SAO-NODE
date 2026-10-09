@@ -10,7 +10,7 @@ describe('liberação de personagens', () => {
       ['Personalidade e história', ['personality', 'history']],
       ['Vínculos', ['section.locations', 'section.relations', 'section.references']],
       ['Serviços', ['section.services']],
-      ['Ficha T20 e fichas adicionais', ['section.t20', 'section.extraStatBlocks']]
+      ['Fichas adicionais', ['section.extraStatBlocks']]
     ]);
     expect(targets.every((target) => !target.availableEntityIds)).toBe(true);
     expect(targets.filter((target) => target.kind === 'field').map(({ key }) => key)).toEqual([

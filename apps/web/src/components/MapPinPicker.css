@@ -1,0 +1,24 @@
+.map-pin-picker { display: flex; flex-wrap: wrap; gap: 12px; min-width: 0; max-width: 100%; }
+.map-pin-picker-control { position: relative; display: grid; gap: 5px; min-width: 155px; }
+.map-pin-picker-control > span { color: var(--muted); font-size: .8rem; }
+.map-pin-entity-control { width: min(420px, calc(100vw - 64px)); }
+.map-pin-picker-trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 39px; text-align: left; }
+.map-pin-picker-trigger strong { font-weight: 500; overflow-wrap: anywhere; }
+.map-pin-picker-trigger:hover { transform: none; }
+.map-pin-picker-popover { position: absolute; top: calc(100% + 6px); left: 0; z-index: 25; width: 100%; min-width: 240px; max-width: calc(100vw - 64px); padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: #0a1a2c; box-shadow: 0 12px 32px #0009; }
+.map-pin-picker-popover input { width: 100%; margin-bottom: 8px; }
+.map-pin-picker-options { max-height: min(340px, 50vh); overflow-y: auto; overscroll-behavior: contain; }
+.map-pin-picker-popover button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; color: inherit; text-align: left; box-shadow: none; font-size: .85rem; }
+.map-pin-picker-popover button:hover, .map-pin-picker-popover button:focus-visible { background: #ffffff10; transform: none; }
+.map-pin-picker-popover button[aria-checked="true"], .map-pin-picker-popover button[aria-pressed="true"] { background: #58d6ed18; color: var(--sao); }
+.map-pin-picker-check { margin-left: auto; }
+.map-pin-picker-options p { margin: 8px; color: var(--muted); font-size: .85rem; }
+.map-pin-type-dot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: #2563eb; }
+.pin-type-npc { background: #16a34a; }
+.pin-type-item { background: #f97316; }
+.pin-type-monster { background: #dc2626; }
+.pin-type-quest { background: #eab308; }
+@media (max-width: 700px) {
+  .map-pin-picker { width: 100%; }
+  .map-pin-picker-control { width: 100%; }
+}

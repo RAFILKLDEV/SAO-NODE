@@ -15,8 +15,9 @@ import {
   chunkDiscoveryGrants,
   isDropReference,
   monsterComponentTargets,
-  monsterNdLabel
-  ,isCharacterEntity
+  monsterNdLabel,
+  isCharacterEntity,
+  monsterRank
 } from './pages/EntityPage.jsx';
 import {
   collectPermissionChangeEntities,
@@ -68,8 +69,15 @@ describe('reference list rendering', () => {
 
   it('exposes the monster ND in the list metadata', () => {
     expect(monsterNdLabel({ sheet: { nd: '3' } })).toBe('ND 3');
-    expect(monsterNdLabel({ t20: { nd: '5' } })).toBe('ND 5');
+    expect(monsterNdLabel({ sheet: { nd: '5' } })).toBe('ND 5');
     expect(monsterNdLabel({})).toBe('');
+  });
+
+  it('classifies monsters as common, elite, or boss', () => {
+    expect(monsterRank({})).toBe('common');
+    expect(monsterRank({ rank: 'elite' })).toBe('elite');
+    expect(monsterRank({ rank: 'boss' })).toBe('boss');
+    expect(monsterRank({ sheet: { boss: true } })).toBe('boss');
   });
 
   it('renders drop references with the drop label and chance percentage', () => {
@@ -192,13 +200,13 @@ describe('resolveCampaignLinks', () => {
       visibleEntityTypes: new Set(['npcs', 'quests'])
     });
 
-    expect(result.map(([path]) => path)).toEqual(['npcs', 'quests', 'progress', 'groups']);
+    expect(result.map(([path]) => path)).toEqual(['npcs', 'quests', 'progress', 'groups', 'players']);
   });
 
   it('mantém todas as categorias para mestre', () => {
     const result = resolveCampaignLinks({ isGm: true, visibleEntityTypes: new Set() });
 
-    expect(result.map(([path]) => path)).toEqual(['npcs', 'locations', 'items', 'monsters', 'quests', 'associations', 'progress', 'groups']);
+    expect(result.map(([path]) => path)).toEqual(['npcs', 'locations', 'items', 'monsters', 'quests', 'associations', 'progress', 'groups', 'players']);
   });
 
   it('oculta seções sem conteúdo visível no detalhe da entidade', () => {

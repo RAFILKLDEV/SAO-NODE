@@ -9,7 +9,8 @@ export const isCharacterFavorite = (item, favorites = []) => {
 };
 export function characterEntries(npcs, players, filter, favorites = []) {
   const roster = players.map((player) => ({ ...player, id: `player:${player.userId}`, imageURL: player.characterImageUrl }));
-  if (filter === 'player') return roster;
+  if (!filter) return [...npcs, ...roster];
+  if (filter === 'player') return [...npcs.filter((item) => item.characterType === 'player'), ...roster];
   if (filter === 'favorites') return [...npcs, ...roster].filter((item) => isCharacterFavorite(item, favorites));
-  return npcs.filter((item) => filter === 'entity' ? isCharacterEntity(item) : !isCharacterEntity(item));
+  return npcs.filter((item) => (item.characterType ?? 'npc') === filter);
 }
