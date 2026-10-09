@@ -42,6 +42,25 @@ describe('edição canônica', () => {
     });
   });
 
+  it('edita atributos sem alterar o texto original nem campos extras', () => {
+    const originalSheet = '  Defesa 18\r\n\tAção: Ímpeto  \nFim  ';
+    const data = normalizeEntity('monster', {
+      id: 'monster.original',
+      name: 'Original',
+      visibility: {},
+      fields: [{ key: 'originalSheet', value: originalSheet }, { key: 'customNote', value: 'preservar' }],
+      statBlocks: { default: { nd: 2 } },
+      components: [{ id: 'ability', kind: 'ability', data: { name: 'Uivo', description: 'Completa', customRule: '1d6' } }]
+    });
+    const draft = createEntityDraft('monster', { schemaVersion: '2.0', data });
+    const edited = updateEntityDraft('monster', { ...draftControls('monster', draft), name: 'Editado' });
+    const saved = prepareCanonicalPayload('monster', edited);
+    expect(saved.name).toBe('Editado');
+    expect(saved.fields.find((field) => field.key === 'originalSheet')?.value).toBe(originalSheet);
+    expect(saved.fields.find((field) => field.key === 'customNote')?.value).toBe('preservar');
+    expect(saved.components[0].data.customRule).toBe('1d6');
+  });
+
   it('preserva Jogador como tipo de personagem ao salvar', () => {
     const draft = createEntityDraft('npc', { id: 'npc.jogador', name: 'Personagem', characterType: 'npc' });
     const edited = updateEntityDraft('npc', { ...draftControls('npc', draft), characterType: 'player' });

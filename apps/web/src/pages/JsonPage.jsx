@@ -13,6 +13,9 @@ export function JsonPage({ view = 'prepare' }) {
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState(null);
   const [selected, setSelected] = useState(new Set());
+  const [selectionMode, setSelectionMode] = useState('explicit');
+  const [excluded, setExcluded] = useState(new Set());
+  const [included, setIncluded] = useState(new Set());
   const [details, setDetails] = useState({});
   const [copied, setCopied] = useState(false);
   const [templateTypes, setTemplateTypes] = useState(['npc', 'location', 'item', 'monster', 'quest']);
@@ -30,10 +33,20 @@ export function JsonPage({ view = 'prepare' }) {
         body: source
       });
     },
-    onSuccess: (data) => { setPage(1); setPreview(data); setDetails({}); setSelected(new Set(data.diff.filter((entry) => entry.selected && !['EQUAL', 'REMOVED_FROM_JSON'].includes(entry.status)).map((entry) => entry.key))); }
+    onSuccess: (data) => {
+      setPage(1);
+      setPreview(data);
+      setDetails({});
+      setSelectionMode('explicit');
+      setExcluded(new Set());
+      setIncluded(new Set());
+      setSelected(new Set(data.diff.filter((entry) => entry.selected && !['EQUAL', 'REMOVED_FROM_JSON'].includes(entry.status)).map((entry) => entry.key)));
+    }
   });
   const applyMutation = useMutation({
-    mutationFn: () => api(`/api/v1/campaigns/${campaignId}/import/apply`, { method: 'POST', body: { previewId: preview.previewId, selectedKeys: [...selected] } }),
+    mutationFn: () => api(`/api/v1/campaigns/${campaignId}/import/apply`, { method: 'POST', body: selectionMode === 'all'
+      ? { previewId: preview.previewId, selectionMode: 'all', excludedKeys: [...excluded], includedKeys: [...included] }
+      : { previewId: preview.previewId, selectedKeys: [...selected] } }),
     onSuccess: async () => { setPreview(null); setText(''); setFile(null); setDetails({}); await queryClient.invalidateQueries(); }
   });
   const copyTemplate = async () => {
@@ -46,7 +59,7 @@ export function JsonPage({ view = 'prepare' }) {
     await navigator.clipboard.writeText(`${instructions}\n\n${JSON.stringify(filtered, null, 2)}`);
     setCopied(true); window.setTimeout(() => setCopied(false), 2200);
   };
-  const loadFile = (nextFile) => { if (!nextFile) return; setFile(nextFile); setText(''); setPreview(null); setDetails({}); previewMutation.reset(); };
+  const loadFile = (nextFile) => { if (!nextFile) return; setFile(nextFile); setText(''); setPreview(null); setDetails({}); setSelected(new Set()); setExcluded(new Set()); setIncluded(new Set()); setSelectionMode('explicit'); previewMutation.reset(); };
   const loadPreviewPage = async (nextPage) => {
     if (!preview?.previewId || nextPage < 1) return;
     const query = new URLSearchParams({ page: String(nextPage), pageSize: String(preview.pageSize ?? 50) });
@@ -59,7 +72,37 @@ export function JsonPage({ view = 'prepare' }) {
     const data = await api(`/api/v1/campaigns/${campaignId}/import/preview/${encodeURIComponent(preview.previewId)}/details?key=${encodeURIComponent(key)}`);
     setDetails((current) => ({ ...current, [key]: data }));
   };
-  const toggle = (key) => setSelected((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
+  const toggle = (entry) => {
+    const key = entry.key;
+    if (selectionMode === 'all') {
+      if (entry.status === 'REMOVED_FROM_JSON') {
+        setIncluded((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
+      } else if (entry.status !== 'EQUAL') {
+        setExcluded((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
+      }
+      return;
+    }
+    setSelected((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
+  };
+  const selectAllRecords = () => { setSelectionMode('all'); setSelected(new Set()); setExcluded(new Set()); setIncluded(new Set()); };
+  const selectCurrentPage = () => {
+    setSelectionMode('explicit');
+    setExcluded(new Set());
+    setIncluded(new Set());
+    setSelected(new Set(preview.diff.filter((entry) => entry.status !== 'EQUAL' && entry.status !== 'REMOVED_FROM_JSON').map((entry) => entry.key)));
+  };
+  const selectRemovalsPage = () => {
+    const removals = preview.diff.filter((entry) => entry.status === 'REMOVED_FROM_JSON').map((entry) => entry.key);
+    if (selectionMode === 'all') setIncluded((current) => new Set([...current, ...removals]));
+    else setSelected((current) => new Set([...current, ...removals]));
+  };
+  const clearSelection = () => { setSelectionMode('explicit'); setSelected(new Set()); setExcluded(new Set()); setIncluded(new Set()); };
+  const isSelected = (entry) => selectionMode === 'all'
+    ? entry.status === 'REMOVED_FROM_JSON' ? included.has(entry.key) : entry.status !== 'EQUAL' && !excluded.has(entry.key)
+    : selected.has(entry.key);
+  const selectedCount = selectionMode === 'all'
+    ? Math.max(0, (preview.selectableCount ?? 0) - excluded.size + included.size)
+    : selected.size;
   const toggleExportType = (type) => setExportTypes((current) => current.includes(type) ? (current.length > 1 ? current.filter((value) => value !== type) : current) : [...current, type]);
   const exportHref = `/api/v1/campaigns/${campaignId}/export.json?types=${encodeURIComponent(exportTypes.join(','))}`;
   const pages = [['prepare', 'Preparar para IA', 'json'], ['import', 'Importar JSON', 'json/import'], ['export', 'Exportar saoData', 'json/export']];
@@ -73,10 +116,13 @@ export function JsonPage({ view = 'prepare' }) {
       {view === 'prepare' && <div className="json-structure-picker"><div className="picker-heading"><div><strong>Contexto atualizado da campanha</strong><small>O pacote é gerado a partir dos dados atuais e as seleções reduzem o conteúdo enviado.</small></div><button className="primary" disabled={!templateTypes.length} onClick={copyTemplate}>{copied ? 'Contexto copiado ✓' : 'Copiar contexto para IA'}</button></div><fieldset><legend>Categorias</legend><div className="structure-options">{entityCategories.map(([value, label]) => <label key={value}><input type="checkbox" checked={templateTypes.includes(value)} onChange={() => setTemplateTypes((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])} />{label}</label>)}</div></fieldset><fieldset><legend>Campos incluídos</legend><div className="structure-options">{[['fields', 'Descrições'], ['links', 'Referências'], ['objectives', 'Objetivos'], ['rewards', 'Recompensas'], ['requirements', 'Requisitos'], ['flow', 'Fluxo da missão'], ['connections', 'Conexões'], ['services', 'Serviços']].map(([value, label]) => <label key={value}><input type="checkbox" checked={templateSections.includes(value)} onChange={() => setTemplateSections((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])} />{label}</label>)}</div></fieldset><details className="json-operations-help"><summary>Formato compacto de operações</summary><p>Para mudanças pequenas, retorne <code>operations</code> com <code>type</code>, <code>id</code> e mapas <code>set</code>, <code>add</code> e <code>remove</code>. Use somente os caminhos alterados; operações preservam campos omitidos. Exemplo: <code>{'{"type":"monster","id":"monster.lobo","set":{"group":"matilha"},"add":{"links":[{"type":"item","id":"item.carne","role":"drops"}]},"remove":{}}'}</code>.</p></details></div>}
       {view === 'import' && <div className="json-import-toolbar"><label className="file-button">Carregar arquivo .json<input type="file" accept=".json,application/json" onChange={(event) => loadFile(event.target.files?.[0])} /></label>{file && <small>{file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB</small>}<small>Revise inclusões, atualizações e remoções antes de aplicar.</small></div>}
       {view === 'import' && <>
-      <textarea className="json-import-editor" value={text} onChange={(event) => { setText(event.target.value); setFile(null); setPreview(null); setDetails({}); previewMutation.reset(); }} placeholder="Cole aqui o JSON devolvido pela IA" spellCheck="false" />
+      <textarea className="json-import-editor" value={text} onChange={(event) => { setText(event.target.value); setFile(null); setPreview(null); setDetails({}); setSelected(new Set()); setExcluded(new Set()); setIncluded(new Set()); setSelectionMode('explicit'); previewMutation.reset(); }} placeholder="Cole aqui o JSON devolvido pela IA" spellCheck="false" />
       <button className="primary" disabled={(!text.trim() && !file) || previewMutation.isPending} onClick={() => previewMutation.mutate()}>{previewMutation.isPending ? 'Validando arquivo…' : 'Gerar prévia'}</button>{previewMutation.error && <div className="alert error">{previewMutation.error.message}</div>}
       </>}
     </div>}
-    {view === 'import' && preview && <><div className="card"><strong>{preview.pack.name}</strong><p>saoData {preview.pack.schemaVersion} · {preview.total ?? preview.diff.length} alterações · página {page}</p>{preview.warnings?.length > 0 && <div className="alert warning">{preview.warnings.length} referência(s) ainda não encontrada(s) na campanha.</div>}<div className="association-toolbar"><button type="button" onClick={() => setSelected((current) => new Set([...current, ...preview.diff.filter((entry) => !['EQUAL', 'REMOVED_FROM_JSON'].includes(entry.status)).map((entry) => entry.key)]))}>Selecionar inclusões desta página</button><button type="button" onClick={() => setSelected((current) => new Set([...current, ...preview.diff.filter((entry) => entry.status === 'REMOVED_FROM_JSON').map((entry) => entry.key)]))}>Selecionar remoções desta página</button><button type="button" onClick={() => setSelected(new Set())}>Limpar seleção</button></div></div><div className="table-wrap"><table><thead><tr><th>Aplicar</th><th>Status</th><th>Tipo</th><th>Identificador</th><th>Alterações</th></tr></thead><tbody>{preview.diff.map((entry) => <tr key={entry.key}><td><input type="checkbox" checked={selected.has(entry.key)} disabled={entry.status === 'EQUAL'} onChange={() => toggle(entry.key)} /></td><td><span className={`diff ${entry.status}`}>{entry.status === 'REMOVED_FROM_JSON' ? 'Remover' : entry.status === 'NEW' ? 'Criar' : entry.status === 'UPDATED' ? 'Atualizar' : 'Sem alteração'}</span></td><td>{entityCategories.find(([type]) => type === entry.type)?.[1] ?? entry.type}</td><td>{entry.id}</td><td>{entry.visibilityChange && <small>Visibilidade: {entry.visibilityChange.before ?? 'novo'} → {entry.visibilityChange.after}</small>}<details onToggle={(event) => event.currentTarget.open && loadDetails(entry.key)}><summary>Ver antes/depois</summary>{details[entry.key] ? <pre>{JSON.stringify({ antes: details[entry.key].before, depois: details[entry.key].after }, null, 2)}</pre> : <p className="muted">Carregando detalhes…</p>}</details></td></tr>)}</tbody></table></div><div className="association-toolbar import-pagination"><button type="button" disabled={page <= 1} onClick={() => loadPreviewPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil((preview.total ?? 0) / (preview.pageSize ?? 50)))}</span><button type="button" disabled={!preview.hasMore} onClick={() => loadPreviewPage(page + 1)}>Próxima</button></div><div className="sticky-actions"><span>{selected.size} ações selecionadas</span><button className="primary" disabled={applyMutation.isPending || !selected.size} onClick={() => applyMutation.mutate()}>{applyMutation.isPending ? 'Aplicando…' : 'Aplicar seleção'}</button></div>{applyMutation.error && <div className="alert error">{applyMutation.error.message}</div>}</>}
+    {view === 'import' && preview && <>
+      <div className="card"><strong>{preview.pack.name}</strong><p>saoData {preview.pack.schemaVersion} · {preview.total ?? preview.diff.length} alterações · página {page}</p>{preview.warnings?.length > 0 && <div className="alert warning">{preview.warnings.length} referência(s) ainda não encontrada(s) na campanha.</div>}<div className="association-toolbar"><button type="button" onClick={selectAllRecords}>Selecionar todos os registros do arquivo</button><button type="button" onClick={selectCurrentPage}>Selecionar registros desta página</button><button type="button" onClick={selectRemovalsPage}>Selecionar remoções desta página</button><button type="button" onClick={clearSelection}>Limpar seleção</button></div></div>
+      <div className="table-wrap"><table><thead><tr><th>Aplicar</th><th>Status</th><th>Tipo</th><th>Identificador</th><th>Alterações</th></tr></thead><tbody>{preview.diff.map((entry) => <tr key={entry.key}><td><input type="checkbox" checked={isSelected(entry)} disabled={entry.status === 'EQUAL'} onChange={() => toggle(entry)} /></td><td><span className={`diff ${entry.status}`}>{entry.status === 'REMOVED_FROM_JSON' ? 'Remover' : entry.status === 'NEW' ? 'Criar' : entry.status === 'ALTERED' ? 'Atualizar' : 'Sem alteração'}</span></td><td>{entityCategories.find(([type]) => type === entry.type)?.[1] ?? entry.type}</td><td>{entry.id}</td><td>{entry.visibilityChange && <small>Visibilidade: {entry.visibilityChange.before ?? 'novo'} → {entry.visibilityChange.after}</small>}<details onToggle={(event) => event.currentTarget.open && loadDetails(entry.key)}><summary>Ver antes/depois</summary>{details[entry.key] ? <pre>{JSON.stringify({ antes: details[entry.key].before, depois: details[entry.key].after }, null, 2)}</pre> : <p className="muted">Carregando detalhes…</p>}</details></td></tr>)}</tbody></table></div>
+      <div className="association-toolbar import-pagination"><button type="button" disabled={page <= 1} onClick={() => loadPreviewPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil((preview.total ?? 0) / (preview.pageSize ?? 50)))}</span><button type="button" disabled={!preview.hasMore} onClick={() => loadPreviewPage(page + 1)}>Próxima</button></div><div className="sticky-actions"><span>{selectedCount} ações selecionadas{selectionMode === 'all' ? ' (seleção global)' : ''}</span><button className="primary" disabled={applyMutation.isPending || !selectedCount} onClick={() => applyMutation.mutate()}>{applyMutation.isPending ? 'Aplicando…' : 'Aplicar seleção'}</button></div>{applyMutation.error && <div className="alert error">{applyMutation.error.message}</div>}</>}
   </>;
 }

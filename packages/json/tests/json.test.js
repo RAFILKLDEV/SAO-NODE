@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
 import { buildDiff, exportSaoDataJson, MAX_DEFAULT, parseSaoDataJson } from '../src/index.js';
 
 const document = {
@@ -41,7 +42,10 @@ describe('saoData JSON', () => {
 
     const exported = exportSaoDataJson(parsed.pack);
     const reparsed = parseSaoDataJson(exported).pack.entities[0].data;
-    expect(reparsed.fields.find((field) => field.key === 'originalSheet')?.value).toBe(originalSheet);
+    const roundTrip = reparsed.fields.find((field) => field.key === 'originalSheet')?.value;
+    expect(roundTrip).toBe(originalSheet);
+    expect(createHash('sha256').update(roundTrip, 'utf8').digest('hex'))
+      .toBe(createHash('sha256').update(originalSheet, 'utf8').digest('hex'));
     expect(reparsed.components[0].data.description).toBe(originalSheet);
   });
 

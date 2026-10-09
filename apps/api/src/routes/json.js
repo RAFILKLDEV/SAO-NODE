@@ -1,4 +1,4 @@
-import { normalizeEntity, validateEntityCatalog, normalizeLegacyDropFormulas } from '@sao/domain';
+import { formatMonsterSheets, normalizeEntity, validateEntityCatalog, normalizeLegacyDropFormulas } from '@sao/domain';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { notifyCampaign } from '../services/notifications.js';
@@ -33,9 +33,22 @@ const includeAll = {
 
 const applySchema = z.object({
   previewId: z.string().min(1),
-  // Applying an import always requires an explicit selection. An omitted
-  // selection must never be interpreted as "apply everything".
-  selectedKeys: z.array(z.string()).min(1)
+  // `selectedKeys` remains supported for older clients. New clients can use
+  // selectionMode=all and transmit only exception keys.
+  selectedKeys: z.array(z.string()).optional(),
+  selectionMode: z.enum(['explicit', 'all']).optional(),
+  selectAll: z.boolean().optional(),
+  excludedKeys: z.array(z.string()).default([]),
+  includedKeys: z.array(z.string()).default([]),
+  selection: z.object({
+    mode: z.enum(['explicit', 'all']).optional(),
+    excludedKeys: z.array(z.string()).default([]),
+    includedKeys: z.array(z.string()).default([])
+  }).optional()
+}).superRefine((value, ctx) => {
+  const mode = value.selection?.mode ?? value.selectionMode ?? (value.selectAll ? 'all' : 'explicit');
+  if (mode === 'explicit' && !(value.selectedKeys?.length || value.includedKeys.length || value.selection?.includedKeys.length))
+    ctx.addIssue({ code: 'custom', path: ['selectedKeys'], message: 'Selecione ao menos uma alteração' });
 });
 const exportTypes = ['npc', 'location', 'item', 'monster', 'quest'];
 const exportSchema = z.object({
@@ -104,26 +117,42 @@ function previewDiffPage(diff, query) {
   };
 }
 
-function formatMonsterExport(monsters, format) {
-  const markdown = format === 'md';
-  return monsters.map(({ data }) => {
-    const title = String(data.name ?? data.id);
-    const lines = [markdown ? `# ${title}` : title, `${data.id}`];
-    const add = (label, value) => {
-      if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) return;
-      const rendered = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-      lines.push(markdown ? `\n## ${label}\n\n${rendered}` : `\n${label}\n${rendered}`);
-    };
-    add('Descrição', data.description);
-    add('Classificação', data.classification);
-    add('Estatísticas', data.statBlocks);
-    add('Componentes', data.components);
-    add('Campos', data.fields);
-    add('Informações adicionais', Object.fromEntries(
-      Object.entries(data).filter(([key]) => !['id', 'name', 'description', 'classification', 'statBlocks', 'components', 'fields'].includes(key))
-    ));
-    return lines.join('\n');
-  }).join(`\n\n${'='.repeat(72)}\n\n`);
+function selectionStats(diff) {
+  const selectable = diff.filter((entry) => entry.status !== 'EQUAL' && entry.status !== 'REMOVED_FROM_JSON');
+  return {
+    selectableCount: selectable.length,
+    defaultSelectedCount: selectable.length,
+    selectedCount: selectable.length
+  };
+}
+
+export function resolveApplySelection(input, preview) {
+  const mode = input.selection?.mode ?? input.selectionMode ?? (input.selectAll ? 'all' : 'explicit');
+  const explicitKeys = new Set([
+    ...(input.selectedKeys ?? []),
+    ...(input.includedKeys ?? []),
+    ...(input.selection?.includedKeys ?? [])
+  ]);
+  const excludedKeys = new Set([
+    ...(input.excludedKeys ?? []),
+    ...(input.selection?.excludedKeys ?? [])
+  ]);
+  const allowedKeys = new Set(preview.diff.map((entry) => entry.key));
+  for (const key of [...explicitKeys, ...excludedKeys]) {
+    if (!allowedKeys.has(key)) return { error: key };
+  }
+
+  const selected = mode === 'all'
+    ? new Set(preview.diff
+      .filter((entry) => entry.status !== 'EQUAL' && entry.status !== 'REMOVED_FROM_JSON')
+      .map((entry) => entry.key))
+    : new Set();
+  for (const key of explicitKeys) selected.add(key);
+  for (const key of excludedKeys) selected.delete(key);
+  // EQUAL entries are never actionable, even when a stale or hand-written
+  // client payload includes their keys.
+  for (const entry of preview.diff) if (entry.status === 'EQUAL') selected.delete(entry.key);
+  return { selected, mode };
 }
 
 function safeImportFileName(request, packId) {
@@ -249,6 +278,11 @@ export async function jsonRoutes(app) {
       }));
       const diffKeys = new Set(storedDiff.map((entry) => entry.key));
       const existingSnapshot = existing.filter((entry) => diffKeys.has(`${entry.type}:${entry.id}`));
+      const versions = Object.fromEntries(
+        existingRows
+          .filter((entity) => diffKeys.has(`${entity.type}:${entity.domainId}`))
+          .map((entity) => [`${entity.type}:${entity.domainId}`, entity.version])
+      );
       for (const [id, preview] of app.importPreviews) {
         if (preview.expiresAt <= Date.now()) app.importPreviews.delete(id);
       }
@@ -265,10 +299,11 @@ export async function jsonRoutes(app) {
         pack,
         diff: storedDiff,
         existing: existingSnapshot,
-        versions: Object.fromEntries(existingRows.map(e => [`${e.type}:${e.domainId}`, e.version])),
+        versions,
         expiresAt: Date.now() + 15 * 60 * 1000
       });
-      const diffPage = previewDiffPage(diff, query.data);
+      const diffPage = previewDiffPage(storedDiff, query.data);
+      const stats = selectionStats(storedDiff);
       return {
         previewId,
         pack: {
@@ -287,7 +322,9 @@ export async function jsonRoutes(app) {
         total: diffPage.total,
         page: diffPage.page,
         pageSize: diffPage.pageSize,
-        hasMore: diffPage.hasMore
+        hasMore: diffPage.hasMore,
+        selectableCount: stats.selectableCount,
+        defaultSelectedCount: stats.defaultSelectedCount
       };
     }
   );
@@ -302,7 +339,11 @@ export async function jsonRoutes(app) {
       const preview = app.importPreviews.get(request.params.previewId);
       if (!preview || preview.expiresAt <= Date.now() || preview.campaignId !== request.campaign.id || preview.userId !== request.auth.user.id)
         return reply.code(410).send(apiError('PREVIEW_EXPIRED', 'A prévia expirou ou pertence a outra sessão'));
-      return { previewId: request.params.previewId, ...previewDiffPage(preview.diff, parsed.data) };
+      return {
+        previewId: request.params.previewId,
+        ...previewDiffPage(preview.diff, parsed.data),
+        ...selectionStats(preview.diff)
+      };
     }
   );
 
@@ -355,14 +396,16 @@ export async function jsonRoutes(app) {
           .code(410)
           .send(apiError('PREVIEW_EXPIRED', 'A prévia expirou ou pertence a outra sessão'));
       }
-      const selected = new Set(parsed.data.selectedKeys);
-      const allowedKeys = new Set(preview.diff.map((entry) => entry.key));
-      for (const key of selected) {
-        if (!allowedKeys.has(key))
-          return reply
-            .code(400)
-            .send(apiError('INVALID_SELECTION', `Chave de alteração desconhecida: ${key}`));
-      }
+      const resolvedSelection = resolveApplySelection(parsed.data, preview);
+      if (resolvedSelection.error)
+        return reply
+          .code(400)
+          .send(apiError('INVALID_SELECTION', `Chave de alteração desconhecida: ${resolvedSelection.error}`));
+      const selected = resolvedSelection.selected;
+      if (!selected.size)
+        return reply
+          .code(400)
+          .send(apiError('INVALID_SELECTION', 'Selecione ao menos uma alteração'));
 
       const incomingByKey = new Map(
         preview.pack.entities.map((entity) => [`${entity.type}:${entity.data.id}`, entity])
@@ -569,7 +612,7 @@ export async function jsonRoutes(app) {
         orderBy: [{ domainId: 'asc' }]
       });
       const monsters = rows.map((entity) => ({ type: 'monster', data: entityRecordToCanonical(entity) }));
-      const body = formatMonsterExport(monsters, parsed.data.format);
+      const body = formatMonsterSheets(monsters, { format: parsed.data.format });
       const extension = parsed.data.format === 'md' ? 'md' : 'txt';
       reply.header('content-type', `${parsed.data.format === 'md' ? 'text/markdown' : 'text/plain'}; charset=utf-8`);
       reply.header('content-disposition', `attachment; filename="${request.campaign.slug}.monsters.${extension}"`);
