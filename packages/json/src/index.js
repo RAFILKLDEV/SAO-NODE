@@ -11,7 +11,10 @@ import {
 
 export const ROOT_VERSION = '2.0';
 export const LEGACY_VERSION = '1.0';
-export const MAX_DEFAULT = 5 * 1024 * 1024;
+// Keep a generous technical guard for normal uploads while allowing callers to
+// choose a stricter limit for their environment.  Monster packs commonly carry
+// long, multiline source sheets and can legitimately exceed a few megabytes.
+export const MAX_DEFAULT = 128 * 1024 * 1024;
 export const entityTypes = ['npc', 'location', 'item', 'monster', 'quest'];
 const v2PackSchema = z.strictObject({
   schemaVersion: z.literal(ROOT_VERSION),
@@ -76,7 +79,12 @@ function normalizeOperationChanges(operation) {
         .map((kind) => [
           kind,
           Object.fromEntries(
-            Object.entries(operation[kind]).map(([path, value]) => [path, unwrapMarkdownLink(value)])
+            Object.entries(operation[kind]).map(([path, value]) => [
+              // Markdown link repair is only for media URL operations. Applying
+              // it to arbitrary fields can silently rewrite source-sheet text.
+              path,
+              path.startsWith('/media/') ? unwrapMarkdownLink(value) : value
+            ])
           )
         ])
     )

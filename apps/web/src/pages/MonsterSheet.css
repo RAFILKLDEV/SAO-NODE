@@ -1,0 +1,27 @@
+.monster-sheet-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin: .55rem 0 .85rem; }
+.monster-sheet-actions button { font-size: .78rem; }
+.monster-sheet-layout { display: grid; gap: .7rem; }
+.monster-sheet-identity { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem; align-items: start; }
+.monster-sheet-identity h3 { margin: 0; font-size: 1.35rem; }
+.monster-sheet-subtitle { color: var(--muted); margin: .2rem 0 0; }
+.monster-sheet-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: .45rem; }
+.monster-sheet-stat { padding: .5rem .6rem; border: 1px solid var(--line); border-radius: 7px; background: #ffffff05; }
+.monster-sheet-stat small { display: block; color: var(--muted); font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; }
+.monster-sheet-stat strong { display: block; margin-top: .12rem; }
+.monster-sheet-original { margin-top: .6rem; border: 1px solid var(--line); border-radius: 7px; }
+.monster-sheet-original-text { margin: .15rem 0 .7rem; padding: .7rem; border: 1px solid var(--line); border-radius: 7px; white-space: pre-wrap; max-height: 34rem; overflow: auto; font: inherit; }
+.monster-sheet-original summary { cursor: pointer; padding: .6rem .7rem; font-weight: 600; }
+.monster-sheet-original pre { margin: 0; padding: .7rem; max-height: 34rem; overflow: auto; white-space: pre-wrap; font: inherit; color: var(--text); border-top: 1px solid var(--line); }
+.monster-component-card { min-width: 0; }
+.monster-component-card p { white-space: pre-wrap; }
+.monster-editor-preview { margin-top: .85rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+.monster-editor-preview h3 { margin-top: 0; }
+.monster-editor-preview .module-card { margin-top: .55rem; }
+.monster-component-fields { display: grid; gap: .5rem; }
+.monster-component-fields textarea { min-height: 110px; resize: vertical; }
+.monster-component-controls { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; justify-content: flex-end; }
+.monster-component-controls button { padding: .3rem .5rem; font-size: .75rem; }
+.monster-custom-fields { margin-top: .5rem; }
+@media (max-width: 640px) {
+  .monster-sheet-identity { grid-template-columns: 1fr; }
+}

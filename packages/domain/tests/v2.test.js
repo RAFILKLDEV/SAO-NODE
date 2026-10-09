@@ -230,4 +230,42 @@ describe('contrato saoData v2', () => {
       expect(data.statBlocks.default).toMatchObject({ nd: 2, combat: { defense: 16 } });
       expect(data.statBlocks).not.toHaveProperty('Ambesek.T20');
     });
+
+    it('preserva a ficha original literalmente e mantém a ordem dos componentes', () => {
+      const originalSheet = '  Defesa 18\r\n\r\nAtaques: Mordida +12 (1d8+5)\n  Fim da ficha  ';
+      const data = normalizeEntity('monster', {
+        id: 'monster.original-sheet',
+        name: 'Guardião',
+        fields: [{ key: 'originalSheet', value: originalSheet }],
+        components: [
+          { id: 'ability-z', kind: 'ability', data: { name: 'Z', description: 'linha 1\nlinha 2' } },
+          { id: 'attack-a', kind: 'attack', data: { name: 'A', description: 'dano +12' } }
+        ]
+      });
+
+      expect(data.fields[0]).toEqual({ key: 'originalSheet', value: originalSheet, visibility: 'public' });
+      expect(data.components.map((component) => component.id)).toEqual(['ability-z', 'attack-a']);
+      expect(data.components[0].data.description).toBe('linha 1\nlinha 2');
+    });
+
+    it('migra originalSheet legado fora de fields sem alterar espaços ou quebras', () => {
+      const originalSheet = '\nNome: Lobo\n\nHabilidades:\n- Uivo\n';
+      const data = normalizeEntity('monster', {
+        id: 'monster.legacy-sheet',
+        name: 'Lobo',
+        originalSheet,
+        attacks: [{ id: 'bite', name: 'Mordida', description: '1d6+2' }]
+      }, { format: '1.0' });
+
+      expect(data.fields.find((field) => field.key === 'originalSheet')?.value).toBe(originalSheet);
+      expect(data.components.find((component) => component.id === 'bite')?.data.description).toBe('1d6+2');
+
+      const objectFields = normalizeEntity('monster', {
+        id: 'monster.legacy-fields-object',
+        name: 'Lobo',
+        fields: { originalSheet: { value: originalSheet, sourceLabel: 'importado' } }
+      }, { format: '1.0' });
+      expect(objectFields.fields[0].value).toBe(originalSheet);
+      expect(objectFields.extensions.legacyNested['fields.originalSheet']).toEqual({ sourceLabel: 'importado' });
+    });
 });

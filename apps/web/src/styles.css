@@ -2313,6 +2313,11 @@ th {
   .map-detail-grid { grid-template-columns: 1fr; }
   .map-route-fields { grid-template-columns: 1fr; }
 }
+.export-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.monster-export-selection { display: grid; gap: .25rem; flex: 1 1 100%; color: var(--muted); font-size: .8rem; }
+.monster-export-selection input { min-width: 16rem; }
+.import-pagination { justify-content: center; align-items: center; gap: .75rem; margin: .75rem 0; }
+.import-pagination button { min-width: 6rem; }
 .image-map-pin svg path { fill: var(--pin-color, #2563eb); }
 .image-map-pin.pin-region svg path { fill: #8b5cf6; }
 .image-map-pin.pin-location svg path { fill: #2563eb; }

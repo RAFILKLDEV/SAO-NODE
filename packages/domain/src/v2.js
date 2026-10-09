@@ -418,8 +418,17 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
     source: take('media.source', raw.media?.source, raw.sourceUrl)
   };
   result.fields = Array.isArray(raw.fields)
-    ? raw.fields
-    : Object.entries(raw.fields ?? {}).map(([key, value]) => ({ key, ...value }));
+    ? raw.fields.map((field) => field)
+    : Object.entries(raw.fields ?? {}).map(([key, value]) => ({
+        key,
+        ...(value && typeof value === 'object' && !Array.isArray(value) ? value : { value })
+      }));
+  // A few v1 producers stored the complete source sheet beside `fields`.
+  // Move that text into the canonical field without trimming or normalizing it.
+  // Keep an explicitly supplied field authoritative and do not synthesize one
+  // when the legacy member is absent.
+  if (typeof raw.originalSheet === 'string' && !result.fields.some((field) => field?.key === 'originalSheet'))
+    result.fields.push({ key: 'originalSheet', value: raw.originalSheet, visibility: 'public' });
   result.extensions = { ...raw.extensions };
   // Provenance belongs to the server; retain legacy input as migration evidence.
   if (raw.source) result.extensions.legacySource = raw.source;
@@ -527,8 +536,9 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
     requirements: ['type', 'id', 'minimum', 'quantity', 'state', 'target']
   };
   for (const [key, keys] of Object.entries(nestedKeys))
-    if (Array.isArray(raw[key]))
-      raw[key].forEach((value, index) => archive(value, keys, `${key}.${index}`));
+    if (Array.isArray(raw[key])) raw[key].forEach((value, index) => archive(value, keys, `${key}.${index}`));
+    else if (key === 'fields' && raw.fields && typeof raw.fields === 'object')
+      Object.entries(raw.fields).forEach(([fieldKey, value]) => archive(value, keys, `${key}.${fieldKey}`));
   result.fields = result.fields.map((value) => pick(value, nestedKeys.fields));
   (raw.services ?? []).forEach((value, index) => {
     if (value?.name && value?.type && value.name !== value.type)
@@ -734,6 +744,7 @@ export function migrateV1Entity(type, raw, { diagnostics = [], conflicts = 'erro
     'discoveryVisibility',
     'references'
   ]);
+  if (typeof raw.originalSheet === 'string') known.add('originalSheet');
   const unknown = Object.fromEntries(Object.entries(raw).filter(([key]) => !known.has(key)));
   if (Object.keys(unknown).length) {
     result.extensions.legacy = { ...result.extensions.legacy, ...unknown };
@@ -793,10 +804,8 @@ export function normalizeEntity(type, raw, options = {}) {
         : {})
     }));
   for (const [key, identity] of Object.entries({
-    fields: (v) => v.key,
     links: (v) => `${v.slot}:${v.type}:${v.id}:${v.role}`,
     connections: (v) => v.id,
-    components: (v) => `${v.kind}:${v.id}`,
     rewards: (v) => v.rewardId,
     stats: (v) => v.key
   }))

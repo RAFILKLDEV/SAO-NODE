@@ -21,6 +21,8 @@ import { createEntityDraft, createMonsterEliteDraft, draftControls, updateEntity
 import { hasRenderableContent } from '../lib/entityContent.js';
 
 import { formatEntityName } from '../lib/entityDisplay.js';
+import { copyMonsterSheet, downloadMonsterSheet } from '../lib/monsterSheet.js';
+import './MonsterSheet.css';
 
 import {
 
@@ -990,6 +992,9 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
   const [rollError, setRollError] = useState('');
 
   const [copyState, setCopyState] = useState('');
+  const [sheetCopyState, setSheetCopyState] = useState('');
+  const [showOriginal, setShowOriginal] = useState(false);
+  const originalSheet = narrativeFields(entity).find((field) => field.key === 'originalSheet')?.value;
   const dropDialogRef = useRef(null);
   useOutsideDismiss(dropDialogRef, () => { setDropRoll(null); setCopyState(''); }, Boolean(dropRoll));
 
@@ -1077,9 +1082,37 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
 
   };
 
+  const copySheetText = async () => {
+    try {
+      await copyMonsterSheet(entity);
+      setSheetCopyState('Ficha copiada');
+    } catch {
+      setSheetCopyState('Não foi possível copiar a ficha automaticamente');
+    }
+  };
+
   return (
 
     <div className="module-stack">
+
+      <section className="monster-sheet-layout" aria-label="Ficha do monstro">
+        <div className="monster-sheet-identity">
+          <div>
+            <h3>{formatEntityName(entity)}</h3>
+            <p className="monster-sheet-subtitle">{[sheet.size, sheet.type, sheet.subtype, sheet.classification ?? entity.classification, sheet.nd != null && `ND ${sheet.nd}`, entity.group, entity.rank].filter(Boolean).join(' · ')}</p>
+          </div>
+          {entityImage(entity) && <img className="entity-portrait" src={entityImage(entity)} alt="" />}
+        </div>
+        <div className="monster-sheet-actions">
+          <button type="button" onClick={copySheetText}>Copiar ficha</button>
+          <button type="button" onClick={() => downloadMonsterSheet(entity, 'txt')}>Baixar .txt</button>
+          <button type="button" onClick={() => downloadMonsterSheet(entity, 'md')}>Baixar .md</button>
+          {originalSheet && <button type="button" onClick={() => setShowOriginal((value) => !value)} aria-expanded={showOriginal}>Ver texto original</button>}
+          {originalSheet && <DiscoveryButton isGm={isGm} onGrant={onGrant} kind="field" targetKey="originalSheet" label="Texto original" />}
+          {sheetCopyState && <span className="muted" role="status">{sheetCopyState}</span>}
+        </div>
+        {showOriginal && originalSheet && <pre className="monster-sheet-original-text">{originalSheet}</pre>}
+      </section>
 
       {hasBasicData && (
 
@@ -2107,7 +2140,7 @@ function EntityDetail({ entity, type, campaignId, isGm, onEdit, onDelete, onGran
 
         {(entity.fields ?? [])
 
-          .filter((field) => hasRenderableContent(field.value))
+          .filter((field) => field.key !== 'originalSheet' && hasRenderableContent(field.value))
 
           .map((field) => (
 
@@ -2590,7 +2623,10 @@ function narrativeFields(data) {
 
   if (Array.isArray(data.fields)) return data.fields;
 
-  return Object.entries(data.fields ?? {}).map(([key, field]) => ({ key, ...field }));
+  return Object.entries(data.fields ?? {}).map(([key, field]) => ({
+    key,
+    ...(field && typeof field === 'object' && !Array.isArray(field) ? field : { value: field })
+  }));
 
 }
 
@@ -2680,12 +2716,37 @@ function ServiceEditor({ values = [], onChange }) {
 
 
 
+function moveEditorItem(values, index, offset, onChange) {
+  const nextIndex = index + offset;
+  if (nextIndex < 0 || nextIndex >= values.length) return;
+  const next = [...values];
+  [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+  onChange(next);
+}
+
 function AbilityEditor({ values = [], onChange }) {
-
   const update = (index, patch) => onChange(values.map((ability, itemIndex) => itemIndex === index ? { ...ability, data: { ...(ability.data ?? {}), ...patch } } : ability));
+  const add = () => onChange([...values, { id: crypto.randomUUID(), visibility: 'discoverable', data: { name: '', type: 'ability', description: '' } }]);
 
-  return <div className="editor-list"><div className="editor-list-head"><strong>Habilidades</strong><button onClick={() => onChange([...values, { id: crypto.randomUUID(), visibility: 'discoverable', data: { name: '', description: '' } }])}>＋ Adicionar</button></div>{values.map((ability, index) => <div className="editor-row named-description-row" key={`${ability.id}:${index}`}><FormField label="Nome" value={ability.data?.name ?? ''} onChange={(name) => update(index, { name })} /><FormField label="Descrição" type="textarea" value={ability.data?.description ?? ''} onChange={(description) => update(index, { description })} /><button className="danger" onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}>Remover</button></div>)}{!values.length && <span className="muted">Nenhuma habilidade cadastrada.</span>}</div>;
-
+  return <div className="editor-list">
+    <div className="editor-list-head"><strong>Habilidades, magias e poderes</strong><button type="button" onClick={add}>＋ Adicionar</button></div>
+    {values.map((ability, index) => <article className="component-editor monster-component-card" key={`${ability.id}:${index}`}>
+      <div className="form-grid">
+        <FormField label="Nome" value={ability.data?.name ?? ''} onChange={(name) => update(index, { name })} />
+        <FormField label="Categoria" value={ability.data?.type ?? 'ability'} options={[{ value: 'ability', label: 'Habilidade' }, { value: 'spell', label: 'Magia' }, { value: 'power', label: 'Poder' }, { value: 'trait', label: 'Característica' }]} onChange={(type) => update(index, { type })} />
+        <FormField label="Visibilidade" value={ability.visibility ?? 'discoverable'} options={visibilityOptions} onChange={(visibility) => update(index, { visibility })} />
+        <FormField wide label="Descrição completa" type="textarea" value={ability.data?.description ?? ''} onChange={(description) => update(index, { description })} />
+        <FormField wide label="Gatilho, custo ou efeito" type="textarea" value={ability.data?.effect ?? ability.data?.trigger ?? ''} onChange={(effect) => update(index, { effect })} />
+      </div>
+      <div className="monster-component-controls">
+        <button type="button" onClick={() => moveEditorItem(values, index, -1)} disabled={!index}>↑ Subir</button>
+        <button type="button" onClick={() => moveEditorItem(values, index, 1)} disabled={index === values.length - 1}>↓ Descer</button>
+        <button type="button" className="danger" onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}>Remover</button>
+      </div>
+      <div className="monster-custom-fields"><KeyValueEditor title="Campos adicionais" value={Object.fromEntries(Object.entries(ability.data ?? {}).filter(([key]) => !['name', 'type', 'description', 'effect', 'trigger'].includes(key)))} onChange={(details) => update(index, details)} /></div>
+    </article>)}
+    {!values.length && <span className="muted">Nenhuma habilidade cadastrada.</span>}
+  </div>;
 }
 
 
@@ -2953,28 +3014,41 @@ function KeyValueEditor({ title, value = {}, onChange }) {
 
 
 function MonsterComponentEditor({ title, values = [], onChange }) {
+  const update = (index, patch) => onChange(values.map((item, itemIndex) => itemIndex === index ? { ...item, data: { ...(item.data ?? {}), ...patch } } : item));
+  const add = () => onChange([...values, { id: crypto.randomUUID(), visibility: 'discoverable', data: { name: '', description: '' } }]);
+  const isAttack = title === 'Ataques';
 
   return (
 
     <div className="editor-list">
 
-      <div className="editor-list-head"><strong>{title}</strong><button onClick={() => onChange([...values, { id: crypto.randomUUID(), visibility: 'discoverable', data: { name: '' } }])}>＋ Adicionar</button></div>
+      <div className="editor-list-head"><strong>{title}</strong><button type="button" onClick={add}>＋ Adicionar</button></div>
 
       {values.map((entry, index) => (
 
-        <article className="component-editor" key={`${entry.id}:${index}`}>
+        <article className="component-editor monster-component-card" key={`${entry.id}:${index}`}>
 
           <div className="form-grid">
 
-            <FormField label="Nome" value={entry.data?.name ?? ''} onChange={(name) => onChange(values.map((item, itemIndex) => itemIndex === index ? { ...item, data: { ...item.data, name } } : item))} />
+            <FormField label="Nome" value={entry.data?.name ?? ''} onChange={(name) => update(index, { name })} />
 
             <FormField label="Visibilidade" value={entry.visibility ?? 'discoverable'} options={visibilityOptions} onChange={(visibility) => onChange(values.map((item, itemIndex) => itemIndex === index ? { ...item, visibility } : item))} />
+            {isAttack && <>
+              <FormField label="Bônus de ataque" value={entry.data?.attack ?? entry.data?.bonus ?? ''} onChange={(attack) => update(index, { attack })} />
+              <FormField label="Dano" value={entry.data?.damage ?? ''} onChange={(damage) => update(index, { damage })} />
+              <FormField label="Crítico" value={entry.data?.critical ?? ''} onChange={(critical) => update(index, { critical })} />
+              <FormField label="Alcance ou ação" value={entry.data?.range ?? entry.data?.action ?? ''} onChange={(range) => update(index, { range })} />
+            </>}
+            <FormField wide label="Descrição completa" type="textarea" value={entry.data?.description ?? ''} onChange={(description) => update(index, { description })} />
 
           </div>
 
-          <KeyValueEditor title="Detalhes" value={Object.fromEntries(Object.entries(entry.data ?? {}).filter(([key]) => key !== 'name'))} onChange={(details) => onChange(values.map((item, itemIndex) => itemIndex === index ? { ...item, data: { name: item.data?.name ?? '', ...details } } : item))} />
-
-          <button className="danger" onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}>Remover {title.toLowerCase()}</button>
+          <div className="monster-component-controls">
+            <button type="button" onClick={() => moveEditorItem(values, index, -1)} disabled={!index}>↑ Subir</button>
+            <button type="button" onClick={() => moveEditorItem(values, index, 1)} disabled={index === values.length - 1}>↓ Descer</button>
+            <button type="button" className="danger" onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}>Remover {title.toLowerCase()}</button>
+          </div>
+          <div className="monster-custom-fields"><KeyValueEditor title="Campos adicionais" value={Object.fromEntries(Object.entries(entry.data ?? {}).filter(([key]) => !['name', 'description', 'attack', 'bonus', 'damage', 'critical', 'range', 'action'].includes(key)))} onChange={(details) => update(index, details)} /></div>
 
         </article>
 
@@ -3149,6 +3223,18 @@ function LocationConnectionEditor({ data, setData }) {
 
 
 
+function MonsterEditorPreview({ data }) {
+  const sheet = data.sheet ?? {};
+  const groups = [['Ataques', data.attacks], ['Habilidades, magias e poderes', data.abilities], ['Perícias', data.skills], ['Características', data.traits]];
+  return <div className="monster-editor-preview">
+    <h3>Pré-visualização da ficha</h3>
+    <div className="monster-sheet-identity"><div><strong>{data.name || 'Monstro sem nome'}</strong><p className="monster-sheet-subtitle">{[sheet.size, sheet.type, sheet.subtype, sheet.nd && `ND ${sheet.nd}`, data.rank].filter(Boolean).join(' · ')}</p></div></div>
+    {hasRenderableContent(sheet) && <ModuleCard title="Estatísticas"><DataGrid data={{ ...sheet, combat: undefined, resources: undefined, resistances: undefined, attributes: undefined }} /></ModuleCard>}
+    {['combat', 'resources', 'resistances', 'attributes'].map((key) => hasRenderableContent(sheet[key]) && <ModuleCard key={key} title={{ combat: 'Combate', resources: 'Recursos', resistances: 'Resistências', attributes: 'Atributos' }[key]}><DataGrid data={sheet[key]} /></ModuleCard>)}
+    {groups.map(([title, values]) => values?.length ? <ModuleCard key={title} title={title}><div className="component-grid">{values.map((entry, index) => <article className="component-card" key={`${entry.id ?? index}:${index}`}><strong>{entry.data?.name || 'Sem nome'}</strong><DataGrid data={entry.data} omit={['name']} /></article>)}</div></ModuleCard> : null)}
+  </div>;
+}
+
 function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, isNew, campaignId, locationImage, onLocationImageChange }) {
 
   const commonTabs = [{ id: 'general', label: 'Geral' }];
@@ -3161,7 +3247,7 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
     item: [...commonTabs, { id: 'description', label: 'Descrição' }, { id: 'references', label: 'Referências' }],
 
-    monster: [...commonTabs, { id: 'description', label: 'Descrição' }, { id: 'sheet', label: 'Ficha' }, { id: 'movements', label: 'Deslocamentos' }, { id: 'attacks', label: 'Ataques' }, { id: 'abilities', label: 'Habilidades' }, { id: 'skills', label: 'Perícias' }, { id: 'traits', label: 'Características' }, { id: 'drops', label: 'Drops' }, { id: 'references', label: 'Referências' }],
+    monster: [...commonTabs, { id: 'description', label: 'Descrição' }, { id: 'sheet', label: 'Ficha' }, { id: 'movements', label: 'Deslocamentos' }, { id: 'attacks', label: 'Ataques' }, { id: 'abilities', label: 'Habilidades' }, { id: 'skills', label: 'Perícias' }, { id: 'traits', label: 'Características' }, { id: 'drops', label: 'Drops' }, { id: 'preview', label: 'Prévia' }, { id: 'references', label: 'Referências' }],
 
     quest: [...commonTabs, { id: 'description', label: 'Descrição' }, { id: 'objectives', label: 'Objetivos' }, { id: 'flow', label: 'Fluxo' }, { id: 'requirements', label: 'Requisitos' }, { id: 'rewards', label: 'Recompensas' }]
 
@@ -3172,6 +3258,13 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
   const set = (key, value) => setData({ ...data, [key]: value });
 
   const identity = data.identity ?? { race: data.race ?? '', gender: data.gender ?? '', age: data.age ?? '', profession: data.profession ?? '' };
+  const monsterSheet = data.sheet ?? {};
+  const setMonsterSheetValue = (section, key, value) => set('sheet', { ...monsterSheet, [section]: { ...(monsterSheet[section] ?? {}), [key]: value } });
+  const updateMonsterField = (value) => {
+    const fields = narrativeFields(data);
+    const current = fields.find((entry) => entry.key === 'originalSheet');
+    setData({ ...data, fields: [...fields.filter((entry) => entry.key !== 'originalSheet'), { key: 'originalSheet', value, visibility: current?.visibility ?? 'discoverable' }] });
+  };
 
   return (
 
@@ -3221,7 +3314,19 @@ function EntityStructuredEditor({ type, data, setData, activeTab, setActiveTab, 
 
         {activeTab === 'references' && <ReferenceListEditor values={(data.references ?? []).filter((reference) => !isDropReference(reference))} onChange={(value) => set('references', [...(data.references ?? []).filter(isDropReference), ...value])} />}
 
-        {activeTab === 'sheet' && <div className="sheet-editor"><div className="form-grid"><FormField label="ND" value={data.sheet?.nd ?? ''} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), nd: value })} /><FormField label="Tipo" value={data.sheet?.type ?? ''} options={monsterTypeOptions} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), type: value })} /><FormField label="Subtipo" value={data.sheet?.subtype ?? ''} options={[{ value: 'none', label: 'Nenhum' }, { value: 'goblinoid', label: 'Goblinóide' }, { value: 'dragon', label: 'Dragão' }, { value: 'elemental', label: 'Elemental' }, { value: 'other', label: 'Outro' }]} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), subtype: value })} /><FormField label="Tamanho" value={data.sheet?.size ?? ''} options={monsterSizeOptions} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), size: value })} /></div>{['combat', 'resources', 'resistances', 'attributes'].map((key) => <KeyValueEditor key={key} title={{ combat: 'Combate', resources: 'Recursos', resistances: 'Resistências', attributes: 'Atributos' }[key]} value={data.sheet?.[key]} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), [key]: value })} />)}</div>}
+        {activeTab === 'sheet' && <div className="sheet-editor"><div className="form-grid"><FormField label="ND" value={data.sheet?.nd ?? ''} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), nd: value })} /><FormField label="Tipo" value={data.sheet?.type ?? ''} options={monsterTypeOptions} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), type: value })} /><FormField label="Subtipo" value={data.sheet?.subtype ?? ''} options={[{ value: 'none', label: 'Nenhum' }, { value: 'goblinoid', label: 'Goblinóide' }, { value: 'dragon', label: 'Dragão' }, { value: 'elemental', label: 'Elemental' }, { value: 'other', label: 'Outro' }]} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), subtype: value })} /><FormField label="Tamanho" value={data.sheet?.size ?? ''} options={monsterSizeOptions} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), size: value })} /><FormField wide label="Texto original completo" type="textarea" value={narrativeFields(data).find((field) => field.key === 'originalSheet')?.value ?? ''} onChange={updateMonsterField} /></div>{['combat', 'resources', 'resistances', 'attributes'].map((key) => <KeyValueEditor key={key} title={{ combat: 'Combate', resources: 'Recursos', resistances: 'Resistências', attributes: 'Atributos' }[key]} value={data.sheet?.[key]} onChange={(value) => set('sheet', { ...(data.sheet ?? {}), [key]: value })} />)}</div>}
+
+        {activeTab === 'sheet' && <>
+          <div className="form-grid monster-common-stats">
+            <FormField label="Defesa" value={monsterSheet.combat?.defesa ?? ''} onChange={(value) => setMonsterSheetValue('combat', 'defesa', value)} />
+            <FormField label="PV" value={monsterSheet.resources?.pv ?? monsterSheet.resources?.hp ?? ''} onChange={(value) => setMonsterSheetValue('resources', 'pv', value)} />
+            <FormField label="PM" value={monsterSheet.resources?.pm ?? monsterSheet.resources?.mp ?? ''} onChange={(value) => setMonsterSheetValue('resources', 'pm', value)} />
+            <FormField label="Iniciativa" value={monsterSheet.combat?.iniciativa ?? ''} onChange={(value) => setMonsterSheetValue('combat', 'iniciativa', value)} />
+            <FormField label="Percepção" value={monsterSheet.combat?.percepcao ?? monsterSheet.combat?.perception ?? ''} onChange={(value) => setMonsterSheetValue('combat', 'percepcao', value)} />
+          </div>
+        </>}
+
+        {activeTab === 'preview' && type === 'monster' && <MonsterEditorPreview data={data} />}
 
         {activeTab === 'abilities' && <AbilityEditor values={data.abilities} onChange={(value) => set('abilities', value)} />}
 

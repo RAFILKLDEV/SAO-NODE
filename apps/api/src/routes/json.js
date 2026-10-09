@@ -33,7 +33,9 @@ const includeAll = {
 
 const applySchema = z.object({
   previewId: z.string().min(1),
-  selectedKeys: z.array(z.string()).default([])
+  // Applying an import always requires an explicit selection. An omitted
+  // selection must never be interpreted as "apply everything".
+  selectedKeys: z.array(z.string()).min(1)
 });
 const exportTypes = ['npc', 'location', 'item', 'monster', 'quest'];
 const exportSchema = z.object({
@@ -44,10 +46,96 @@ const exportSchema = z.object({
     ),
   format: z.enum(['1', '2']).default('2')
 });
+const monsterExportSchema = z.object({
+  types: z.preprocess(
+    (value) => typeof value === 'string' ? value.split(',').filter(Boolean) : value,
+    z.array(z.literal('monster')).min(1).default(['monster'])
+  ),
+  format: z.enum(['txt', 'md']).default('txt'),
+  ids: z.preprocess(
+    (value) => typeof value === 'string' ? value.split(',').map((id) => id.trim()).filter(Boolean) : value,
+    z.array(z.string().min(1).max(160)).max(1000).optional()
+  )
+});
 const historyQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20)
 });
+const previewQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(50),
+  type: z.string().optional(),
+  status: z.string().optional(),
+  search: z.string().trim().max(120).optional(),
+  // Removals are an explicit opt-in. A package may intentionally be partial.
+  includeRemovals: z.preprocess((value) => {
+    if (value == null || value === '') return false;
+    if (typeof value === 'boolean') return value;
+    return String(value).toLowerCase() === 'true';
+  }, z.boolean()).default(false)
+});
+
+function compactDiffEntry(entry) {
+  return {
+    key: entry.key,
+    type: entry.type,
+    id: entry.id,
+    name: entry.name ?? entry.after?.name ?? entry.before?.name ?? null,
+    status: entry.status,
+    selected: entry.selected,
+    visibilityChange: entry.visibilityChange ?? null
+  };
+}
+
+function previewDiffPage(diff, query) {
+  const search = query.search?.toLocaleLowerCase('pt-BR');
+  const filtered = diff.filter((entry) =>
+    (!query.type || entry.type === query.type) &&
+    (!query.status || entry.status === query.status) &&
+    (!search || `${entry.type}:${entry.id}`.toLocaleLowerCase('pt-BR').includes(search))
+  );
+  const offset = (query.page - 1) * query.pageSize;
+  return {
+    items: filtered.slice(offset, offset + query.pageSize).map(compactDiffEntry),
+    total: filtered.length,
+    page: query.page,
+    pageSize: query.pageSize,
+    hasMore: offset + query.pageSize < filtered.length
+  };
+}
+
+function formatMonsterExport(monsters, format) {
+  const markdown = format === 'md';
+  return monsters.map(({ data }) => {
+    const title = String(data.name ?? data.id);
+    const lines = [markdown ? `# ${title}` : title, `${data.id}`];
+    const add = (label, value) => {
+      if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) return;
+      const rendered = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+      lines.push(markdown ? `\n## ${label}\n\n${rendered}` : `\n${label}\n${rendered}`);
+    };
+    add('Descrição', data.description);
+    add('Classificação', data.classification);
+    add('Estatísticas', data.statBlocks);
+    add('Componentes', data.components);
+    add('Campos', data.fields);
+    add('Informações adicionais', Object.fromEntries(
+      Object.entries(data).filter(([key]) => !['id', 'name', 'description', 'classification', 'statBlocks', 'components', 'fields'].includes(key))
+    ));
+    return lines.join('\n');
+  }).join(`\n\n${'='.repeat(72)}\n\n`);
+}
+
+function safeImportFileName(request, packId) {
+  const header = request.headers['x-file-name'];
+  if (typeof header !== 'string' || !header.trim()) return `${packId}.json`;
+  const base = header.split(/[\\/]/).pop().trim().slice(0, 180);
+  const safe = Array.from(base, (character) => {
+    const code = character.codePointAt(0);
+    return code < 32 || '<>:"|?*'.includes(character) ? '_' : character;
+  }).join('');
+  return safe || `${packId}.json`;
+}
 
 export async function jsonRoutes(app) {
   app.get('/api/v1/campaigns/:campaignId/import/schema', { preHandler: [authenticate, requireCampaign, requireGm] }, async () => saoDataJsonSchema());
@@ -64,9 +152,15 @@ export async function jsonRoutes(app) {
       config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
     },
     async (request, reply) => {
+      const query = previewQuerySchema.safeParse(request.query);
+      if (!query.success)
+        return reply.code(400).send(apiError('INVALID_QUERY', 'Paginação da prévia inválida', query.error.flatten()));
       let parsed;
       try {
-        parsed = parseSaoDataJson(request.body, { maxBytes: config.maxJsonBytes, migrateDropFormulas: false });
+        const input = request.body && typeof request.body === 'object' && !Array.isArray(request.body)
+          ? Object.fromEntries(Object.entries(request.body).filter(([key]) => key !== 'includeRemovals'))
+          : request.body;
+        parsed = parseSaoDataJson(input, { maxBytes: config.maxJsonBytes, migrateDropFormulas: false });
       } catch (error) {
         return reply.code(400).send(apiError('INVALID_JSON', error.message));
       }
@@ -115,10 +209,16 @@ export async function jsonRoutes(app) {
       let warnings;
       try { warnings = validateEntityCatalog(pack.entities, existingRows.filter(e => !e.deletedAt).map(e => ({ type: e.type, data: entityRecordToCanonical(e) }))); }
       catch (error) { return reply.code(400).send(apiError('INVALID_CONTENT', error.message)); }
+      // Removals are opt-in so a partial package can never delete unrelated
+      // campaign content merely because it was omitted from the upload.
+      const bodyIncludeRemovals = request.body && typeof request.body === 'object'
+        ? request.body.includeRemovals === true
+        : false;
+      const includeRemovals = query.data.includeRemovals || bodyIncludeRemovals;
       const diff = buildDiff(
         operations.length > 0 ? existing : existing.filter(e => pack.containers.includes(e.type)),
         pack
-      );
+      ).filter((entry) => includeRemovals || entry.status !== 'REMOVED_FROM_JSON');
 
       const unresolvedWarnings = [];
       for (const warning of [...parsed.warnings, ...warnings]) {
@@ -135,15 +235,40 @@ export async function jsonRoutes(app) {
       }
 
       const previewId = randomToken(18);
+      // Keep complete documents in the campaign snapshot and incoming pack,
+      // while retaining only metadata in the in-memory diff index. This avoids
+      // storing another before/after copy for every large monster sheet.
+      const storedDiff = diff.map((entry) => ({
+        key: entry.key,
+        type: entry.type,
+        id: entry.id,
+        name: entry.after?.name ?? entry.before?.name ?? null,
+        status: entry.status,
+        selected: entry.selected,
+        visibilityChange: entry.visibilityChange ?? null
+      }));
+      const diffKeys = new Set(storedDiff.map((entry) => entry.key));
+      const existingSnapshot = existing.filter((entry) => diffKeys.has(`${entry.type}:${entry.id}`));
+      for (const [id, preview] of app.importPreviews) {
+        if (preview.expiresAt <= Date.now()) app.importPreviews.delete(id);
+      }
+      // A user can keep several previews open, but never allow abandoned large
+      // packs to accumulate indefinitely in the process.
+      if (app.importPreviews.size >= 20) {
+        const oldest = [...app.importPreviews.entries()].sort((a, b) => a[1].expiresAt - b[1].expiresAt)[0];
+        if (oldest) app.importPreviews.delete(oldest[0]);
+      }
       app.importPreviews.set(previewId, {
         campaignId: request.campaign.id,
         userId: request.auth.user.id,
-        fileName: `${pack.packId}.json`,
+        fileName: safeImportFileName(request, pack.packId),
         pack,
-        diff,
+        diff: storedDiff,
+        existing: existingSnapshot,
         versions: Object.fromEntries(existingRows.map(e => [`${e.type}:${e.domainId}`, e.version])),
         expiresAt: Date.now() + 15 * 60 * 1000
       });
+      const diffPage = previewDiffPage(diff, query.data);
       return {
         previewId,
         pack: {
@@ -156,7 +281,53 @@ export async function jsonRoutes(app) {
           diagnostics: parsed.diagnostics
         },
         warnings: unresolvedWarnings,
-        diff
+        // Keep the initial response bounded. Full before/after documents are
+        // available from GET /import/preview/:previewId/details?key=...
+        diff: diffPage.items,
+        total: diffPage.total,
+        page: diffPage.page,
+        pageSize: diffPage.pageSize,
+        hasMore: diffPage.hasMore
+      };
+    }
+  );
+
+  app.get(
+    '/api/v1/campaigns/:campaignId/import/preview/:previewId',
+    { preHandler: [authenticate, requireCampaign, requireGm] },
+    async (request, reply) => {
+      const parsed = previewQuerySchema.safeParse(request.query);
+      if (!parsed.success)
+        return reply.code(400).send(apiError('INVALID_QUERY', 'Paginação da prévia inválida', parsed.error.flatten()));
+      const preview = app.importPreviews.get(request.params.previewId);
+      if (!preview || preview.expiresAt <= Date.now() || preview.campaignId !== request.campaign.id || preview.userId !== request.auth.user.id)
+        return reply.code(410).send(apiError('PREVIEW_EXPIRED', 'A prévia expirou ou pertence a outra sessão'));
+      return { previewId: request.params.previewId, ...previewDiffPage(preview.diff, parsed.data) };
+    }
+  );
+
+  app.get(
+    '/api/v1/campaigns/:campaignId/import/preview/:previewId/details',
+    { preHandler: [authenticate, requireCampaign, requireGm] },
+    async (request, reply) => {
+      const key = z.string().min(1).max(240).safeParse(request.query?.key);
+      if (!key.success) return reply.code(400).send(apiError('INVALID_QUERY', 'A chave da alteração é obrigatória'));
+      const preview = app.importPreviews.get(request.params.previewId);
+      if (!preview || preview.expiresAt <= Date.now() || preview.campaignId !== request.campaign.id || preview.userId !== request.auth.user.id)
+        return reply.code(410).send(apiError('PREVIEW_EXPIRED', 'A prévia expirou ou pertence a outra sessão'));
+      const entry = preview.diff.find((item) => item.key === key.data);
+      if (!entry) return reply.code(404).send(apiError('NOT_FOUND', 'Alteração não encontrada na prévia'));
+      const incoming = preview.pack.entities.find((item) => `${item.type}:${item.data.id}` === key.data);
+      const previous = preview.existing.find((item) => `${item.type}:${item.id}` === key.data);
+      return {
+        key: entry.key,
+        type: entry.type,
+        id: entry.id,
+        status: entry.status,
+        selected: entry.selected,
+        before: entry.before ?? previous?.data ?? null,
+        after: entry.after ?? incoming?.data ?? null,
+        versions: { before: preview.versions[key.data] ?? null }
       };
     }
   );
@@ -221,16 +392,24 @@ export async function jsonRoutes(app) {
         let updated = 0;
         let removed = 0;
         const reversibleChanges = [];
-        for (const entry of preview.diff) {
-          if (!selected.has(entry.key) || entry.status === 'EQUAL') continue;
-          const previous = byKey.get(entry.key);
-          const before = previous ? {
-            data: entityRecordToCanonical(previous),
-            source: previous.source,
-            deletedAt: Boolean(previous.deletedAt)
-          } : null;
-          let after;
-          if (entry.status === 'REMOVED_FROM_JSON') {
+        const selectedEntries = preview.diff.filter((entry) => selected.has(entry.key) && entry.status !== 'EQUAL');
+        // Keep one transaction and history record, but yield work to bounded
+        // batches so very large monster packs do not build an unbounded loop.
+        const configuredBatchSize = Number(config.importBatchSize ?? 100);
+        const batchSize = Number.isFinite(configuredBatchSize) && configuredBatchSize > 0
+          ? Math.floor(configuredBatchSize)
+          : 100;
+        for (let offset = 0; offset < selectedEntries.length; offset += batchSize) {
+          const batch = selectedEntries.slice(offset, offset + batchSize);
+          for (const entry of batch) {
+            const previous = byKey.get(entry.key);
+            const before = previous ? {
+              data: entityRecordToCanonical(previous),
+              source: previous.source,
+              deletedAt: Boolean(previous.deletedAt)
+            } : null;
+            let after;
+            if (entry.status === 'REMOVED_FROM_JSON') {
             const saved = await softRemoveImportedEntityTx({
               tx,
               campaignId: request.campaign.id,
@@ -243,22 +422,23 @@ export async function jsonRoutes(app) {
             removed += 1;
             const resultVersion = saved?.version;
             reversibleChanges.push({ type: entry.type, id: entry.id, status: entry.status, before, after, resultVersion });
-            continue;
-          } else {
-            const incoming = incomingByKey.get(entry.key);
-            if (!incoming) continue;
-            const saved = await upsertImportedEntityTx({
+              continue;
+            } else {
+              const incoming = incomingByKey.get(entry.key);
+              if (!incoming) continue;
+              const saved = await upsertImportedEntityTx({
               tx,
               campaignId: request.campaign.id,
               type: incoming.type,
               input: incoming.data,
               actorUserId: request.auth.user.id,
               source
-            });
-            after = { data: incoming.data, source, deletedAt: false };
-            if (entry.status === 'NEW') created += 1;
-            else updated += 1;
-            reversibleChanges.push({ type: entry.type, id: entry.id, status: entry.status, before, after, resultVersion: saved.version });
+              });
+              after = { data: incoming.data, source, deletedAt: false };
+              if (entry.status === 'NEW') created += 1;
+              else updated += 1;
+              reversibleChanges.push({ type: entry.type, id: entry.id, status: entry.status, before, after, resultVersion: saved.version });
+            }
           }
         }
         const result = {
@@ -281,7 +461,10 @@ export async function jsonRoutes(app) {
           }
         });
         return result;
-      }, { isolationLevel: 'Serializable', timeout: 60000 });
+      }, {
+        isolationLevel: 'Serializable',
+        timeout: config.importTransactionTimeoutMs ?? 300000
+      });
 
       app.importPreviews.delete(parsed.data.previewId);
       await notifyCampaign({ db: prisma, realtime: request.server.realtime, campaignId: request.campaign.id, actorUserId: request.auth.user.id, eventType: 'import.applied', kind: 'info', title: 'Importação concluída', message: 'Novos dados foram importados para a campanha.', payload: summary });
@@ -351,7 +534,10 @@ export async function jsonRoutes(app) {
       if (marked.count !== 1) throw Object.assign(new Error('Esta importação já foi desfeita.'), { code: 'ALREADY_REVERTED' });
       await audit(tx, { campaignId: request.campaign.id, actorUserId: request.auth.user.id, action: 'import.undo', before: { historyId: history.id, summary: history.summary }, after: { historyId: history.id, revertedAt: now.toISOString() } });
       return { result: { historyId: history.id, reverted: changes.length, revertedAt: now } };
-      }, { isolationLevel: 'Serializable', timeout: 60000 });
+      }, {
+        isolationLevel: 'Serializable',
+        timeout: config.importTransactionTimeoutMs ?? 300000
+      });
     } catch (error) {
       if (['ALREADY_REVERTED', 'VERSION_CONFLICT'].includes(error.code))
         return reply.code(409).send(apiError(error.code, error.message));
@@ -363,6 +549,33 @@ export async function jsonRoutes(app) {
     request.server.realtime?.to(`campaign:${request.campaign.id}`).emit('import.reverted', result.result);
     return result.result;
   });
+
+  app.get(
+    '/api/v1/campaigns/:campaignId/export.monsters',
+    { preHandler: [authenticate, requireCampaign, requireGm] },
+    async (request, reply) => {
+      const parsed = monsterExportSchema.safeParse(request.query);
+      if (!parsed.success)
+        return reply.code(400).send(apiError('INVALID_QUERY', 'Opções de exportação de monstros inválidas', parsed.error.flatten()));
+      const where = {
+        campaignId: request.campaign.id,
+        type: 'monster',
+        deletedAt: null,
+        ...(parsed.data.ids?.length ? { domainId: { in: parsed.data.ids } } : {})
+      };
+      const rows = await prisma.entity.findMany({
+        where,
+        include: includeAll,
+        orderBy: [{ domainId: 'asc' }]
+      });
+      const monsters = rows.map((entity) => ({ type: 'monster', data: entityRecordToCanonical(entity) }));
+      const body = formatMonsterExport(monsters, parsed.data.format);
+      const extension = parsed.data.format === 'md' ? 'md' : 'txt';
+      reply.header('content-type', `${parsed.data.format === 'md' ? 'text/markdown' : 'text/plain'}; charset=utf-8`);
+      reply.header('content-disposition', `attachment; filename="${request.campaign.slug}.monsters.${extension}"`);
+      return body;
+    }
+  );
 
   app.get(
     '/api/v1/campaigns/:campaignId/export.json',

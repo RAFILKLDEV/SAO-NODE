@@ -33,7 +33,15 @@ export async function buildApp() {
       level: process.env.LOG_LEVEL ?? 'info',
       redact: ['req.headers.cookie', 'req.headers.authorization', 'res.headers.set-cookie']
     },
+    // Leave a small envelope for the request while keeping the import limit
+    // itself controlled by MAX_JSON_BYTES.
     bodyLimit: config.maxJsonBytes + 1024 * 1024
+  });
+
+  // A file upload can use the import parser without requiring the browser to
+  // parse and re-stringify a large document first.
+  app.addContentTypeParser('application/sao-data+json', { parseAs: 'string' }, (_request, body, done) => {
+    done(null, body);
   });
 
   app.decorate('realtime', null);
@@ -46,7 +54,7 @@ export async function buildApp() {
     origin: config.webOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['content-type', 'x-csrf-token', 'if-match', 'x-map-preview-id']
+    allowedHeaders: ['content-type', 'x-csrf-token', 'if-match', 'x-map-preview-id', 'x-file-name']
   });
   await app.register(helmet, {
     contentSecurityPolicy: false,
