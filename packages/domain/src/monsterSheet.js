@@ -81,9 +81,21 @@ function valueText(value) {
   return String(value);
 }
 
+function mergeRecords(base, override) {
+  const result = { ...(base ?? {}) };
+  for (const [key, value] of Object.entries(override ?? {})) {
+    const current = result[key];
+    if (current && value && typeof current === 'object' && !Array.isArray(current) && typeof value === 'object' && !Array.isArray(value))
+      result[key] = mergeRecords(current, value);
+    else result[key] = value;
+  }
+  return result;
+}
+
 function sectionsOf(entity) {
   const data = entity?.data ?? entity ?? {};
-  const sheet = data.sheet ?? data.statBlocks?.default ?? {};
+  const statBlocks = mergeRecords(data.statBlocks, data.extraStatBlocks);
+  const sheet = mergeRecords(statBlocks.default, data.sheet);
   const fields = Array.isArray(data.fields)
     ? Object.fromEntries(data.fields.filter((field) => field?.key).map((field) => [field.key, field.value]))
     : (data.fields && typeof data.fields === 'object' ? data.fields : {});
@@ -94,7 +106,7 @@ function sectionsOf(entity) {
   for (const [kind, key] of [['movement', 'movements'], ['attack', 'attacks'], ['ability', 'abilities'], ['skill', 'skills'], ['trait', 'traits']]) {
     groups[key] = data[key] ?? components.filter((component) => component.kind === kind).map(({ kind: _kind, ...component }) => component);
   }
-  return { data, sheet, fields, groups, references, drops };
+  return { data, sheet, statBlocks, fields, groups, references, drops };
 }
 
 function linesForMap(map, prefix = '') {
@@ -106,7 +118,7 @@ function linesForMap(map, prefix = '') {
 
 /** Render a monster without modifying source text stored in originalSheet. */
 export function formatMonsterSheet(entity, { format = 'txt' } = {}) {
-  const { data, sheet, fields, groups, references, drops } = sectionsOf(entity);
+  const { data, sheet, statBlocks, fields, groups, references, drops } = sectionsOf(entity);
   const title = data.name ?? entity?.name ?? 'Monstro sem nome';
   const original = fields.originalSheet ?? data.originalSheet;
   const markdown = format === 'md';
@@ -127,6 +139,11 @@ export function formatMonsterSheet(entity, { format = 'txt' } = {}) {
   if (drops.length)
     lines.push('', markdown ? '## Drops' : 'DROPS', '', ...linesForMap({ drops }));
 
+  for (const [blockName, block] of Object.entries(statBlocks).filter(([key]) => key !== 'default')) {
+    if (!block || typeof block !== 'object' || !Object.keys(block).length) continue;
+    lines.push('', markdown ? `## Estatísticas — ${blockName}` : `ESTATÍSTICAS — ${blockName.toUpperCase()}`, '', ...linesForMap(block));
+  }
+
   for (const [key, label] of Object.entries(COMPONENT_GROUPS)) {
     const entries = groups[key] ?? [];
     if (!entries.length) continue;
@@ -144,7 +161,7 @@ export function formatMonsterSheet(entity, { format = 'txt' } = {}) {
     }
   }
 
-  const extra = data.extraStatBlocks ?? data.extensions;
+  const extra = data.extensions;
   if (extra && Object.keys(extra).length)
     lines.push('', markdown ? '## Informações adicionais' : 'INFORMAÇÕES ADICIONAIS', '', ...linesForMap(extra));
   if (original !== undefined && original !== null)

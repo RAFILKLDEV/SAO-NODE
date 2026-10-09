@@ -17,7 +17,7 @@ describe('seleção de importação', () => {
   it('seleciona globalmente 300 registros sem transportar 300 IDs', () => {
     const result = resolveApplySelection({ selectionMode: 'all' }, previewOf());
     expect(result.error).toBeUndefined();
-    expect(result.selected).toHaveLength(300);
+    expect(result.selected.size).toBe(300);
     expect(result.selected.has('monster:monster.removed')).toBe(false);
   });
 
@@ -27,7 +27,7 @@ describe('seleção de importação', () => {
       excludedKeys: ['monster:monster.7', 'monster:monster.101'],
       includedKeys: ['monster:monster.removed']
     }, previewOf());
-    expect(result.selected).toHaveLength(299);
+    expect(result.selected.size).toBe(299);
     expect(result.selected.has('monster:monster.7')).toBe(false);
     expect(result.selected.has('monster:monster.101')).toBe(false);
     expect(result.selected.has('monster:monster.removed')).toBe(true);

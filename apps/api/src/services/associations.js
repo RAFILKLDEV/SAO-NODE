@@ -83,7 +83,7 @@ export async function applyAssociations({ campaignId, actorUserId, changes }) {
       plan.after = plan.after.filter((link) => originalKeys.has(associationKey(link)) || addedKeys.has(associationKey(link)));
     }
     const changed = [];
-    for (const { source, before, after, additions, rewardAdditions, removeKeys } of plans) {
+    for (const { source, additions, rewardAdditions, removeKeys } of plans) {
       if (!removeKeys.size && !additions.length && !rewardAdditions.length) continue;
       const updated = await tx.entity.updateMany({
         where: { id: source.id, version: source.version, deletedAt: null },

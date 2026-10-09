@@ -47,4 +47,21 @@ describe('monster sheet export', () => {
     expect(text).toContain('customNote: Texto adicional');
     expect(text).not.toContain('"quantityFormula"');
   });
+
+  it('exports every named stat block exactly once', () => {
+    const text = formatMonsterSheet({
+      id: 'monster.multi-block',
+      name: 'Multi bloco',
+      statBlocks: {
+        default: { nd: 5, combat: { defesa: 20 } },
+        'forma-aquática': { nd: 6, resources: { pv: 88 }, customRule: '1d8+4' },
+        'forma-terrestre': { nd: 7, resistances: { fogo: 10 } }
+      }
+    });
+    expect(text).toContain('ND: 5');
+    expect(text).toContain('ESTATÍSTICAS — FORMA-AQUÁTICA');
+    expect(text).toContain('ESTATÍSTICAS — FORMA-TERRESTRE');
+    expect(text).toContain('customRule: 1d8+4');
+    expect(text.match(/ND: 5/g)).toHaveLength(1);
+  });
 });
