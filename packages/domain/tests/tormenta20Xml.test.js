@@ -116,4 +116,33 @@ describe('buildTormenta20CriaturaXml', () => {
     expect(extractTag(xml, 'nome')).toBe('Dragão &quot;Rei&quot; &amp; Cia &lt;Lendário&gt;');
     expect(xml).not.toMatch(/<nome>[^<]*<Lendário>/);
   });
+
+  it('transfere imagem, texto original e dados estendidos sem descartar campos', () => {
+    const originalSheet = '  Linha 1\r\n\nLinha 3  ';
+    const monster = normalizeEntity('monster', {
+      id: 'monster.lossless',
+      name: 'Guardião',
+      media: { portrait: 'https://cdn.example/guardiao.png' },
+      fields: [
+        { key: 'description', value: 'Descrição\ncom quebra' },
+        { key: 'originalSheet', value: originalSheet }
+      ],
+      statBlocks: { default: { combat: { Iniciativa: '+7', Percepção: '+9' } } },
+      components: [
+        { id: 'spell', kind: 'ability', data: { name: 'Raio', description: 'linha 1\nlinha 2', custo: '2 PM', alcance: '30m' } }
+      ],
+      extensions: { customData: { source: 'keep me' } }
+    }, { format: '2.0' });
+
+    const xml = buildTormenta20CriaturaXml(monster);
+    expect(extractTag(xml, 'imagemURL')).toBe('https://cdn.example/guardiao.png');
+    expect(extractTag(xml, 'iniciativa')).toBe('+7');
+    expect(extractTag(xml, 'percepcao')).toBe('+9');
+    expect(extractTag(xml, 'descricao')).toBe('Descrição\ncom quebra');
+    expect(extractTag(xml, 'originalSheet')).toBe(originalSheet);
+    expect(extractTag(xml, 'dadosAdicionais')).toContain('customData');
+    expect(extractTag(xml, 'saoNodeSourceJson')).toContain('monster.lossless');
+    expect(xml).toContain('<custo>2 PM</custo>');
+    expect(xml).toContain('<alcance>30m</alcance>');
+  });
 });

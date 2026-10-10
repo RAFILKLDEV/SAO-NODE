@@ -22,6 +22,7 @@ import { hasRenderableContent } from '../lib/entityContent.js';
 
 import { formatEntityName } from '../lib/entityDisplay.js';
 import { copyMonsterSheet, downloadMonsterSheet } from '../lib/monsterSheet.js';
+import { sendMonsterToFirecast } from '../lib/firecastTransfer.js';
 import './MonsterSheet.css';
 
 import {
@@ -994,6 +995,10 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
   const [copyState, setCopyState] = useState('');
   const [sheetCopyState, setSheetCopyState] = useState('');
   const [showOriginal, setShowOriginal] = useState(false);
+  const [firecastState, setFirecastState] = useState('');
+  const [firecastError, setFirecastError] = useState('');
+  const firecastLock = useRef(false);
+  const firecastBusy = Boolean(firecastState && firecastState !== 'applied');
   const originalSheet = narrativeFields(entity).find((field) => field.key === 'originalSheet')?.value;
   const dropDialogRef = useRef(null);
   useOutsideDismiss(dropDialogRef, () => { setDropRoll(null); setCopyState(''); }, Boolean(dropRoll));
@@ -1091,6 +1096,28 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
     }
   };
 
+  const sendToFirecast = async () => {
+    if (firecastBusy || firecastLock.current || !isGm) return;
+    if (!window.confirm('Enviar esta ficha para o Firecast? O plugin pedirá confirmação antes de substituir uma ficha preenchida.')) return;
+    firecastLock.current = true;
+    setFirecastError('');
+    setFirecastState('preparando');
+    try {
+      await sendMonsterToFirecast({
+        campaignId,
+        monsterId: entity.id,
+        onStatus: (status) => setFirecastState(status)
+      });
+      setFirecastState('applied');
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      setFirecastState('');
+      setFirecastError(error.message || 'Não foi possível enviar a ficha ao Firecast.');
+    } finally {
+      firecastLock.current = false;
+    }
+  };
+
   return (
 
     <div className="module-stack">
@@ -1107,9 +1134,12 @@ function MonsterDetails({ entity, campaignId, isGm, onGrant }) {
           <button type="button" onClick={copySheetText}>Copiar ficha</button>
           <button type="button" onClick={() => downloadMonsterSheet(entity, 'txt')}>Baixar .txt</button>
           <button type="button" onClick={() => downloadMonsterSheet(entity, 'md')}>Baixar .md</button>
+          {isGm && <button type="button" className="primary" onClick={sendToFirecast} disabled={firecastBusy} aria-busy={firecastBusy}>{firecastBusy ? 'Enviando para Firecast…' : 'Enviar para Firecast'}</button>}
           {originalSheet && <button type="button" onClick={() => setShowOriginal((value) => !value)} aria-expanded={showOriginal}>Ver texto original</button>}
           {originalSheet && <DiscoveryButton isGm={isGm} onGrant={onGrant} kind="field" targetKey="originalSheet" label="Texto original" />}
           {sheetCopyState && <span className="muted" role="status">{sheetCopyState}</span>}
+          {firecastState === 'applied' && <span className="muted" role="status">Ficha recebida pelo Firecast.</span>}
+          {firecastError && <span className="alert error" role="alert">{firecastError}</span>}
         </div>
         {showOriginal && originalSheet && <pre className="monster-sheet-original-text">{originalSheet}</pre>}
       </section>

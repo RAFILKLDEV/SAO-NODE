@@ -1,3 +1,5 @@
+import { formatMonsterSheet } from '../monsterSheet.js';
+
 // Converte uma entidade monster (v2 canônica) em um XML <criatura> no formato
 // já consumido pelo plugin Firecast/Tormenta20 (parseCriaturaXML em MonsterIA.lua),
 // o mesmo formato que hoje é gerado por uma IA a partir de texto livre.
@@ -60,6 +62,14 @@ function textOrDefault(value, fallback) {
   return text === '' ? fallback : text;
 }
 
+// Valores descritivos (descrição, texto original e notas) são deliberadamente
+// mantidos sem trim/collapse. O parser do Firecast pode apresentar uma versão
+// compactada, mas o XML continua sendo uma transferência lossless.
+function rawText(value, fallback = '') {
+  if (value === undefined || value === null) return fallback;
+  return String(value);
+}
+
 function numberTextOrDefault(value, fallback = '0') {
   if (value === undefined || value === null || value === '') return fallback;
   return String(value).trim();
@@ -115,6 +125,8 @@ function buildAttackItem(component) {
   const tipo = pickBySynonyms(details, ATTACK_DETAIL_SYNONYMS.tipo);
   const alcance = pickBySynonyms(details, ATTACK_DETAIL_SYNONYMS.alcance);
   const critico = pickBySynonyms(details, ATTACK_DETAIL_SYNONYMS.critico);
+  const descricao = details.descricao ?? details.description;
+  const observacoes = details.observacoes ?? details.observations ?? details.notes;
 
   // Quando não há chaves estruturadas de dano/bônus, tenta extrair de um texto
   // livre qualquer (ex.: { text: "Investida com presas (+8, 1d8+4)" }).
@@ -132,6 +144,8 @@ function buildAttackItem(component) {
     `            ${tag('tipo', textOrDefault(tipo, ''))}`,
     alcance !== undefined ? `            ${tag('alcance', textOrDefault(alcance, ''))}` : '',
     critico !== undefined ? `            ${tag('critico', textOrDefault(critico, ''))}` : '',
+    descricao !== undefined ? `            ${tag('descricao', rawText(descricao))}` : '',
+    observacoes !== undefined ? `            ${tag('observacoes', rawText(observacoes))}` : '',
     '        </item>'
   ].filter(Boolean).join('\n');
 }
@@ -143,6 +157,24 @@ function buildAbilityItem(nome, descricao) {
     `            ${tag('descricao', descricao)}`,
     '        </item>'
   ].join('\n');
+}
+
+function buildStructuredItem(data, nameKeys = ['name']) {
+  const name = rawText(data?.name ?? data?.nome ?? '');
+  const fields = Object.entries(data ?? {}).filter(([key]) => !nameKeys.includes(key) && key !== 'name');
+  const aliases = {
+    description: 'descricao', observations: 'observacoes', notes: 'observacoes',
+    trigger: 'gatilho', cost: 'custo', recharge: 'recarga', range: 'alcance',
+    target: 'alvo', duration: 'duracao', type: 'tipo'
+  };
+  const tags = fields.map(([key, value]) => {
+    let tagName = aliases[key] ?? key.replace(/[^A-Za-z0-9_:-]/g, '_');
+    if (!/^[A-Za-z_]/.test(tagName)) tagName = `campo_${tagName}`;
+    if (value === undefined || value === null || value === '') return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : rawText(value);
+    return `            ${tag(tagName, text)}`;
+  }).filter(Boolean);
+  return ['        <item>', `            ${tag('nome', name)}`, ...tags, '        </item>'].join('\n');
 }
 
 function buildSkillEntry(component) {
@@ -180,12 +212,29 @@ function buildTipo(sheet) {
   return textOrDefault(type, 'nenhum');
 }
 
+function componentNumericValue(monster, terms) {
+  for (const component of monster?.components ?? []) {
+    const data = component.data ?? {};
+    const name = normalizeKey(data.name ?? data.nome ?? '');
+    if (!terms.some((term) => name.includes(term))) continue;
+    const value = Object.entries(data)
+      .filter(([key]) => !['name', 'nome', 'description', 'descricao'].includes(key))
+      .map(([, entry]) => String(entry ?? '').trim())
+      .find((entry) => /^[+-]?\d+(?:\.\d+)?$/.test(entry));
+    if (value !== undefined) return value;
+  }
+  return undefined;
+}
+
 /**
  * Gera o XML <criatura> (mesmo formato produzido pelo proxy Gemini) a partir de
  * uma entidade monster v2 canônica do SAO-NODE (com `statBlocks`, `components`
  * e `fields`, como devolvido por `entityRecordToCanonical`/`normalizeEntity`).
  */
 export function buildTormenta20CriaturaXml(monster) {
+  // Accept both the canonical entity and the entity-record wrapper returned by
+  // older API services (`{ data: canonical }`).
+  monster = monster?.data ?? monster ?? {};
   const sheet = monster?.statBlocks?.default ?? {};
   const attributes = sheet.attributes ?? {};
   const combat = sheet.combat ?? {};
@@ -194,18 +243,49 @@ export function buildTormenta20CriaturaXml(monster) {
 
   const nome = textOrDefault(monster?.name, 'Criatura');
   const tipo = buildTipo(sheet);
-  const descricao = textOrDefault(fieldValue(monster, 'description'), '');
+  const descricao = rawText(fieldValue(monster, 'description'), '');
+  const originalSheet = rawText(fieldValue(monster, 'originalSheet') ?? monster?.originalSheet, '');
+  const media = monster?.media ?? {};
+  const imagemURL = rawText(media.image || media.portrait, '');
 
   const movements = componentsOfKind(monster, 'movement');
-  const deslocamento = pickBySynonyms(combat, COMBAT_SYNONYMS.deslocamento)
-    ?? (movements.length ? movements.map(buildMovementEntry).filter(Boolean).join(', ') : undefined);
+  const movementValues = [];
+  const combatMovement = pickBySynonyms(combat, COMBAT_SYNONYMS.deslocamento);
+  if (combatMovement !== undefined && combatMovement !== '') movementValues.push(rawText(combatMovement));
+  movementValues.push(...movements.map(buildMovementEntry).filter(Boolean));
+  const deslocamento = [...new Set(movementValues)].join(', ');
 
-  const equipamentos = (monster?.links ?? [])
-    .filter((link) => link.type === 'item' && ['equipment', 'equipamento'].includes(link.role))
-    .map((link) => link.id);
+  const linkedEquipamentos = (monster?.links ?? [])
+    // Item references are the only typed links that can be represented as
+    // equipment. Keep them even when older records omit the role.
+    .filter((link) => link.type === 'item')
+    .map((link) => link.name ?? link.resolvedName ?? link.label ?? link.id);
+  const componentEquipamentos = componentsOfKind(monster, 'equipment')
+    .concat(componentsOfKind(monster, 'item'))
+    .map((component) => {
+      const data = component.data ?? {};
+      const name = data.name ?? data.nome ?? '';
+      const details = Object.entries(data)
+        .filter(([key, value]) => !['name', 'nome'].includes(key) && value !== undefined && value !== '')
+        .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`);
+      return [name, ...details].filter(Boolean).join(' ');
+    }).filter(Boolean);
+  const fieldEquipamentos = fieldValue(monster, 'equipment') || fieldValue(monster, 'equipamentos');
+  const equipamentos = [...linkedEquipamentos, ...componentEquipamentos];
+  if (typeof fieldEquipamentos === 'string' && fieldEquipamentos) equipamentos.push(fieldEquipamentos);
+  else if (Array.isArray(fieldEquipamentos)) equipamentos.push(...fieldEquipamentos.map((value) => typeof value === 'string' ? value : JSON.stringify(value)).filter(Boolean));
 
   const skills = componentsOfKind(monster, 'skill').map(buildSkillEntry).filter(Boolean);
-  const abilities = componentsOfKind(monster, 'ability');
+  const allAbilities = componentsOfKind(monster, 'ability');
+  const spellLike = (component) => {
+    const data = component?.data ?? {};
+    const marker = normalizeKey(data.kind ?? data.type ?? data.category ?? data.tipo ?? '');
+    return marker === 'spell' || marker === 'magia' || data.isSpell === true;
+  };
+  const abilities = allAbilities.filter((component) => !spellLike(component));
+  const spells = componentsOfKind(monster, 'spell')
+    .concat(componentsOfKind(monster, 'magic'))
+    .concat(allAbilities.filter(spellLike));
   const traits = componentsOfKind(monster, 'trait');
 
   const sentidos = [];
@@ -217,6 +297,8 @@ export function buildTormenta20CriaturaXml(monster) {
     const nomeTrait = textOrDefault(data.name, '');
     if (!nomeTrait) continue;
     const bucket = classifyTrait(trait);
+    // Keep the canonical label in list fields expected by the Lua sheet. The
+    // complete value/description remains available in dadosAdicionais/source JSON.
     if (bucket === 'imunidades') imunidades.push(nomeTrait);
     else if (bucket === 'resistencias') resistenciasEspeciais.push(nomeTrait);
     else if (bucket === 'sentidos') sentidos.push(nomeTrait);
@@ -229,12 +311,18 @@ export function buildTormenta20CriaturaXml(monster) {
 
   const attackItems = componentsOfKind(monster, 'attack').map(buildAttackItem);
   const abilityItems = [
-    ...abilities.map((component) => buildAbilityItem(
-      textOrDefault(component.data?.name, ''),
-      textOrDefault(component.data?.description, '')
-    )),
+    ...abilities.map((component) => buildStructuredItem(component.data ?? {})),
     ...extraAbilities
   ];
+
+  const initiative = pickBySynonyms(combat, ['iniciativa', 'initiative', 'init'])
+    ?? componentNumericValue(monster, ['iniciativa', 'initiative']);
+  const percepcao = pickBySynonyms(combat, ['percepcao', 'perception'])
+    ?? pickBySynonyms(attributes, ['percepcao', 'perception'])
+    ?? componentNumericValue(monster, ['percepcao', 'perception']);
+  const sourceJson = (() => { try { return JSON.stringify(monster); } catch { return ''; } })();
+  let additionalText = '';
+  try { additionalText = formatMonsterSheet(monster); } catch { additionalText = ''; }
 
   const xml = [
     '<criatura>',
@@ -243,6 +331,12 @@ export function buildTormenta20CriaturaXml(monster) {
     `    ${tag('tipo', tipo)}`,
     `    ${tag('tamanho', textOrDefault(sheet.size, 'Médio'))}`,
     `    ${tag('descricao', descricao)}`,
+    `    ${tag('imagemURL', imagemURL)}`,
+    `    ${tag('iniciativa', numberTextOrDefault(initiative, '0'))}`,
+    `    ${tag('percepcao', numberTextOrDefault(percepcao, '0'))}`,
+    `    ${tag('originalSheet', originalSheet)}`,
+    `    ${tag('dadosAdicionais', additionalText)}`,
+    `    ${tag('saoNodeSourceJson', sourceJson)}`,
     '',
     `    ${tag('mana', numberTextOrDefault(pickBySynonyms(resources, RESOURCE_SYNONYMS.mana), '0'))}`,
     '',
@@ -270,6 +364,10 @@ export function buildTormenta20CriaturaXml(monster) {
     itemListTag('resistencias', resistenciasEspeciais),
     '',
     itemListTag('imunidades', imunidades),
+    '',
+    '    <magias>',
+    spells.length ? spells.map((component) => buildStructuredItem(component.data ?? {})).join('\n') : buildStructuredItem({ name: 'nenhuma' }),
+    '    </magias>',
     '',
     '    <ataques>',
     attackItems.length ? attackItems.join('\n') : buildAttackItem({ data: { name: 'Ataque' } }),

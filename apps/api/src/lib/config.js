@@ -16,5 +16,7 @@ export const config = {
   disableLogin: String(process.env.DISABLE_LOGIN ?? 'false').toLowerCase() === 'true',
   localAdminLogin: process.env.LOCAL_ADMIN_LOGIN ?? 'Rafilkl',
   localAdminPassword: process.env.LOCAL_ADMIN_PASSWORD ?? 'asadasan123',
-  localAdminName: process.env.LOCAL_ADMIN_NAME ?? 'Rafilkl'
+  localAdminName: process.env.LOCAL_ADMIN_NAME ?? 'Rafilkl',
+  saoNodeBridgeToken: process.env.SAO_NODE_BRIDGE_TOKEN ?? '',
+  firecastPublicBaseUrl: process.env.FIRECAST_PUBLIC_BASE_URL ?? ''
 };

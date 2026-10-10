@@ -14,6 +14,26 @@ import {
 import { notifyEntityChanged } from '../services/notifications.js';
 import { buildTormenta20CriaturaXml } from '@sao/domain';
 
+// The legacy XML endpoint is also used by older plugin builds. Authenticated
+// campaign-media URLs require the SAO session and therefore cannot be embedded
+// in a Firecast ficha. The authenticated transfer route copies those bytes to
+// a capability URL; this endpoint omits the private value instead of leaking a
+// session-bound or localhost URL.
+function withoutPrivateMonsterMedia(monster, campaignId) {
+  const media = monster?.media;
+  if (!media || typeof media !== 'object') return monster;
+  const isPrivate = (value) => {
+    if (typeof value !== 'string' || !value) return false;
+    try {
+      const parsed = new URL(value, 'http://sao-node.invalid');
+      return parsed.pathname.startsWith(`/api/v1/campaigns/${campaignId}/media/`);
+    } catch { return false; }
+  };
+  const nextMedia = { ...media };
+  for (const key of ['image', 'portrait']) if (isPrivate(nextMedia[key])) nextMedia[key] = '';
+  return { ...monster, media: nextMedia };
+}
+
 const querySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(50),
@@ -62,7 +82,7 @@ export async function entityRoutes(app) {
             domainId: request.params.domainId
           });
           if (!monster) return reply.code(404).send(apiError('NOT_FOUND', 'Entity not found'));
-          const xml = buildTormenta20CriaturaXml(monster);
+          const xml = buildTormenta20CriaturaXml(withoutPrivateMonsterMedia(monster, request.campaign.id));
           return reply.header('Content-Type', 'application/xml; charset=utf-8').send(xml);
         }
       );

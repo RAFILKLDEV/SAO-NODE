@@ -26,6 +26,7 @@ import { associationRoutes } from './routes/associations.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { mapRoutes } from './routes/map.js';
 import { mapCanvasRoutes } from './routes/map-canvas.js';
+import { firecastTransferRoutes } from './routes/firecastTransfers.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -137,6 +138,7 @@ export async function buildApp() {
   await app.register(notificationRoutes);
   await app.register(mapRoutes);
   await app.register(mapCanvasRoutes);
+  await app.register(firecastTransferRoutes);
 
   return app;
 }
