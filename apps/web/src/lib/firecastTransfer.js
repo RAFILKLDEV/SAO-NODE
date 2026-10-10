@@ -1,7 +1,7 @@
 import { api } from './api.js';
 
 export const firecastProxyUrl =
-  (import.meta.env.VITE_FIRECAST_PROXY_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
+  (import.meta.env.VITE_FIRECAST_PROXY_URL || 'http://127.0.0.1:7000').replace(/\/$/, '');
 
 async function proxyJson(response) {
   const body = await response.json().catch(() => ({}));

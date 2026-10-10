@@ -34,6 +34,10 @@ services:
       LOCAL_ADMIN_LOGIN: Rafilkl
       LOCAL_ADMIN_PASSWORD: asadasan123
       LOCAL_ADMIN_NAME: Rafilkl
+      # Must match the token used by gemini-proxy/MonsterIA.
+      SAO_NODE_BRIDGE_TOKEN: ${SAO_NODE_BRIDGE_TOKEN:-}
+      # Set this to an HTTPS address reachable by Firecast for private images.
+      FIRECAST_PUBLIC_BASE_URL: ${FIRECAST_PUBLIC_BASE_URL:-}
     depends_on:
       db:
         condition: service_healthy
